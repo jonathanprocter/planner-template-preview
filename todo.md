@@ -65,3 +65,5 @@
 - [x] Implement hover tooltips to display full event details
 
 - [x] Update Weekly Overview button design to match new styling with calendar icon
+
+- [x] Fix React ref warning in CategoryFilter DropdownMenuTrigger

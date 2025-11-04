@@ -52,16 +52,14 @@ export function CategoryFilter({ onFilterChange }: CategoryFilterProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Filter className="h-4 w-4" />
-          Filter by Category
-          {selectedCategories.length < categories.length && (
-            <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
-              {selectedCategories.length}/{categories.length}
-            </span>
-          )}
-        </Button>
+      <DropdownMenuTrigger className="inline-flex items-center justify-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm font-medium ring-offset-background transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50">
+        <Filter className="h-4 w-4" />
+        Filter by Category
+        {selectedCategories.length < categories.length && (
+          <span className="ml-1 text-xs bg-primary text-primary-foreground rounded-full px-2 py-0.5">
+            {selectedCategories.length}/{categories.length}
+          </span>
+        )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <div className="flex gap-2 p-2 border-b">
