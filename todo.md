@@ -27,3 +27,6 @@
 - [x] Match weekly view time formatting to daily view (bold hours, lighter half-hours)
 - [x] Update Weekly Overview button to match screenshot style (calendar icon with date)
 - [x] Implement bidirectional event linking between daily and weekly views
+
+- [x] Fix weekly overview layout and grid structure
+- [x] Use exact Weekly Overview button from screenshot
