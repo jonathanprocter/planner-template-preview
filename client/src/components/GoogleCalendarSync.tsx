@@ -1,221 +1,239 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  initGoogleCalendar,
-  signIn,
-  signOut,
-  isUserSignedIn,
-  getCalendarList,
-  getEvents,
-  getColorForEvent,
-  type GoogleCalendarEvent,
-} from "@/lib/googleCalendar";
-import { trpc } from "@/lib/trpc";
-import { CalendarSelector, type CalendarInfo } from "./CalendarSelector";
 import { toast } from "sonner";
+import { initGoogleCalendar, getCalendarList, getEvents, signIn, signOut, type GoogleCalendarEvent } from "@/lib/googleCalendar";
+import { trpc } from "@/lib/trpc";
+import { CalendarSelector } from "./CalendarSelector";
 
-export function GoogleCalendarSync() {
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export default function GoogleCalendarSync() {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [availableCalendars, setAvailableCalendars] = useState<CalendarInfo[]>([]);
+  const [availableCalendars, setAvailableCalendars] = useState<Array<{ id: string; summary: string; selected: boolean }>>([]);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
+  const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0, calendar: "" });
 
-  const syncMutation = trpc.appointments.syncFromGoogle.useMutation({
-    onSuccess: (result) => {
-      toast.success(`Synced ${result.synced} events, deleted ${result.deleted} old events`);
-      // Reload to refresh from database
-      window.location.reload();
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to sync calendar");
-      setIsSyncing(false);
-    },
-  });
+  const syncMutation = trpc.appointments.syncFromGoogle.useMutation();
 
   useEffect(() => {
-    const initialize = async () => {
-      try {
-        await initGoogleCalendar();
-        setIsSignedIn(isUserSignedIn());
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Failed to initialize Google Calendar:', error);
-        toast.error('Failed to initialize Google Calendar');
-      }
-    };
-
-    initialize();
+    initGoogleCalendar();
   }, []);
 
   const loadCalendars = async () => {
     try {
       const calendars = await getCalendarList();
-      const calendarInfos: CalendarInfo[] = calendars.map((cal: any) => ({
-        id: cal.id,
-        summary: cal.summary,
-        backgroundColor: cal.backgroundColor,
-        selected: true,
-      }));
-      setAvailableCalendars(calendarInfos);
-      setSelectedCalendarIds(calendarInfos.map(c => c.id));
-      return calendarInfos;
+      const calendarsWithSelection = calendars.map((c: any) => ({ ...c, selected: true }));
+      setAvailableCalendars(calendarsWithSelection);
+      // Auto-select all calendars by default
+      setSelectedCalendarIds(calendars.map((c: any) => c.id));
     } catch (error) {
-      console.error('Failed to load calendars:', error);
-      toast.error('Failed to load calendar list');
-      return [];
+      console.error("Error loading calendars:", error);
+      toast.error("Failed to load calendars");
     }
   };
 
-  const handleSignIn = async () => {
-    try {
-      await signIn();
-      setIsSignedIn(true);
-      toast.success('Successfully signed in to Google Calendar');
-      await loadCalendars();
-    } catch (error) {
-      console.error('Sign in failed:', error);
-      toast.error('Failed to sign in to Google Calendar');
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      setIsSignedIn(false);
-      setAvailableCalendars([]);
-      setSelectedCalendarIds([]);
-      toast.success('Successfully signed out from Google Calendar');
-      window.location.reload();
-    } catch (error) {
-      console.error('Sign out failed:', error);
-      toast.error('Failed to sign out');
-    }
-  };
-
-  const handleCalendarSelectionChange = (selectedIds: string[]) => {
-    setSelectedCalendarIds(selectedIds);
-    handleSync(selectedIds);
-  };
-
-  const handleSync = async (calendarIds?: string[]) => {
-    if (!isSignedIn) {
-      toast.error('Please sign in to Google Calendar first');
+  const handleSync = async () => {
+    if (selectedCalendarIds.length === 0) {
+      toast.error("Please select at least one calendar");
       return;
     }
 
     setIsSyncing(true);
-
+    setSyncProgress({ current: 0, total: selectedCalendarIds.length, calendar: "" });
+    
     try {
-      const idsToSync = calendarIds || selectedCalendarIds;
-      
-      if (idsToSync.length === 0) {
-        toast.info('No calendars selected');
-        setIsSyncing(false);
-        return;
-      }
-
-      // Fetch events from 2015-2030 (15 year range) in yearly chunks to avoid API limits
       const eventMap = new Map<string, any>();
       
-      // Helper function to add delay between requests
-      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-      // Fetch events from selected calendars
-      for (const calendarId of idsToSync) {
+      // Process calendars one at a time
+      for (let i = 0; i < selectedCalendarIds.length; i++) {
+        const calendarId = selectedCalendarIds[i];
         const calendar = availableCalendars.find(c => c.id === calendarId);
         if (!calendar) continue;
 
-        // Fetch only 2025 for now
-        const year = 2025;
-          try {
-            const timeMin = new Date(`${year}-01-01`);
-            const timeMax = new Date(`${year}-12-31T23:59:59`);
-            
-            const events = await getEvents(calendarId, timeMin, timeMax);
-            
-            toast.info(`Syncing ${calendar.summary} - ${year}...`);
-            
-            // Add delay to respect rate limits (500ms between requests)
-            await delay(500);
-        
-            events.forEach((googleEvent: GoogleCalendarEvent) => {
-          const startDateTime = googleEvent.start.dateTime || googleEvent.start.date;
-          const endDateTime = googleEvent.end.dateTime || googleEvent.end.date;
+        setSyncProgress({ current: i + 1, total: selectedCalendarIds.length, calendar: calendar.summary });
+        toast.info(`Syncing ${calendar.summary} (${i + 1}/${selectedCalendarIds.length})...`);
 
-          if (!startDateTime || !endDateTime) return;
-
-          const startDate = new Date(startDateTime);
-          const endDate = new Date(endDateTime);
-          const date = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
-
-          // Create unique key for deduplication
-          const eventKey = `${googleEvent.summary}|${date}|${startDate.toISOString()}|${endDate.toISOString()}`;
+        try {
+          // Fetch only 2025 events
+          const timeMin = new Date('2025-01-01');
+          const timeMax = new Date('2025-12-31T23:59:59');
           
-          if (!eventMap.has(eventKey)) {
-            let recurrence = undefined;
-            if (googleEvent.recurrence && googleEvent.recurrence.length > 0) {
-              const rrule = googleEvent.recurrence[0];
-              if (rrule.includes('FREQ=DAILY')) {
-                recurrence = JSON.stringify({ frequency: 'daily' });
-              } else if (rrule.includes('FREQ=WEEKLY')) {
-                recurrence = JSON.stringify({ frequency: 'weekly' });
-              } else if (rrule.includes('FREQ=MONTHLY')) {
-                recurrence = JSON.stringify({ frequency: 'monthly' });
-              }
-            }
+          // Add 1 second delay before API call
+          await delay(1000);
+          
+          const events = await getEvents(calendarId, timeMin, timeMax);
+          
+          toast.success(`Fetched ${events.length} events from ${calendar.summary}`);
+          
+          // Process events in batches of 50
+          const batchSize = 50;
+          for (let j = 0; j < events.length; j += batchSize) {
+            const batch = events.slice(j, Math.min(j + batchSize, events.length));
+            
+            batch.forEach((googleEvent: GoogleCalendarEvent) => {
+              const startDateTime = googleEvent.start.dateTime || googleEvent.start.date;
+              const endDateTime = googleEvent.end.dateTime || googleEvent.end.date;
+              
+              if (!startDateTime || !endDateTime) return;
 
-            eventMap.set(eventKey, {
-              id: googleEvent.id,
-              calendarId: calendarId,
-              title: googleEvent.summary || 'Untitled Event',
-              description: googleEvent.description,
-              startTime: startDate,
-              endTime: endDate,
-              date,
-              category: calendar.summary,
-              recurrence,
+              const startDate = new Date(startDateTime);
+              const endDate = new Date(endDateTime);
+              
+              // Format date as YYYY-MM-DD in local timezone
+              const dateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+              
+              const startHour = startDate.getHours();
+              const startMinute = startDate.getMinutes();
+              const endHour = endDate.getHours();
+              const endMinute = endDate.getMinutes();
+
+              // Create unique key for deduplication
+              const eventKey = `${googleEvent.summary}-${dateStr}-${startHour}:${startMinute}`;
+              
+              // Only add if not already in map (deduplication)
+              if (!eventMap.has(eventKey)) {
+                const category = googleEvent.colorId ? 
+                  ['work', 'personal', 'meeting', 'other'][parseInt(googleEvent.colorId) % 4] as 'work' | 'personal' | 'meeting' | 'other' : 
+                  'other';
+
+                const recurrence = googleEvent.recurrence ? {
+                  frequency: 'weekly' as const,
+                  interval: 1,
+                  endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                } : undefined;
+
+                eventMap.set(eventKey, {
+                  title: googleEvent.summary || 'Untitled',
+                  date: dateStr,
+                  startHour,
+                  startMinute,
+                  endHour,
+                  endMinute,
+                  description: googleEvent.description || '',
+                  location: googleEvent.location || '',
+                  calendar: calendar.summary,
+                  category,
+                  recurrence,
+                });
+              }
             });
+            
+            // Add 500ms delay between batches
+            if (j + batchSize < events.length) {
+              await delay(500);
+            }
           }
-        });
+          
         } catch (calendarError) {
           console.error(`Error syncing ${calendar.summary}:`, calendarError);
-          toast.error(`Failed to sync ${calendar.summary}`);
+          toast.error(`Failed to sync ${calendar.summary} - continuing with others`);
         }
         
-        // Add 1.5 second delay between calendars to prevent overload
-        await delay(1500);
+        // Add 3 second delay between calendars to prevent overload
+        if (i < selectedCalendarIds.length - 1) {
+          toast.info("Waiting before next calendar...");
+          await delay(3000);
+        }
       }
 
       const uniqueEvents = Array.from(eventMap.values());
       
-      // Sync to database
-      await syncMutation.mutateAsync({ events: uniqueEvents });
+      // Sync to database with retry logic
+      let retries = 3;
+      while (retries > 0) {
+        try {
+          toast.info(`Saving ${uniqueEvents.length} unique events to database...`);
+          await syncMutation.mutateAsync({ events: uniqueEvents });
+          toast.success(`Successfully synced ${uniqueEvents.length} appointments!`);
+          break;
+        } catch (dbError) {
+          retries--;
+          if (retries > 0) {
+            toast.warning(`Database save failed, retrying... (${retries} attempts left)`);
+            await delay(2000);
+          } else {
+            throw dbError;
+          }
+        }
+      }
+      
     } catch (error) {
-      console.error('Sync failed:', error);
-      toast.error('Failed to sync Google Calendar events');
+      console.error("Sync error:", error);
+      toast.error("Failed to complete sync");
+    } finally {
       setIsSyncing(false);
+      setSyncProgress({ current: 0, total: 0, calendar: "" });
     }
   };
 
-  if (!isInitialized) {
-    return (
-      <Button disabled className="bg-gray-400">
-        Initializing...
-      </Button>
-    );
-  }
+  const handleSignOut = async () => {
+    await signOut();
+    setIsSignedIn(false);
+    setAvailableCalendars([]);
+    setSelectedCalendarIds([]);
+    toast.success("Signed out successfully");
+  };
 
   if (!isSignedIn) {
     return (
-      <Button onClick={handleSignIn} className="bg-blue-500 hover:bg-blue-600 text-white w-full">
-        🔐 Sign in to Google Calendar
-      </Button>
+      <div className="p-4 border rounded-lg">
+        <h3 className="font-semibold mb-2">Google Calendar Sync</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          Sign in to sync your Google Calendar events
+        </p>
+        <Button onClick={async () => {
+          await initGoogleCalendar();
+          try {
+            await signIn();
+            setIsSignedIn(true);
+            await loadCalendars();
+          } catch (error) {
+            console.error('Sign in error:', error);
+          }
+        }} className="w-full">
+          Sign in to Google Calendar
+        </Button>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="p-4 border rounded-lg space-y-4">
+      <div>
+        <h3 className="font-semibold mb-2">Google Calendar Sync</h3>
+        <p className="text-sm text-muted-foreground">
+          Connected to Google Calendar
+        </p>
+      </div>
+
+      {availableCalendars.length > 0 && (
+        <CalendarSelector
+          calendars={availableCalendars}
+          onSelectionChange={setSelectedCalendarIds}
+        />
+      )}
+
+      {isSyncing && syncProgress.total > 0 && (
+        <div className="text-sm space-y-1">
+          <div className="flex justify-between">
+            <span>Progress:</span>
+            <span>{syncProgress.current} / {syncProgress.total}</span>
+          </div>
+          {syncProgress.calendar && (
+            <div className="text-muted-foreground">
+              Syncing: {syncProgress.calendar}
+            </div>
+          )}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(syncProgress.current / syncProgress.total) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-2">
         <Button
           onClick={() => handleSync()}
@@ -227,16 +245,11 @@ export function GoogleCalendarSync() {
         <Button
           onClick={handleSignOut}
           variant="outline"
-          size="sm"
+          disabled={isSyncing}
         >
           Sign Out
         </Button>
       </div>
-      
-      <CalendarSelector
-        calendars={availableCalendars}
-        onSelectionChange={handleCalendarSelectionChange}
-      />
     </div>
   );
 }

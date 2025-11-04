@@ -100,3 +100,8 @@
 - [x] Start with 2025 only
 - [x] Add longer delays between calendar syncs (1-2 seconds)
 - [x] Show progress for each calendar being synced
+
+- [x] Make sync even slower with 2-3 second delays between calendars
+- [x] Add retry logic for failed requests
+- [x] Implement progress tracking with percentage
+- [x] Batch events in smaller chunks (50 events at a time)

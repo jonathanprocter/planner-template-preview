@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { eventStore, type Event, type Task } from "@/lib/eventStore";
 import { AppointmentDialog } from "./AppointmentDialog";
 import { SearchBar } from "./SearchBar";
-import { GoogleCalendarSync } from "./GoogleCalendarSync";
+import GoogleCalendarSync from "./GoogleCalendarSync";
 import { EventTooltip } from "./EventTooltip";
 
 interface DailyConfig {

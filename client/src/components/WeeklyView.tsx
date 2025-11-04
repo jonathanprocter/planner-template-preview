@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
 import { AppointmentDialog } from "./AppointmentDialog";
 import { AdvancedSearch } from "./AdvancedSearch";
-import { GoogleCalendarSync } from "./GoogleCalendarSync";
+import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { EventTooltip } from "./EventTooltip";
 
