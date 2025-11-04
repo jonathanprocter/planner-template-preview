@@ -65,6 +65,18 @@ export default function DailyView() {
     year: "numeric",
   });
 
+  // Calculate previous and next dates
+  const previousDate = new Date(currentDate);
+  previousDate.setDate(currentDate.getDate() - 1);
+  const nextDate = new Date(currentDate);
+  nextDate.setDate(currentDate.getDate() + 1);
+
+  const formatNavDate = (date: Date) => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
+  };
+
   // Sample events
   const sampleEvents: SampleEvent[] = [
     { title: "Team Meeting", startTime: "09:00", endTime: "10:00", color: "#3b82f6" },
@@ -113,7 +125,7 @@ export default function DailyView() {
 
         {/* Header - Weekly Overview Button */}
         <div
-          className="absolute flex items-center justify-center bg-gray-200 border border-gray-400 rounded cursor-pointer hover:bg-gray-300"
+          className="absolute flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 shadow-sm"
           style={{
             left: `${config.header.weeklyOverview.x}px`,
             top: `${config.header.weeklyOverview.y}px`,
@@ -121,7 +133,13 @@ export default function DailyView() {
             height: `${config.header.weeklyOverview.height}px`,
           }}
         >
-          <span className="text-lg font-medium">{config.header.weeklyOverview.textKey}</span>
+          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
+            <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
+            <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"/>
+            <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"/>
+          </svg>
+          <span className="text-base font-normal text-gray-700">{config.header.weeklyOverview.textKey}</span>
         </div>
 
         {/* Header - Date Title */}
@@ -185,14 +203,17 @@ export default function DailyView() {
         {/* Time Labels */}
         {timeLabels.map((time, idx) => {
           const y = config.timeBlocks.y + idx * 50; // 50px per 30-minute block
+          const isHour = time.endsWith(":00");
           return (
             <div
               key={time}
-              className="absolute text-gray-600"
+              className="absolute"
               style={{
-                left: `${config.timeBlocks.x - 90}px`,
-                top: `${y - 10}px`,
-                fontSize: `${config.timeBlocks.fontSize}px`,
+                left: `${config.timeBlocks.x - 80}px`,
+                top: `${y - 8}px`,
+                fontSize: `${isHour ? 18 : 16}px`,
+                fontWeight: isHour ? 600 : 400,
+                color: isHour ? "#444" : "#888",
               }}
             >
               {time}
@@ -228,20 +249,50 @@ export default function DailyView() {
 
         {/* Footer Navigation */}
         <div className="absolute" style={{ top: `${config.footerNav.y}px`, width: "100%" }}>
-          {config.footerNav.items.map((item, idx) => (
-            <div
-              key={idx}
-              className="absolute cursor-pointer hover:underline"
-              style={{
-                left: `${item.x}px`,
-                width: `${item.width}px`,
-                fontSize: `${config.footerNav.fontSize}px`,
-                textAlign: item.textAlign as any,
-              }}
-            >
-              {item.textKey}
-            </div>
-          ))}
+          {/* Previous Day */}
+          <div
+            className="absolute cursor-pointer hover:underline text-gray-700"
+            style={{
+              left: `${config.footerNav.items[0].x}px`,
+              width: `${config.footerNav.items[0].width}px`,
+              fontSize: `${config.footerNav.fontSize}px`,
+              textAlign: "left",
+            }}
+          >
+            ← {formatNavDate(previousDate)}
+          </div>
+          
+          {/* Weekly Overview Button */}
+          <div
+            className="absolute flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 shadow-sm"
+            style={{
+              left: `${config.footerNav.items[1].x}px`,
+              width: `${config.footerNav.items[1].width}px`,
+              height: "50px",
+              top: "-10px",
+            }}
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
+              <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
+              <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"/>
+              <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"/>
+            </svg>
+            <span className="text-base font-normal text-gray-700">Weekly Overview</span>
+          </div>
+          
+          {/* Next Day */}
+          <div
+            className="absolute cursor-pointer hover:underline text-gray-700"
+            style={{
+              left: `${config.footerNav.items[2].x}px`,
+              width: `${config.footerNav.items[2].width}px`,
+              fontSize: `${config.footerNav.fontSize}px`,
+              textAlign: "right",
+            }}
+          >
+            {formatNavDate(nextDate)} →
+          </div>
         </div>
       </div>
     </div>

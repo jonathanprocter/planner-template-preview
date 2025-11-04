@@ -10,3 +10,7 @@
 - [x] Add sample data for demonstration
 
 - [x] Fix time label spacing to align with 30-minute grid lines
+
+- [x] Match Weekly Overview button styling from original layout
+- [x] Match font and style for time labels
+- [x] Show actual previous/next dates in footer navigation
