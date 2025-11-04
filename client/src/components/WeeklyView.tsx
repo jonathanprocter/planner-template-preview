@@ -62,12 +62,13 @@ export default function WeeklyView() {
   const weekDates = getWeekDates();
   const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
-  // Generate time labels
+  // Generate time labels (including 00:00 at bottom)
   const generateTimeLabels = () => {
     const labels = [];
     for (let hour = 6; hour <= 23; hour++) {
       labels.push(`${hour.toString().padStart(2, "0")}:00`);
     }
+    labels.push("00:00"); // Add midnight at the bottom
     return labels;
   };
 

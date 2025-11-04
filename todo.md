@@ -19,3 +19,7 @@
 - [x] Fix Weekly Overview button navigation to weekly view
 - [x] Add task list section on the right side of daily schedule
 - [x] Update header to match exact layout from screenshot (calendar icons, styling)
+
+- [x] Fix weekly view to show top and bottom hour labels
+- [x] Add drag-and-drop functionality for rescheduling appointments
+- [x] Implement Google Calendar sync to display events
