@@ -112,3 +112,6 @@
 
 - [x] Verify Holidays calendar sync saved events to database
 - [x] Expand sync to include all calendars for 2025
+
+- [x] Verify all calendars sync completed successfully for 2025 (612 appointments across 5 calendars)
+- [x] Expand sync date range from 2025 to 2023-2025

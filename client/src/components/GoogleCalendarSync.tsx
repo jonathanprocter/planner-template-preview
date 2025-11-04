@@ -60,8 +60,8 @@ export default function GoogleCalendarSync() {
         toast.info(`Syncing ${calendar.summary} (${i + 1}/${calendarsToSync.length})...`);
 
         try {
-          // Fetch only 2025 events
-          const timeMin = new Date('2025-01-01');
+          // Fetch 2023-2025 events
+          const timeMin = new Date('2023-01-01');
           const timeMax = new Date('2025-12-31T23:59:59');
           
           // Add 1 second delay before API call
@@ -245,7 +245,7 @@ export default function GoogleCalendarSync() {
           disabled={isSyncing}
           className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
         >
-          {isSyncing ? "Syncing..." : "🔄 Sync All Calendars (2025)"}
+          {isSyncing ? "Syncing..." : "🔄 Sync All Calendars (2023-2025)"}
         </Button>
         <Button
           onClick={handleSignOut}
