@@ -126,8 +126,8 @@ export function GoogleCalendarSync() {
         const calendar = availableCalendars.find(c => c.id === calendarId);
         if (!calendar) continue;
 
-        // Fetch in yearly chunks from 2015-2030
-        for (let year = 2015; year <= 2030; year++) {
+        // Fetch in yearly chunks from 2024-2026
+        for (let year = 2024; year <= 2026; year++) {
           try {
             const timeMin = new Date(`${year}-01-01`);
             const timeMax = new Date(`${year}-12-31T23:59:59`);
@@ -220,7 +220,7 @@ export function GoogleCalendarSync() {
           disabled={isSyncing}
           className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
         >
-          {isSyncing ? "Syncing..." : "🔄 Sync Calendar (2015-2030)"}
+          {isSyncing ? "Syncing..." : "🔄 Sync Calendar (2024-2026)"}
         </Button>
         <Button
           onClick={handleSignOut}

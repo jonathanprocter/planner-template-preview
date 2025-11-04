@@ -93,3 +93,5 @@
 
 - [x] Fix 403 error during Google Calendar sync
 - [x] Update Google Calendar API authentication and permissions
+
+- [x] Reduce sync date range to 2024-2026 for reliability
