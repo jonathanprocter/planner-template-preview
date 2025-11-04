@@ -111,17 +111,17 @@ export default function GoogleCalendarSync() {
                 } : undefined;
 
                 eventMap.set(eventKey, {
+                  id: googleEvent.id,
+                  calendarId: calendarId,
                   title: googleEvent.summary || 'Untitled',
                   date: dateStr,
-                  startHour,
-                  startMinute,
-                  endHour,
-                  endMinute,
+                  startTime: startDate,
+                  endTime: endDate,
                   description: googleEvent.description || '',
                   location: googleEvent.location || '',
                   calendar: calendar.summary,
                   category,
-                  recurrence,
+                  recurrence: recurrence ? JSON.stringify(recurrence) : undefined,
                 });
               }
             });
