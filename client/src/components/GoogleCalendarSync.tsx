@@ -126,8 +126,8 @@ export function GoogleCalendarSync() {
         const calendar = availableCalendars.find(c => c.id === calendarId);
         if (!calendar) continue;
 
-        // Fetch in yearly chunks from 2024-2026
-        for (let year = 2024; year <= 2026; year++) {
+        // Fetch only 2025 for now
+        const year = 2025;
           try {
             const timeMin = new Date(`${year}-01-01`);
             const timeMax = new Date(`${year}-12-31T23:59:59`);
@@ -136,8 +136,8 @@ export function GoogleCalendarSync() {
             
             toast.info(`Syncing ${calendar.summary} - ${year}...`);
             
-            // Add delay to respect rate limits (250ms between requests)
-            await delay(250);
+            // Add delay to respect rate limits (500ms between requests)
+            await delay(500);
         
             events.forEach((googleEvent: GoogleCalendarEvent) => {
           const startDateTime = googleEvent.start.dateTime || googleEvent.start.date;
@@ -178,11 +178,13 @@ export function GoogleCalendarSync() {
             });
           }
         });
-          } catch (yearError) {
-            console.error(`Error syncing ${calendar.summary} for year ${year}:`, yearError);
-            // Continue with next year even if one fails
-          }
+        } catch (calendarError) {
+          console.error(`Error syncing ${calendar.summary}:`, calendarError);
+          toast.error(`Failed to sync ${calendar.summary}`);
         }
+        
+        // Add 1.5 second delay between calendars to prevent overload
+        await delay(1500);
       }
 
       const uniqueEvents = Array.from(eventMap.values());
@@ -220,7 +222,7 @@ export function GoogleCalendarSync() {
           disabled={isSyncing}
           className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
         >
-          {isSyncing ? "Syncing..." : "🔄 Sync Calendar (2024-2026)"}
+          {isSyncing ? "Syncing..." : "🔄 Sync Calendar (2025)"}
         </Button>
         <Button
           onClick={handleSignOut}

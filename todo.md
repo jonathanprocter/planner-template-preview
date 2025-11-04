@@ -95,3 +95,8 @@
 - [x] Update Google Calendar API authentication and permissions
 
 - [x] Reduce sync date range to 2024-2026 for reliability
+
+- [x] Slow down sync to prevent crashes - sync one calendar at a time
+- [x] Start with 2025 only
+- [x] Add longer delays between calendar syncs (1-2 seconds)
+- [x] Show progress for each calendar being synced
