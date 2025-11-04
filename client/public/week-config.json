@@ -1,0 +1,24 @@
+{
+  "header": {
+    "weekLabel": {
+      "x": 810,
+      "y": 70,
+      "fontSize": 30,
+      "textAlign": "center"
+    }
+  },
+  "grid": {
+    "x": 100,
+    "y": 150,
+    "width": 1420,
+    "height": 1850,
+    "timeColumnWidth": 150,
+    "dayColumnWidth": 200,
+    "hourHeight": 100,
+    "startTime": "06:00",
+    "endTime": "23:00",
+    "dayHeaderHeight": 50,
+    "dayHeaderFontSize": 22,
+    "timeFontSize": 20
+  }
+}
