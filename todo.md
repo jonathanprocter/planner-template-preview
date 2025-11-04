@@ -71,3 +71,6 @@
 - [x] Update Weekly Overview buttons on weekly page to match new design
 - [x] Make weekly view the main dashboard page (default route)
 - [x] Verify and fix date issue for daily appointments display
+
+- [x] Fix weekly view date offset - events showing on wrong days (one day early)
+- [x] Fix daily view to show only current day's appointments instead of all events

@@ -81,6 +81,12 @@ export default function DailyView() {
     day: "numeric",
     year: "numeric",
   });
+  
+  // Format current date as YYYY-MM-DD for filtering
+  const currentDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+  
+  // Filter events for today only
+  const todayEvents = events.filter(event => event.date === currentDateStr);
 
   const previousDate = new Date(currentDate);
   previousDate.setDate(currentDate.getDate() - 1);
@@ -93,10 +99,10 @@ export default function DailyView() {
     return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
   };
 
-  const totalAppointments = events.length;
+  const totalAppointments = todayEvents.length;
   const calculateHours = () => {
     let totalMinutes = 0;
-    events.forEach(event => {
+    todayEvents.forEach(event => {
       const [startH, startM] = event.startTime.split(":").map(Number);
       const [endH, endM] = event.endTime.split(":").map(Number);
       const startMinutes = startH * 60 + startM;
@@ -435,7 +441,7 @@ export default function DailyView() {
             );
           })}
 
-          {events.map((event) => {
+          {todayEvents.map((event) => {
             const startY = timeToY(event.startTime);
             const endY = timeToY(event.endTime);
             const height = endY - startY;

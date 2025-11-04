@@ -56,7 +56,9 @@ export default function WeeklyView() {
 
   const getEventDayIndex = (event: Event) => {
     if (!event.date) return 0;
-    const eventDate = new Date(event.date);
+    // Parse date as local date to avoid timezone issues
+    const [year, month, day] = event.date.split('-').map(Number);
+    const eventDate = new Date(year, month - 1, day);
     const dayOfWeek = eventDate.getDay();
     return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
   };
