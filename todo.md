@@ -14,3 +14,8 @@
 - [x] Match Weekly Overview button styling from original layout
 - [x] Match font and style for time labels
 - [x] Show actual previous/next dates in footer navigation
+
+- [x] Add appointment editing feature (click time slots to add/edit)
+- [x] Fix Weekly Overview button navigation to weekly view
+- [x] Add task list section on the right side of daily schedule
+- [x] Update header to match exact layout from screenshot (calendar icons, styling)
