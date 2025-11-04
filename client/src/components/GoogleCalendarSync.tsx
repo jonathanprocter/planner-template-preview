@@ -115,32 +115,31 @@ export function GoogleCalendarSync() {
         return;
       }
 
-      // Fetch events from 2015-2030 (15 year range)
-      const timeMin = new Date("2015-01-01");
-      const timeMax = new Date("2030-12-31");
-
-      const allEvents: Array<{
-        id: string;
-        calendarId: string;
-        title: string;
-        description?: string;
-        startTime: Date;
-        endTime: Date;
-        date: string;
-        category?: string;
-        recurrence?: string;
-      }> = [];
-
+      // Fetch events from 2015-2030 (15 year range) in yearly chunks to avoid API limits
       const eventMap = new Map<string, any>();
+      
+      // Helper function to add delay between requests
+      const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
       // Fetch events from selected calendars
       for (const calendarId of idsToSync) {
         const calendar = availableCalendars.find(c => c.id === calendarId);
         if (!calendar) continue;
 
-        const events = await getEvents(calendarId, timeMin, timeMax);
+        // Fetch in yearly chunks from 2015-2030
+        for (let year = 2015; year <= 2030; year++) {
+          try {
+            const timeMin = new Date(`${year}-01-01`);
+            const timeMax = new Date(`${year}-12-31T23:59:59`);
+            
+            const events = await getEvents(calendarId, timeMin, timeMax);
+            
+            toast.info(`Syncing ${calendar.summary} - ${year}...`);
+            
+            // Add delay to respect rate limits (250ms between requests)
+            await delay(250);
         
-        events.forEach((googleEvent: GoogleCalendarEvent) => {
+            events.forEach((googleEvent: GoogleCalendarEvent) => {
           const startDateTime = googleEvent.start.dateTime || googleEvent.start.date;
           const endDateTime = googleEvent.end.dateTime || googleEvent.end.date;
 
@@ -179,6 +178,11 @@ export function GoogleCalendarSync() {
             });
           }
         });
+          } catch (yearError) {
+            console.error(`Error syncing ${calendar.summary} for year ${year}:`, yearError);
+            // Continue with next year even if one fails
+          }
+        }
       }
 
       const uniqueEvents = Array.from(eventMap.values());

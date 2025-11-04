@@ -90,3 +90,6 @@
 - [x] Add search filters (date range, category, calendar)
 - [x] Create search results view with appointment details
 - [x] Add quick navigation from search results to specific dates
+
+- [x] Fix 403 error during Google Calendar sync
+- [x] Update Google Calendar API authentication and permissions
