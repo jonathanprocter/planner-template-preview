@@ -20,18 +20,9 @@ interface Task {
 }
 
 class EventStore {
-  private events: Event[] = [
-    { id: "1", title: "Team Meeting", startTime: "09:00", endTime: "10:00", color: "#3b82f6", source: "local", date: new Date().toISOString().split('T')[0] },
-    { id: "2", title: "Client Call", startTime: "14:00", endTime: "15:30", color: "#10b981", source: "local", date: new Date().toISOString().split('T')[0] },
-    { id: "3", title: "Project Review", startTime: "16:00", endTime: "17:00", color: "#f59e0b", source: "local", date: new Date().toISOString().split('T')[0] },
-  ];
+  private events: Event[] = [];
 
-  private tasks: Task[] = [
-    { id: "1", text: "Review project proposal", completed: false },
-    { id: "2", text: "Send follow-up emails", completed: true },
-    { id: "3", text: "Update documentation", completed: false },
-    { id: "4", text: "Prepare presentation slides", completed: false },
-  ];
+  private tasks: Task[] = [];
 
   private listeners: Set<() => void> = new Set();
 

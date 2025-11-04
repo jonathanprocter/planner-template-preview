@@ -47,3 +47,6 @@
 
 - [x] Update Google OAuth to use Google Identity Services (GIS) for better redirect handling
 - [x] Add write scopes for calendar modification
+
+- [x] Add calendar selector to choose which calendars to display
+- [x] Remove all demo/sample data from the application
