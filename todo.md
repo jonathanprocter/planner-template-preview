@@ -79,3 +79,9 @@
 - [x] Fix bidirectional linking so appointments sync between weekly and daily views
 
 - [x] Add error handling to suppress generic script errors from external resources
+
+- [x] Upgrade project to include database functionality (web-db-user feature)
+- [x] Create appointments database schema with date range 2015-2030
+- [x] Implement automatic sync between Google Calendar and database
+- [x] Add sync management for additions, deletions, and modifications
+- [x] Create backup system for appointment data
