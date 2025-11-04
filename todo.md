@@ -63,3 +63,5 @@
 - [x] Add category filter to weekly view for organizing appointments
 - [x] Enhance color-coding system for event categories
 - [x] Implement hover tooltips to display full event details
+
+- [x] Update Weekly Overview button design to match new styling with calendar icon
