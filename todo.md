@@ -55,3 +55,7 @@
 
 - [x] Fix React ref warning in DialogOverlay component
 - [x] Fix calendar date offset - events displaying one day off
+
+- [x] Improve appointment display in daily view for better readability
+- [x] Deduplicate events that appear in multiple Google calendars
+- [x] Fix appointment count to accurately reflect unique events

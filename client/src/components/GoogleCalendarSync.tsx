@@ -163,6 +163,7 @@ export function GoogleCalendarSync() {
       timeMax.setDate(timeMax.getDate() + 30);
 
       const googleEvents: Event[] = [];
+      const eventMap = new Map<string, Event>(); // For deduplication
       let totalEvents = 0;
 
       // Fetch events only from selected calendars
@@ -179,15 +180,24 @@ export function GoogleCalendarSync() {
             calendar.backgroundColor
           );
           if (localEvent) {
-            googleEvents.push(localEvent);
-            totalEvents++;
+            // Create unique key based on title, date, start time, and end time
+            const eventKey = `${localEvent.title}|${localEvent.date}|${localEvent.startTime}|${localEvent.endTime}`;
+            
+            // Only add if this exact event doesn't already exist
+            if (!eventMap.has(eventKey)) {
+              eventMap.set(eventKey, localEvent);
+              totalEvents++;
+            }
           }
         });
       }
 
+      // Convert map to array
+      const uniqueGoogleEvents = Array.from(eventMap.values());
+
       // Remove old Google Calendar events and add new ones
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
-      eventStore.setEvents([...localEvents, ...googleEvents]);
+      eventStore.setEvents([...localEvents, ...uniqueGoogleEvents]);
 
       toast.success(`Successfully synced ${totalEvents} events from ${idsToSync.length} calendar(s)`);
     } catch (error) {

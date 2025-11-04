@@ -442,7 +442,7 @@ export default function DailyView() {
             return (
               <div
                 key={event.id}
-                className="absolute rounded px-2 py-1 text-white text-sm overflow-hidden group cursor-move"
+                className="absolute rounded-md px-3 py-2 text-white group cursor-move shadow-sm border border-white/20"
                 style={{
                   left: `${config.timeBlocks.x + config.timeBlocks.labelWidth}px`,
                   top: `${startY}px`,
@@ -450,18 +450,26 @@ export default function DailyView() {
                   height: `${height}px`,
                   backgroundColor: event.color,
                   opacity: draggingEvent === event.id ? 0.7 : 1,
+                  minHeight: '40px',
                 }}
                 onMouseDown={(e) => handleDragStart(e, event.id)}
               >
-                <div className="font-semibold">{event.title}</div>
-                <div className="text-xs">
+                <div className="font-semibold text-sm leading-tight mb-1 overflow-hidden text-ellipsis" style={{ 
+                  display: '-webkit-box',
+                  WebkitLineClamp: height > 60 ? 2 : 1,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden'
+                }}>
+                  {event.title}
+                </div>
+                <div className="text-xs opacity-90 font-medium">
                   {event.startTime} - {event.endTime}
                 </div>
-                {event.source === "google" && (
-                  <div className="text-xs opacity-75">📅 Google</div>
+                {event.category && height > 60 && (
+                  <div className="text-xs opacity-75 mt-1 truncate">{event.category}</div>
                 )}
                 <button
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-md transition-all"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDeleteEvent(event.id);
