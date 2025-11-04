@@ -74,7 +74,13 @@ export default function DailyView() {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  const currentDate = new Date();
+  // Get date from URL parameter or use today
+  const urlParams = new URLSearchParams(window.location.search);
+  const dateParam = urlParams.get('date');
+  const currentDate = dateParam ? (() => {
+    const [year, month, day] = dateParam.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  })() : new Date();
   const dateString = currentDate.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",

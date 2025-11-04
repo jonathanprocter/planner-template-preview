@@ -65,7 +65,7 @@ export default function WeeklyView() {
 
   const handleDayHeaderClick = (date: Date) => {
     // Navigate to daily view with the selected date
-    setLocation(`/?date=${formatDateISO(date)}`);
+    setLocation(`/daily?date=${formatDateISO(date)}`);
   };
 
   const handleTimeSlotClick = (dayIdx: number, hour: number) => {

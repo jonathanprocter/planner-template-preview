@@ -74,3 +74,6 @@
 
 - [x] Fix weekly view date offset - events showing on wrong days (one day early)
 - [x] Fix daily view to show only current day's appointments instead of all events
+
+- [x] Fix day header clicks in weekly view to navigate to correct date in daily view
+- [x] Fix bidirectional linking so appointments sync between weekly and daily views
