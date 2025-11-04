@@ -77,3 +77,5 @@
 
 - [x] Fix day header clicks in weekly view to navigate to correct date in daily view
 - [x] Fix bidirectional linking so appointments sync between weekly and daily views
+
+- [x] Add error handling to suppress generic script errors from external resources

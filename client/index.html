@@ -18,6 +18,15 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      // Suppress generic "Script error" from cross-origin resources
+      window.addEventListener('error', function(e) {
+        if (e.message === 'Script error.' && e.lineno === 0 && e.colno === 0) {
+          e.preventDefault();
+          return true;
+        }
+      });
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script
       defer
