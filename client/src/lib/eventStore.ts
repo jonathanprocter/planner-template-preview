@@ -5,6 +5,7 @@ interface Event {
   endTime: string;
   color: string;
   source?: string;
+  date?: string; // ISO date string (YYYY-MM-DD) for weekly view placement
 }
 
 interface Task {
@@ -15,9 +16,9 @@ interface Task {
 
 class EventStore {
   private events: Event[] = [
-    { id: "1", title: "Team Meeting", startTime: "09:00", endTime: "10:00", color: "#3b82f6", source: "local" },
-    { id: "2", title: "Client Call", startTime: "14:00", endTime: "15:30", color: "#10b981", source: "local" },
-    { id: "3", title: "Project Review", startTime: "16:00", endTime: "17:00", color: "#f59e0b", source: "local" },
+    { id: "1", title: "Team Meeting", startTime: "09:00", endTime: "10:00", color: "#3b82f6", source: "local", date: new Date().toISOString().split('T')[0] },
+    { id: "2", title: "Client Call", startTime: "14:00", endTime: "15:30", color: "#10b981", source: "local", date: new Date().toISOString().split('T')[0] },
+    { id: "3", title: "Project Review", startTime: "16:00", endTime: "17:00", color: "#f59e0b", source: "local", date: new Date().toISOString().split('T')[0] },
   ];
 
   private tasks: Task[] = [

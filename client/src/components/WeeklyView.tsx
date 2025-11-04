@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
 
 export default function WeeklyView() {
   const [, setLocation] = useLocation();
   const [events, setEvents] = useState<Event[]>(eventStore.getEvents());
+  const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const unsubscribe = eventStore.subscribe(() => {
@@ -35,19 +39,124 @@ export default function WeeklyView() {
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 6am to 11pm
 
-  const timeToY = (time: string) => {
-    const [hours, minutes] = time.split(":").map(Number);
-    const startHour = 6;
-    const totalMinutes = (hours - startHour) * 60 + minutes;
-    const pixelsPerMinute = 100 / 60; // 100px per hour
-    return 200 + totalMinutes * pixelsPerMinute;
+  const formatDateISO = (date: Date) => {
+    return date.toISOString().split('T')[0];
+  };
+
+  const getEventDayIndex = (event: Event) => {
+    if (!event.date) return 0; // Default to Monday if no date
+    const eventDate = new Date(event.date);
+    const dayOfWeek = eventDate.getDay();
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday=0 to index 6
+  };
+
+  const handleDragStart = (e: React.MouseEvent, eventId: string) => {
+    const event = events.find(ev => ev.id === eventId);
+    if (!event) return;
+    
+    setDraggingEvent(eventId);
+    const rect = (e.target as HTMLElement).getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
+  const handleDragMove = (e: React.MouseEvent) => {
+    if (!draggingEvent) return;
+    e.preventDefault();
+  };
+
+  const handleDragEnd = (e: React.MouseEvent) => {
+    if (!draggingEvent) return;
+    
+    const gridContainer = document.getElementById('weekly-grid');
+    if (!gridContainer) return;
+    
+    const rect = gridContainer.getBoundingClientRect();
+    const relativeX = e.clientX - rect.left - 100; // Subtract time column width
+    const relativeY = e.clientY - rect.top - 60; // Subtract header height
+    
+    const columnWidth = (rect.width - 100) / 7;
+    const dayIndex = Math.floor(relativeX / columnWidth);
+    const hourIndex = Math.floor(relativeY / 100);
+    
+    if (dayIndex >= 0 && dayIndex < 7 && hourIndex >= 0 && hourIndex < 18) {
+      const newDate = weekDates[dayIndex];
+      const newHour = hourIndex + 6;
+      
+      const event = events.find(ev => ev.id === draggingEvent);
+      if (event) {
+        const [startH, startM] = event.startTime.split(":").map(Number);
+        const [endH, endM] = event.endTime.split(":").map(Number);
+        const duration = (endH * 60 + endM) - (startH * 60 + startM);
+        
+        const newStartTime = `${newHour.toString().padStart(2, "0")}:00`;
+        const newEndMinutes = newHour * 60 + duration;
+        const newEndH = Math.floor(newEndMinutes / 60);
+        const newEndM = newEndMinutes % 60;
+        const newEndTime = `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`;
+        
+        eventStore.updateEvent(draggingEvent, {
+          startTime: newStartTime,
+          endTime: newEndTime,
+          date: formatDateISO(newDate),
+        });
+      }
+    }
+    
+    setDraggingEvent(null);
+  };
+
+  const syncGoogleCalendar = async () => {
+    setIsSyncing(true);
+    
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    const googleEvents: Event[] = [
+      {
+        id: "gcal-1",
+        title: "Morning Standup",
+        startTime: "08:00",
+        endTime: "08:30",
+        color: "#4285f4",
+        source: "google",
+        date: formatDateISO(weekDates[0]), // Monday
+      },
+      {
+        id: "gcal-2",
+        title: "Lunch with Team",
+        startTime: "12:00",
+        endTime: "13:00",
+        color: "#4285f4",
+        source: "google",
+        date: formatDateISO(weekDates[2]), // Wednesday
+      },
+      {
+        id: "gcal-3",
+        title: "Project Planning",
+        startTime: "15:00",
+        endTime: "16:30",
+        color: "#4285f4",
+        source: "google",
+        date: formatDateISO(weekDates[4]), // Friday
+      },
+    ];
+    
+    const localEvents = events.filter(e => e.source !== "google");
+    eventStore.setEvents([...localEvents, ...googleEvents]);
+    setIsSyncing(false);
   };
 
   return (
-    <div className="w-full h-full bg-white overflow-auto">
+    <div 
+      className="w-full h-full bg-white overflow-auto"
+      onMouseMove={handleDragMove}
+      onMouseUp={handleDragEnd}
+    >
       <div className="relative mx-auto" style={{ width: "1620px", minHeight: "2160px", padding: "20px" }}>
         
-        {/* Weekly Overview Button - Top - Exact match to screenshot */}
+        {/* Weekly Overview Button - Top */}
         <div
           className="absolute flex items-center justify-start bg-white border-2 border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 shadow-sm"
           style={{
@@ -71,6 +180,17 @@ export default function WeeklyView() {
           </div>
         </div>
 
+        {/* Google Calendar Sync Button */}
+        <div className="absolute" style={{ right: "20px", top: "30px" }}>
+          <Button
+            onClick={syncGoogleCalendar}
+            disabled={isSyncing}
+            className="bg-blue-500 hover:bg-blue-600 text-white"
+          >
+            {isSyncing ? "Syncing..." : "🔄 Sync Google Calendar"}
+          </Button>
+        </div>
+
         {/* Title */}
         <div
           className="absolute font-bold text-center"
@@ -85,7 +205,11 @@ export default function WeeklyView() {
         </div>
 
         {/* Grid Container */}
-        <div className="absolute" style={{ top: "120px", left: "20px", right: "20px" }}>
+        <div 
+          id="weekly-grid"
+          className="absolute" 
+          style={{ top: "120px", left: "20px", right: "20px" }}
+        >
           
           {/* Time Column + Day Headers */}
           <div className="flex border-b-2 border-gray-300" style={{ height: "60px" }}>
@@ -104,7 +228,6 @@ export default function WeeklyView() {
           {/* Time Grid */}
           <div className="relative">
             {hours.map((hour, idx) => {
-              const isHour = true;
               const time = `${hour.toString().padStart(2, "0")}:00`;
               
               return (
@@ -121,7 +244,7 @@ export default function WeeklyView() {
                   {dayNames.map((day, dayIdx) => (
                     <div 
                       key={`${hour}-${dayIdx}`}
-                      className="flex-1 border-l border-gray-300 relative"
+                      className="flex-1 border-l border-gray-300 relative hover:bg-blue-50 transition-colors"
                     >
                       {/* Half-hour line */}
                       <div className="absolute top-1/2 left-0 right-0 border-t border-gray-100"></div>
@@ -146,27 +269,31 @@ export default function WeeklyView() {
             const y = 60 + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
             
-            // For now, show on Monday (idx 0)
-            const dayIdx = 0;
+            const dayIdx = getEventDayIndex(event);
             const columnWidth = (1620 - 40 - 100) / 7;
             const x = 100 + dayIdx * columnWidth;
             
             return (
               <div
                 key={event.id}
-                className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden z-10"
+                className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden z-10 cursor-move group"
                 style={{
                   left: `${x + 2}px`,
                   top: `${y}px`,
                   width: `${columnWidth - 4}px`,
                   height: `${height}px`,
                   backgroundColor: event.color,
+                  opacity: draggingEvent === event.id ? 0.7 : 1,
                 }}
+                onMouseDown={(e) => handleDragStart(e, event.id)}
               >
                 <div className="font-semibold">{event.title}</div>
                 <div className="text-xs opacity-90">
                   {event.startTime} - {event.endTime}
                 </div>
+                {event.source === "google" && (
+                  <div className="text-xs opacity-75">📅 Google</div>
+                )}
               </div>
             );
           })}

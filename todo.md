@@ -30,3 +30,7 @@
 
 - [x] Fix weekly overview layout and grid structure
 - [x] Use exact Weekly Overview button from screenshot
+
+- [x] Add drag-and-drop functionality to weekly view for rescheduling appointments
+- [x] Enhance Google Calendar sync to work across both daily and weekly views
+- [x] Display synced Google Calendar events in weekly view with proper day placement
