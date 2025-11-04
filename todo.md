@@ -52,3 +52,6 @@
 - [x] Remove all demo/sample data from the application
 
 - [x] Fix React ref warning in CalendarSelector DialogTrigger
+
+- [x] Fix React ref warning in DialogOverlay component
+- [x] Fix calendar date offset - events displaying one day off

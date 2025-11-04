@@ -109,7 +109,7 @@ export function GoogleCalendarSync() {
 
     const startTime = startDate.toTimeString().slice(0, 5);
     const endTime = endDate.toTimeString().slice(0, 5);
-    const date = startDate.toISOString().split('T')[0];
+    const date = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
 
     const color = backgroundColor || getColorForEvent(googleEvent.colorId);
 

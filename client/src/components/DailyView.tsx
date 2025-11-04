@@ -159,7 +159,7 @@ export default function DailyView() {
       endTime,
       color: "#8b5cf6",
       source: "local",
-      date: currentDate.toISOString().split('T')[0],
+      date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
     };
 
     eventStore.addEvent(newEvent);
@@ -224,7 +224,7 @@ export default function DailyView() {
         endTime: "08:30",
         color: "#4285f4",
         source: "google",
-        date: currentDate.toISOString().split('T')[0],
+        date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
       },
       {
         id: "gcal-2",
@@ -233,7 +233,7 @@ export default function DailyView() {
         endTime: "13:00",
         color: "#4285f4",
         source: "google",
-        date: currentDate.toISOString().split('T')[0],
+        date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
       },
     ];
     
