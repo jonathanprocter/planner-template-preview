@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { eventStore, type Event, type Task } from "@/lib/eventStore";
 
 interface DailyConfig {
   header: {
@@ -34,36 +35,12 @@ interface DailyConfig {
   };
 }
 
-interface SampleEvent {
-  id: string;
-  title: string;
-  startTime: string;
-  endTime: string;
-  color: string;
-  source?: string;
-}
-
-interface Task {
-  id: string;
-  text: string;
-  completed: boolean;
-}
-
 export default function DailyView() {
   const [config, setConfig] = useState<DailyConfig | null>(null);
   const [svgContent, setSvgContent] = useState<string>("");
   const [, setLocation] = useLocation();
-  const [events, setEvents] = useState<SampleEvent[]>([
-    { id: "1", title: "Team Meeting", startTime: "09:00", endTime: "10:00", color: "#3b82f6", source: "local" },
-    { id: "2", title: "Client Call", startTime: "14:00", endTime: "15:30", color: "#10b981", source: "local" },
-    { id: "3", title: "Project Review", startTime: "16:00", endTime: "17:00", color: "#f59e0b", source: "local" },
-  ]);
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: "1", text: "Review project proposal", completed: false },
-    { id: "2", text: "Send follow-up emails", completed: true },
-    { id: "3", text: "Update documentation", completed: false },
-    { id: "4", text: "Prepare presentation slides", completed: false },
-  ]);
+  const [events, setEvents] = useState<Event[]>(eventStore.getEvents());
+  const [tasks, setTasks] = useState<Task[]>(eventStore.getTasks());
   const [editingSlot, setEditingSlot] = useState<string | null>(null);
   const [newEventTitle, setNewEventTitle] = useState("");
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
@@ -78,6 +55,13 @@ export default function DailyView() {
     fetch("/day-template.svg")
       .then((res) => res.text())
       .then((svg) => setSvgContent(svg));
+
+    const unsubscribe = eventStore.subscribe(() => {
+      setEvents(eventStore.getEvents());
+      setTasks(eventStore.getTasks());
+    });
+
+    return () => unsubscribe();
   }, []);
 
   if (!config || !svgContent) {
@@ -163,7 +147,7 @@ export default function DailyView() {
     const endMinutes = minutes === 30 ? 0 : 30;
     const endTime = `${endHours.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")}`;
 
-    const newEvent: SampleEvent = {
+    const newEvent: Event = {
       id: Date.now().toString(),
       title: newEventTitle,
       startTime,
@@ -172,13 +156,13 @@ export default function DailyView() {
       source: "local",
     };
 
-    setEvents([...events, newEvent]);
+    eventStore.addEvent(newEvent);
     setEditingSlot(null);
     setNewEventTitle("");
   };
 
   const handleDeleteEvent = (id: string) => {
-    setEvents(events.filter(e => e.id !== id));
+    eventStore.deleteEvent(id);
   };
 
   const handleDragStart = (e: React.MouseEvent, eventId: string) => {
@@ -199,25 +183,22 @@ export default function DailyView() {
     const newY = e.clientY - dragOffset.y;
     const newStartTime = yToTime(newY);
     
-    setEvents(events.map(event => {
-      if (event.id === draggingEvent) {
-        const [startH, startM] = event.startTime.split(":").map(Number);
-        const [endH, endM] = event.endTime.split(":").map(Number);
-        const duration = (endH * 60 + endM) - (startH * 60 + startM);
-        
-        const [newStartH, newStartM] = newStartTime.split(":").map(Number);
-        const newEndMinutes = newStartH * 60 + newStartM + duration;
-        const newEndH = Math.floor(newEndMinutes / 60);
-        const newEndM = newEndMinutes % 60;
-        
-        return {
-          ...event,
-          startTime: newStartTime,
-          endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
-        };
-      }
-      return event;
-    }));
+    const event = events.find(ev => ev.id === draggingEvent);
+    if (!event) return;
+
+    const [startH, startM] = event.startTime.split(":").map(Number);
+    const [endH, endM] = event.endTime.split(":").map(Number);
+    const duration = (endH * 60 + endM) - (startH * 60 + startM);
+    
+    const [newStartH, newStartM] = newStartTime.split(":").map(Number);
+    const newEndMinutes = newStartH * 60 + newStartM + duration;
+    const newEndH = Math.floor(newEndMinutes / 60);
+    const newEndM = newEndMinutes % 60;
+    
+    eventStore.updateEvent(draggingEvent, {
+      startTime: newStartTime,
+      endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
+    });
   };
 
   const handleDragEnd = () => {
@@ -227,10 +208,9 @@ export default function DailyView() {
   const syncGoogleCalendar = async () => {
     setIsSyncing(true);
     
-    // Simulate Google Calendar sync
     await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const googleEvents: SampleEvent[] = [
+    const googleEvents: Event[] = [
       {
         id: "gcal-1",
         title: "Morning Standup",
@@ -250,14 +230,15 @@ export default function DailyView() {
     ];
     
     const localEvents = events.filter(e => e.source !== "google");
-    setEvents([...localEvents, ...googleEvents]);
+    eventStore.setEvents([...localEvents, ...googleEvents]);
     setIsSyncing(false);
   };
 
   const toggleTask = (id: string) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+    const task = tasks.find(t => t.id === id);
+    if (task) {
+      eventStore.updateTask(id, { completed: !task.completed });
+    }
   };
 
   const addTask = () => {
@@ -266,7 +247,7 @@ export default function DailyView() {
       text: "New task",
       completed: false,
     };
-    setTasks([...tasks, newTask]);
+    eventStore.addTask(newTask);
   };
 
   return (
@@ -282,23 +263,24 @@ export default function DailyView() {
             dangerouslySetInnerHTML={{ __html: svgContent }}
           />
 
+          {/* Weekly Overview Button - Exact match to screenshot */}
           <div
-            className="absolute flex items-center justify-center bg-white border border-gray-400 rounded cursor-pointer hover:bg-gray-50"
+            className="absolute flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 shadow-sm"
             style={{
               left: "20px",
               top: "20px",
-              width: "140px",
-              height: "40px",
+              width: "280px",
+              height: "70px",
+              padding: "10px 20px",
             }}
             onClick={() => setLocation("/weekly")}
           >
-            <svg className="w-4 h-4 mr-1.5 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" strokeWidth="2"/>
-              <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" strokeWidth="2"/>
-              <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" strokeWidth="2"/>
-              <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-            <span className="text-sm font-normal text-gray-700">Weekly Overview</span>
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center justify-center bg-white border border-gray-300 rounded" style={{ width: "50px", height: "50px" }}>
+                <div className="text-red-600 font-bold text-xs">17</div>
+              </div>
+              <span className="text-xl font-normal text-gray-800">Weekly Overview</span>
+            </div>
           </div>
 
           <div
@@ -497,23 +479,24 @@ export default function DailyView() {
               ← {formatNavDate(previousDate)}
             </div>
             
+            {/* Weekly Overview Button - Bottom */}
             <div
               className="absolute flex items-center justify-center bg-white border-2 border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 shadow-sm"
               style={{
                 left: `${config.footerNav.items[1].x}px`,
-                width: `${config.footerNav.items[1].width}px`,
-                height: "50px",
+                width: "280px",
+                height: "70px",
                 top: "-10px",
+                padding: "10px 20px",
               }}
               onClick={() => setLocation("/weekly")}
             >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth="2"/>
-                <line x1="16" y1="2" x2="16" y2="6" strokeWidth="2"/>
-                <line x1="8" y1="2" x2="8" y2="6" strokeWidth="2"/>
-                <line x1="3" y1="10" x2="21" y2="10" strokeWidth="2"/>
-              </svg>
-              <span className="text-base font-normal text-gray-700">Weekly Overview</span>
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center justify-center bg-white border border-gray-300 rounded" style={{ width: "50px", height: "50px" }}>
+                  <div className="text-red-600 font-bold text-xs">17</div>
+                </div>
+                <span className="text-xl font-normal text-gray-800">Weekly Overview</span>
+              </div>
             </div>
             
             <div

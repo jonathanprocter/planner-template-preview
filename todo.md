@@ -23,3 +23,7 @@
 - [x] Fix weekly view to show top and bottom hour labels
 - [x] Add drag-and-drop functionality for rescheduling appointments
 - [x] Implement Google Calendar sync to display events
+
+- [x] Match weekly view time formatting to daily view (bold hours, lighter half-hours)
+- [x] Update Weekly Overview button to match screenshot style (calendar icon with date)
+- [x] Implement bidirectional event linking between daily and weekly views
