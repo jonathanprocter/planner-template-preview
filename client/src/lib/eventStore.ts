@@ -6,6 +6,11 @@ interface Event {
   color: string;
   source?: string;
   date?: string; // ISO date string (YYYY-MM-DD) for weekly view placement
+  category?: string; // Category label (e.g., "Work", "Personal", "Meeting")
+  recurring?: {
+    frequency: "daily" | "weekly" | "monthly";
+    endDate?: string; // Optional end date for recurring events
+  };
 }
 
 interface Task {
@@ -89,7 +94,23 @@ class EventStore {
       this.notify();
     }
   }
+
+  searchEvents(query: string): Event[] {
+    const lowerQuery = query.toLowerCase();
+    return this.events.filter(event => 
+      event.title.toLowerCase().includes(lowerQuery) ||
+      event.category?.toLowerCase().includes(lowerQuery)
+    );
+  }
 }
+
+export const CATEGORIES = [
+  { name: "Work", color: "#3b82f6" },
+  { name: "Personal", color: "#10b981" },
+  { name: "Meeting", color: "#f59e0b" },
+  { name: "Health", color: "#ef4444" },
+  { name: "Social", color: "#8b5cf6" },
+];
 
 export const eventStore = new EventStore();
 export type { Event, Task };

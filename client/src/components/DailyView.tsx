@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event, type Task } from "@/lib/eventStore";
+import { AppointmentDialog } from "./AppointmentDialog";
+import { SearchBar } from "./SearchBar";
+import { GoogleCalendarSync } from "./GoogleCalendarSync";
 
 interface DailyConfig {
   header: {
@@ -46,6 +49,8 @@ export default function DailyView() {
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
   useEffect(() => {
     fetch("/day-config.json")
@@ -518,13 +523,15 @@ export default function DailyView() {
 
         <div className="relative bg-gray-50 border-l border-gray-300" style={{ width: "400px", height: "2160px", padding: "20px" }}>
           <div className="mb-4">
-            <Button
-              className="w-full mb-4"
-              onClick={syncGoogleCalendar}
-              disabled={isSyncing}
-            >
-              {isSyncing ? "Syncing..." : "🔄 Sync Google Calendar"}
-            </Button>
+            <SearchBar onResultClick={(event) => {
+              if (event.date) {
+                setLocation(`/?date=${event.date}`);
+              }
+            }} />
+          </div>
+          
+          <div className="mb-4">
+            <GoogleCalendarSync />
           </div>
 
           <div className="mb-4 flex items-center justify-between">

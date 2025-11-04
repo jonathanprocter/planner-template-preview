@@ -34,3 +34,13 @@
 - [x] Add drag-and-drop functionality to weekly view for rescheduling appointments
 - [x] Enhance Google Calendar sync to work across both daily and weekly views
 - [x] Display synced Google Calendar events in weekly view with proper day placement
+
+- [x] Make day headers in weekly view clickable to navigate to daily view
+- [x] Enable appointment creation in weekly view by clicking time slots
+- [x] Add color-coded category labels for appointments
+- [x] Implement recurring appointment feature (daily, weekly, monthly)
+- [x] Add search bar to find appointments across all views
+
+- [x] Integrate real Google Calendar API with OAuth authentication
+- [x] Fetch and display actual calendar events from jonathan.procter@gmail.com
+- [x] Support multiple sub-calendars from the Google account

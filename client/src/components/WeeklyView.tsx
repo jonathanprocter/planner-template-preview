@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
+import { AppointmentDialog } from "./AppointmentDialog";
+import { SearchBar } from "./SearchBar";
+import { GoogleCalendarSync } from "./GoogleCalendarSync";
 
 export default function WeeklyView() {
   const [, setLocation] = useLocation();
@@ -9,6 +12,8 @@ export default function WeeklyView() {
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
   useEffect(() => {
     const unsubscribe = eventStore.subscribe(() => {
@@ -44,10 +49,36 @@ export default function WeeklyView() {
   };
 
   const getEventDayIndex = (event: Event) => {
-    if (!event.date) return 0; // Default to Monday if no date
+    if (!event.date) return 0;
     const eventDate = new Date(event.date);
     const dayOfWeek = eventDate.getDay();
-    return dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert Sunday=0 to index 6
+    return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  };
+
+  const handleDayHeaderClick = (date: Date) => {
+    // Navigate to daily view with the selected date
+    setLocation(`/?date=${formatDateISO(date)}`);
+  };
+
+  const handleTimeSlotClick = (dayIdx: number, hour: number) => {
+    const date = weekDates[dayIdx];
+    const startTime = `${hour.toString().padStart(2, "0")}:00`;
+    const endTime = `${(hour + 1).toString().padStart(2, "0")}:00`;
+    
+    setDialogData({
+      startTime,
+      endTime,
+      date: formatDateISO(date),
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSaveAppointment = (eventData: Omit<Event, "id">) => {
+    const newEvent: Event = {
+      ...eventData,
+      id: Date.now().toString(),
+    };
+    eventStore.addEvent(newEvent);
   };
 
   const handleDragStart = (e: React.MouseEvent, eventId: string) => {
@@ -74,8 +105,8 @@ export default function WeeklyView() {
     if (!gridContainer) return;
     
     const rect = gridContainer.getBoundingClientRect();
-    const relativeX = e.clientX - rect.left - 100; // Subtract time column width
-    const relativeY = e.clientY - rect.top - 60; // Subtract header height
+    const relativeX = e.clientX - rect.left - 100;
+    const relativeY = e.clientY - rect.top - 60;
     
     const columnWidth = (rect.width - 100) / 7;
     const dayIndex = Math.floor(relativeX / columnWidth);
@@ -121,7 +152,8 @@ export default function WeeklyView() {
         endTime: "08:30",
         color: "#4285f4",
         source: "google",
-        date: formatDateISO(weekDates[0]), // Monday
+        date: formatDateISO(weekDates[0]),
+        category: "Meeting",
       },
       {
         id: "gcal-2",
@@ -130,7 +162,8 @@ export default function WeeklyView() {
         endTime: "13:00",
         color: "#4285f4",
         source: "google",
-        date: formatDateISO(weekDates[2]), // Wednesday
+        date: formatDateISO(weekDates[2]),
+        category: "Social",
       },
       {
         id: "gcal-3",
@@ -139,13 +172,20 @@ export default function WeeklyView() {
         endTime: "16:30",
         color: "#4285f4",
         source: "google",
-        date: formatDateISO(weekDates[4]), // Friday
+        date: formatDateISO(weekDates[4]),
+        category: "Work",
       },
     ];
     
     const localEvents = events.filter(e => e.source !== "google");
     eventStore.setEvents([...localEvents, ...googleEvents]);
     setIsSyncing(false);
+  };
+
+  const handleSearchResultClick = (event: Event) => {
+    if (event.date) {
+      setLocation(`/?date=${event.date}`);
+    }
   };
 
   return (
@@ -180,15 +220,14 @@ export default function WeeklyView() {
           </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="absolute" style={{ left: "350px", top: "30px" }}>
+          <SearchBar onResultClick={handleSearchResultClick} />
+        </div>
+
         {/* Google Calendar Sync Button */}
         <div className="absolute" style={{ right: "20px", top: "30px" }}>
-          <Button
-            onClick={syncGoogleCalendar}
-            disabled={isSyncing}
-            className="bg-blue-500 hover:bg-blue-600 text-white"
-          >
-            {isSyncing ? "Syncing..." : "🔄 Sync Google Calendar"}
-          </Button>
+          <GoogleCalendarSync />
         </div>
 
         {/* Title */}
@@ -196,7 +235,7 @@ export default function WeeklyView() {
           className="absolute font-bold text-center"
           style={{
             left: "50%",
-            top: "45px",
+            top: "100px",
             fontSize: "28px",
             transform: "translateX(-50%)",
           }}
@@ -208,7 +247,7 @@ export default function WeeklyView() {
         <div 
           id="weekly-grid"
           className="absolute" 
-          style={{ top: "120px", left: "20px", right: "20px" }}
+          style={{ top: "150px", left: "20px", right: "20px" }}
         >
           
           {/* Time Column + Day Headers */}
@@ -217,7 +256,8 @@ export default function WeeklyView() {
             {dayNames.map((day, idx) => (
               <div 
                 key={day}
-                className="flex-1 text-center font-semibold border-l border-gray-300 flex flex-col justify-center"
+                className="flex-1 text-center font-semibold border-l border-gray-300 flex flex-col justify-center cursor-pointer hover:bg-blue-50 transition-colors"
+                onClick={() => handleDayHeaderClick(weekDates[idx])}
               >
                 <div className="text-base">{day}</div>
                 <div className="text-sm text-gray-600">{weekDates[idx].getDate()}</div>
@@ -244,7 +284,8 @@ export default function WeeklyView() {
                   {dayNames.map((day, dayIdx) => (
                     <div 
                       key={`${hour}-${dayIdx}`}
-                      className="flex-1 border-l border-gray-300 relative hover:bg-blue-50 transition-colors"
+                      className="flex-1 border-l border-gray-300 relative hover:bg-blue-50 transition-colors cursor-pointer"
+                      onClick={() => handleTimeSlotClick(dayIdx, hour)}
                     >
                       {/* Half-hour line */}
                       <div className="absolute top-1/2 left-0 right-0 border-t border-gray-100"></div>
@@ -286,13 +327,20 @@ export default function WeeklyView() {
                   opacity: draggingEvent === event.id ? 0.7 : 1,
                 }}
                 onMouseDown={(e) => handleDragStart(e, event.id)}
+                onClick={(e) => e.stopPropagation()}
               >
                 <div className="font-semibold">{event.title}</div>
                 <div className="text-xs opacity-90">
                   {event.startTime} - {event.endTime}
                 </div>
+                {event.category && (
+                  <div className="text-xs opacity-75 mt-0.5">📁 {event.category}</div>
+                )}
                 {event.source === "google" && (
                   <div className="text-xs opacity-75">📅 Google</div>
+                )}
+                {event.recurring && (
+                  <div className="text-xs opacity-75">🔄 {event.recurring.frequency}</div>
                 )}
               </div>
             );
@@ -324,6 +372,13 @@ export default function WeeklyView() {
           </div>
         </div>
       </div>
+
+      <AppointmentDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={handleSaveAppointment}
+        initialData={dialogData}
+      />
     </div>
   );
 }
