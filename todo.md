@@ -105,3 +105,5 @@
 - [x] Add retry logic for failed requests
 - [x] Implement progress tracking with percentage
 - [x] Batch events in smaller chunks (50 events at a time)
+
+- [x] Update sync to only fetch Holidays calendar for 2025 as initial test

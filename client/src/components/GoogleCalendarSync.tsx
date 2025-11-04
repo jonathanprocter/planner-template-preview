@@ -34,25 +34,32 @@ export default function GoogleCalendarSync() {
   };
 
   const handleSync = async () => {
-    if (selectedCalendarIds.length === 0) {
-      toast.error("Please select at least one calendar");
+    // Filter to only Holidays calendar for testing
+    const holidaysCalendar = availableCalendars.find(cal => 
+      cal.summary.toLowerCase().includes('holiday')
+    );
+    
+    if (!holidaysCalendar) {
+      toast.error("Holidays calendar not found");
       return;
     }
+    
+    const calendarsToSync = [holidaysCalendar.id];
 
     setIsSyncing(true);
-    setSyncProgress({ current: 0, total: selectedCalendarIds.length, calendar: "" });
+    setSyncProgress({ current: 0, total: calendarsToSync.length, calendar: "" });
     
     try {
       const eventMap = new Map<string, any>();
       
-      // Process calendars one at a time
-      for (let i = 0; i < selectedCalendarIds.length; i++) {
-        const calendarId = selectedCalendarIds[i];
+      // Process only holidays calendar
+      for (let i = 0; i < calendarsToSync.length; i++) {
+        const calendarId = calendarsToSync[i];
         const calendar = availableCalendars.find(c => c.id === calendarId);
         if (!calendar) continue;
 
-        setSyncProgress({ current: i + 1, total: selectedCalendarIds.length, calendar: calendar.summary });
-        toast.info(`Syncing ${calendar.summary} (${i + 1}/${selectedCalendarIds.length})...`);
+        setSyncProgress({ current: i + 1, total: calendarsToSync.length, calendar: calendar.summary });
+        toast.info(`Syncing ${calendar.summary} (${i + 1}/${calendarsToSync.length})...`);
 
         try {
           // Fetch only 2025 events
@@ -131,7 +138,7 @@ export default function GoogleCalendarSync() {
         }
         
         // Add 3 second delay between calendars to prevent overload
-        if (i < selectedCalendarIds.length - 1) {
+        if (i < calendarsToSync.length - 1) {
           toast.info("Waiting before next calendar...");
           await delay(3000);
         }
@@ -240,7 +247,7 @@ export default function GoogleCalendarSync() {
           disabled={isSyncing}
           className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
         >
-          {isSyncing ? "Syncing..." : "🔄 Sync Calendar (2025)"}
+          {isSyncing ? "Syncing..." : "🔄 Sync Holidays (2025)"}
         </Button>
         <Button
           onClick={handleSignOut}
