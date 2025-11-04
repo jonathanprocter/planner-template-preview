@@ -44,3 +44,6 @@
 - [x] Integrate real Google Calendar API with OAuth authentication
 - [x] Fetch and display actual calendar events from jonathan.procter@gmail.com
 - [x] Support multiple sub-calendars from the Google account
+
+- [x] Update Google OAuth to use Google Identity Services (GIS) for better redirect handling
+- [x] Add write scopes for calendar modification
