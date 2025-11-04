@@ -5,6 +5,7 @@ import { eventStore, type Event, type Task } from "@/lib/eventStore";
 import { AppointmentDialog } from "./AppointmentDialog";
 import { SearchBar } from "./SearchBar";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
+import { EventTooltip } from "./EventTooltip";
 
 interface DailyConfig {
   header: {
@@ -440,9 +441,9 @@ export default function DailyView() {
             const height = endY - startY;
 
             return (
-              <div
-                key={event.id}
-                className="absolute rounded-md px-3 py-2 text-white group cursor-move shadow-sm border border-white/20"
+              <EventTooltip key={event.id} event={event}>
+                <div
+                  className="absolute rounded-md px-3 py-2 text-white group cursor-move shadow-sm border border-white/20"
                 style={{
                   left: `${config.timeBlocks.x + config.timeBlocks.labelWidth}px`,
                   top: `${startY}px`,
@@ -478,7 +479,8 @@ export default function DailyView() {
                 >
                   ×
                 </button>
-              </div>
+                </div>
+              </EventTooltip>
             );
           })}
 

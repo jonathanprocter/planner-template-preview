@@ -5,6 +5,8 @@ import { eventStore, type Event } from "@/lib/eventStore";
 import { AppointmentDialog } from "./AppointmentDialog";
 import { SearchBar } from "./SearchBar";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
+import { CategoryFilter } from "./CategoryFilter";
+import { EventTooltip } from "./EventTooltip";
 
 export default function WeeklyView() {
   const [, setLocation] = useLocation();
@@ -14,6 +16,7 @@ export default function WeeklyView() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
+  const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubscribe = eventStore.subscribe(() => {
@@ -228,6 +231,11 @@ export default function WeeklyView() {
           <SearchBar onResultClick={handleSearchResultClick} />
         </div>
 
+        {/* Category Filter */}
+        <div className="absolute" style={{ right: "220px", top: "30px" }}>
+          <CategoryFilter onFilterChange={setFilteredCategories} />
+        </div>
+
         {/* Google Calendar Sync Button */}
         <div className="absolute" style={{ right: "20px", top: "30px" }}>
           <GoogleCalendarSync />
@@ -300,7 +308,16 @@ export default function WeeklyView() {
           </div>
 
           {/* Events Overlay */}
-          {events.map((event) => {
+          {events
+            .filter(event => {
+              // Filter by category if categories are selected
+              if (filteredCategories.length > 0 && event.category) {
+                return filteredCategories.includes(event.category);
+              }
+              // Show events without category if no filter is active
+              return filteredCategories.length === 0 || !event.category;
+            })
+            .map((event) => {
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
             
@@ -318,34 +335,35 @@ export default function WeeklyView() {
             const x = 100 + dayIdx * columnWidth;
             
             return (
-              <div
-                key={event.id}
-                className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden z-10 cursor-move group"
-                style={{
-                  left: `${x + 2}px`,
-                  top: `${y}px`,
-                  width: `${columnWidth - 4}px`,
-                  height: `${height}px`,
-                  backgroundColor: event.color,
-                  opacity: draggingEvent === event.id ? 0.7 : 1,
-                }}
-                onMouseDown={(e) => handleDragStart(e, event.id)}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="font-semibold">{event.title}</div>
-                <div className="text-xs opacity-90">
-                  {event.startTime} - {event.endTime}
+              <EventTooltip key={event.id} event={event}>
+                <div
+                  className="absolute rounded-md px-2 py-1 text-white text-xs overflow-hidden z-10 cursor-move group shadow-sm border border-white/20"
+                  style={{
+                    left: `${x + 2}px`,
+                    top: `${y}px`,
+                    width: `${columnWidth - 4}px`,
+                    height: `${height}px`,
+                    backgroundColor: event.color,
+                    opacity: draggingEvent === event.id ? 0.7 : 1,
+                  }}
+                  onMouseDown={(e) => handleDragStart(e, event.id)}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className="font-semibold truncate">{event.title}</div>
+                  <div className="text-xs opacity-90">
+                    {event.startTime} - {event.endTime}
+                  </div>
+                  {event.category && height > 50 && (
+                    <div className="text-xs opacity-75 mt-0.5 truncate">📁 {event.category}</div>
+                  )}
+                  {event.source === "google" && height > 70 && (
+                    <div className="text-xs opacity-75">📅 Google</div>
+                  )}
+                  {event.recurring && height > 90 && (
+                    <div className="text-xs opacity-75">🔄 {event.recurring.frequency}</div>
+                  )}
                 </div>
-                {event.category && (
-                  <div className="text-xs opacity-75 mt-0.5">📁 {event.category}</div>
-                )}
-                {event.source === "google" && (
-                  <div className="text-xs opacity-75">📅 Google</div>
-                )}
-                {event.recurring && (
-                  <div className="text-xs opacity-75">🔄 {event.recurring.frequency}</div>
-                )}
-              </div>
+              </EventTooltip>
             );
           })}
         </div>

@@ -59,3 +59,7 @@
 - [x] Improve appointment display in daily view for better readability
 - [x] Deduplicate events that appear in multiple Google calendars
 - [x] Fix appointment count to accurately reflect unique events
+
+- [x] Add category filter to weekly view for organizing appointments
+- [x] Enhance color-coding system for event categories
+- [x] Implement hover tooltips to display full event details
