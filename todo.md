@@ -50,3 +50,5 @@
 
 - [x] Add calendar selector to choose which calendars to display
 - [x] Remove all demo/sample data from the application
+
+- [x] Fix React ref warning in CalendarSelector DialogTrigger
