@@ -281,7 +281,7 @@ export default function DailyView() {
               padding: "6px 14px",
               boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
             }}
-            onClick={() => setLocation("/weekly")}
+            onClick={() => setLocation("/")}
           >
             <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
               <rect x="3" y="5" width="18" height="16" rx="2" ry="2" fill="#f9f9f9" stroke="#b46b5e" strokeWidth="1.2"/>
@@ -506,7 +506,7 @@ export default function DailyView() {
                 padding: "6px 14px",
                 boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
               }}
-              onClick={() => setLocation("/weekly")}
+              onClick={() => setLocation("/")}
             >
               <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <rect x="3" y="5" width="18" height="16" rx="2" ry="2" fill="#f9f9f9" stroke="#b46b5e" strokeWidth="1.2"/>

@@ -204,26 +204,22 @@ export default function WeeklyView() {
         
         {/* Weekly Overview Button - Top */}
         <div
-          className="absolute flex items-center justify-start bg-white border-2 border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 shadow-sm"
+          className="absolute inline-flex items-center gap-2 bg-[#f3f3f3] border border-[#d0d0d0] rounded-lg cursor-pointer hover:bg-[#ececec] hover:shadow-md transition-all duration-200 hover:-translate-y-px"
           style={{
             left: "20px",
             top: "20px",
-            width: "300px",
-            height: "70px",
-            padding: "12px 20px",
+            padding: "6px 14px",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
           }}
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation("/daily")}
         >
-          <div className="flex items-center gap-4">
-            <div 
-              className="flex flex-col items-center justify-center bg-white border border-gray-400 rounded-md shadow-sm" 
-              style={{ width: "48px", height: "48px" }}
-            >
-              <div className="text-[10px] text-gray-600 font-medium leading-none">NOV</div>
-              <div className="text-red-600 font-bold text-2xl leading-none mt-0.5">17</div>
-            </div>
-            <span className="text-xl font-normal text-gray-800">Weekly Overview</span>
-          </div>
+          <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="16" rx="2" ry="2" fill="#f9f9f9" stroke="#b46b5e" strokeWidth="1.2"/>
+            <rect x="3" y="5" width="18" height="3" rx="2" ry="2" fill="#b46b5e"/>
+            <line x1="7" y1="3" x2="7" y2="7" stroke="#b46b5e" strokeWidth="1.4" strokeLinecap="round"/>
+            <line x1="17" y1="3" x2="17" y2="7" stroke="#b46b5e" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <span className="font-medium text-base text-[#2e2e2e]" style={{ fontFamily: "Georgia, serif" }}>Daily View</span>
         </div>
 
         {/* Search Bar */}
@@ -368,29 +364,25 @@ export default function WeeklyView() {
           })}
         </div>
 
-        {/* Weekly Overview Button - Bottom */}
+        {/* Daily View Button - Bottom */}
         <div
-          className="absolute flex items-center justify-start bg-white border-2 border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 shadow-sm"
+          className="absolute inline-flex items-center gap-2 bg-[#f3f3f3] border border-[#d0d0d0] rounded-lg cursor-pointer hover:bg-[#ececec] hover:shadow-md transition-all duration-200 hover:-translate-y-px"
           style={{
             left: "50%",
             bottom: "40px",
             transform: "translateX(-50%)",
-            width: "300px",
-            height: "70px",
-            padding: "12px 20px",
+            padding: "6px 14px",
+            boxShadow: "0 1px 2px rgba(0, 0, 0, 0.1)",
           }}
-          onClick={() => setLocation("/")}
+          onClick={() => setLocation("/daily")}
         >
-          <div className="flex items-center gap-4">
-            <div 
-              className="flex flex-col items-center justify-center bg-white border border-gray-400 rounded-md shadow-sm" 
-              style={{ width: "48px", height: "48px" }}
-            >
-              <div className="text-[10px] text-gray-600 font-medium leading-none">NOV</div>
-              <div className="text-red-600 font-bold text-2xl leading-none mt-0.5">17</div>
-            </div>
-            <span className="text-xl font-normal text-gray-800">Weekly Overview</span>
-          </div>
+          <svg className="w-5 h-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <rect x="3" y="5" width="18" height="16" rx="2" ry="2" fill="#f9f9f9" stroke="#b46b5e" strokeWidth="1.2"/>
+            <rect x="3" y="5" width="18" height="3" rx="2" ry="2" fill="#b46b5e"/>
+            <line x1="7" y1="3" x2="7" y2="7" stroke="#b46b5e" strokeWidth="1.4" strokeLinecap="round"/>
+            <line x1="17" y1="3" x2="17" y2="7" stroke="#b46b5e" strokeWidth="1.4" strokeLinecap="round"/>
+          </svg>
+          <span className="font-medium text-base text-[#2e2e2e]" style={{ fontFamily: "Georgia, serif" }}>Daily View</span>
         </div>
       </div>
 

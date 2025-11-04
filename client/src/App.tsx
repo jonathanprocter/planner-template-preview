@@ -10,8 +10,8 @@ import WeeklyPage from "./pages/WeeklyPage";
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/weekly"} component={WeeklyPage} />
+      <Route path={"/"} component={WeeklyPage} />
+      <Route path={"/daily"} component={Home} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

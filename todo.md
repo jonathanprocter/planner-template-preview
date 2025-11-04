@@ -67,3 +67,7 @@
 - [x] Update Weekly Overview button design to match new styling with calendar icon
 
 - [x] Fix React ref warning in CategoryFilter DropdownMenuTrigger
+
+- [x] Update Weekly Overview buttons on weekly page to match new design
+- [x] Make weekly view the main dashboard page (default route)
+- [x] Verify and fix date issue for daily appointments display
