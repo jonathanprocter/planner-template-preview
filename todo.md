@@ -109,3 +109,6 @@
 - [x] Update sync to only fetch Holidays calendar for 2025 as initial test
 
 - [x] Investigate and fix error that appears after sync completion
+
+- [x] Verify Holidays calendar sync saved events to database
+- [x] Expand sync to include all calendars for 2025

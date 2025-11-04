@@ -34,17 +34,15 @@ export default function GoogleCalendarSync() {
   };
 
   const handleSync = async () => {
-    // Filter to only Holidays calendar for testing
-    const holidaysCalendar = availableCalendars.find(cal => 
-      cal.summary.toLowerCase().includes('holiday')
-    );
+    // Sync all selected calendars
+    const calendarsToSync = selectedCalendarIds.length > 0 
+      ? selectedCalendarIds 
+      : availableCalendars.map(c => c.id);
     
-    if (!holidaysCalendar) {
-      toast.error("Holidays calendar not found");
+    if (calendarsToSync.length === 0) {
+      toast.error("No calendars selected");
       return;
     }
-    
-    const calendarsToSync = [holidaysCalendar.id];
 
     setIsSyncing(true);
     setSyncProgress({ current: 0, total: calendarsToSync.length, calendar: "" });
@@ -247,7 +245,7 @@ export default function GoogleCalendarSync() {
           disabled={isSyncing}
           className="bg-blue-500 hover:bg-blue-600 text-white flex-1"
         >
-          {isSyncing ? "Syncing..." : "🔄 Sync Holidays (2025)"}
+          {isSyncing ? "Syncing..." : "🔄 Sync All Calendars (2025)"}
         </Button>
         <Button
           onClick={handleSignOut}
