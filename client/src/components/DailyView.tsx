@@ -184,7 +184,7 @@ export default function DailyView() {
 
         {/* Time Labels */}
         {timeLabels.map((time, idx) => {
-          const y = config.timeBlocks.y + idx * 25;
+          const y = config.timeBlocks.y + idx * 50; // 50px per 30-minute block
           return (
             <div
               key={time}

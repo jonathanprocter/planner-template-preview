@@ -8,3 +8,5 @@
 - [x] Show configuration details panel
 - [x] Make templates responsive to viewport
 - [x] Add sample data for demonstration
+
+- [x] Fix time label spacing to align with 30-minute grid lines

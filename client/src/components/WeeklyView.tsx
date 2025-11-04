@@ -41,6 +41,8 @@ export default function WeeklyView() {
   const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const currentDate = new Date();
   
+  // Grid starts at y=200 with 100px per hour
+  
   // Get week dates
   const getWeekDates = () => {
     const dates = [];
@@ -96,7 +98,7 @@ export default function WeeklyView() {
         {/* Day Headers */}
         {days.map((day, idx) => {
           const x = config.grid.x + config.grid.timeColumnWidth + idx * config.grid.dayColumnWidth;
-          const y = config.grid.y;
+          const y = 150; // Fixed header position
           const date = weekDates[idx];
 
           return (
@@ -125,7 +127,7 @@ export default function WeeklyView() {
 
         {/* Time Labels */}
         {timeLabels.map((time, idx) => {
-          const y = config.grid.y + config.grid.dayHeaderHeight + idx * config.grid.hourHeight;
+          const y = 200 + idx * 100; // Start at y=200, 100px per hour
           return (
             <div
               key={time}
@@ -148,7 +150,7 @@ export default function WeeklyView() {
           className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden"
           style={{
             left: `${config.grid.x + config.grid.timeColumnWidth + 5}px`,
-            top: `${config.grid.y + config.grid.dayHeaderHeight + 3 * config.grid.hourHeight}px`,
+            top: `${200 + 3 * 100}px`, // 9am = 3 hours after 6am
             width: `${config.grid.dayColumnWidth - 10}px`,
             height: `${config.grid.hourHeight - 2}px`,
             backgroundColor: "#3b82f6",
@@ -163,7 +165,7 @@ export default function WeeklyView() {
           className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden"
           style={{
             left: `${config.grid.x + config.grid.timeColumnWidth + 2 * config.grid.dayColumnWidth + 5}px`,
-            top: `${config.grid.y + config.grid.dayHeaderHeight + 8 * config.grid.hourHeight}px`,
+            top: `${200 + 8 * 100}px`, // 2pm = 8 hours after 6am
             width: `${config.grid.dayColumnWidth - 10}px`,
             height: `${config.grid.hourHeight * 1.5 - 2}px`,
             backgroundColor: "#10b981",
@@ -178,7 +180,7 @@ export default function WeeklyView() {
           className="absolute rounded px-2 py-1 text-white text-xs overflow-hidden"
           style={{
             left: `${config.grid.x + config.grid.timeColumnWidth + 4 * config.grid.dayColumnWidth + 5}px`,
-            top: `${config.grid.y + config.grid.dayHeaderHeight + 10 * config.grid.hourHeight}px`,
+            top: `${200 + 10 * 100}px`, // 4pm = 10 hours after 6am
             width: `${config.grid.dayColumnWidth - 10}px`,
             height: `${config.grid.hourHeight - 2}px`,
             backgroundColor: "#f59e0b",
