@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
 import { AppointmentDialog } from "./AppointmentDialog";
-import { SearchBar } from "./SearchBar";
+import { AdvancedSearch } from "./AdvancedSearch";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { EventTooltip } from "./EventTooltip";
@@ -226,7 +226,7 @@ export default function WeeklyView() {
 
         {/* Search Bar */}
         <div className="absolute" style={{ left: "350px", top: "30px" }}>
-          <SearchBar onResultClick={handleSearchResultClick} />
+          <AdvancedSearch />
         </div>
 
         {/* Category Filter */}

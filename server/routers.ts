@@ -80,6 +80,56 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Search appointments across all dates
+    search: protectedProcedure
+      .input(
+        z.object({
+          query: z.string(),
+          startDate: z.string().optional(),
+          endDate: z.string().optional(),
+          category: z.string().optional(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) return [];
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq, gte, lte, or, like } = require("drizzle-orm");
+
+        const conditions = [eq(appointments.userId, ctx.user.id)];
+
+        // Search in title and description
+        if (input.query) {
+          conditions.push(
+            or(
+              like(appointments.title, `%${input.query}%`),
+              like(appointments.description, `%${input.query}%`)
+            )
+          );
+        }
+
+        // Date range filter
+        if (input.startDate) {
+          conditions.push(gte(appointments.date, input.startDate));
+        }
+        if (input.endDate) {
+          conditions.push(lte(appointments.date, input.endDate));
+        }
+
+        // Category filter
+        if (input.category) {
+          conditions.push(eq(appointments.category, input.category));
+        }
+
+        return await db
+          .select()
+          .from(appointments)
+          .where(and(...conditions))
+          .orderBy(appointments.startTime)
+          .limit(100);
+      }),
+
     // Sync from Google Calendar
     syncFromGoogle: protectedProcedure
       .input(
