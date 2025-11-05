@@ -152,3 +152,5 @@
 - [x] Create backend endpoint to update note tags
 - [x] Add visual category badges to appointments (in modal)
 - [x] Add category filter to calendar views (can be added later if needed)
+
+- [x] Move Google Calendar sync button to avoid Saturday/Sunday overlap

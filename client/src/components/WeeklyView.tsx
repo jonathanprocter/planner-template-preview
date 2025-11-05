@@ -279,7 +279,7 @@ export default function WeeklyView() {
         </div>
 
         {/* Google Calendar Sync Button */}
-        <div className="absolute" style={{ right: "20px", top: "30px" }}>
+        <div className="absolute" style={{ right: "20px", top: "-60px" }}>
           <GoogleCalendarSync />
         </div>
 
