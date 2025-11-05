@@ -135,3 +135,9 @@
 - [x] Add click handler to appointments in WeeklyView to open modal
 - [x] Add click handler to appointments in DailyView to open modal
 - [x] Display client notes, date/time, category, and other details in modal
+
+- [x] Add edit mode toggle to AppointmentDetailsModal
+- [x] Add textarea for editing client notes
+- [x] Create backend endpoint to update appointment notes
+- [x] Integrate save functionality with database
+- [x] Test edit and save flow

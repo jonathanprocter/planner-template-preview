@@ -156,6 +156,34 @@ export const appRouter = router({
         );
         return result;
       }),
+
+    // Update appointment notes
+    updateNotes: protectedProcedure
+      .input(
+        z.object({
+          googleEventId: z.string(),
+          notes: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq } = require("drizzle-orm");
+
+        await db
+          .update(appointments)
+          .set({ description: input.notes })
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          );
+
+        return { success: true };
+      }),
   }),
 });
 
