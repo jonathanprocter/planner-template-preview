@@ -109,7 +109,7 @@ export default function DailyView() {
           title: apt.title,
           startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          color: isHoliday ? '#34a853' : isSimplePractice ? '#6495ED' : apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
+          color: isHoliday ? '#3D5845' : isSimplePractice ? '#243447' : apt.category === 'Work' ? '#4F5D67' : apt.category === 'Meeting' ? '#9A7547' : apt.title?.toLowerCase().includes('flight') ? '#A63D3D' : '#3D5845',
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
@@ -523,11 +523,18 @@ export default function DailyView() {
                   top: `${startY}px`,
                   width: `${config.timeBlocks.width - config.timeBlocks.labelWidth - 20}px`,
                   height: `${height}px`,
-                  backgroundColor: (event as any).isSimplePractice ? '#F5F5F0' : event.color,
-                  color: (event as any).isSimplePractice ? '#333' : 'white',
-                  border: (event as any).isSimplePractice ? '1.5px solid #6495ED' : '1px solid rgba(255,255,255,0.2)',
-                  borderLeftWidth: (event as any).isSimplePractice ? '4px' : '1.5px',
-                  borderLeftColor: (event as any).isSimplePractice ? '#6495ED' : undefined,
+                  backgroundColor: (() => {
+                    if ((event as any).isSimplePractice) return '#E7E9EC';
+                    if ((event as any).isHoliday) return '#E9ECE9';
+                    if (event.category === 'Work') return '#EBEDEF';
+                    if (event.category === 'Meeting') return '#F4F0E9';
+                    if (event.title?.toLowerCase().includes('flight')) return '#F6EAEA';
+                    return '#E9ECE9';
+                  })(),
+                  color: event.color,
+                  border: `1.5px solid ${event.color}`,
+                  borderLeftWidth: '4px',
+                  borderLeftColor: event.color,
                   opacity: draggingEvent === event.id ? 0.7 : 1,
                   minHeight: '40px',
                 }}

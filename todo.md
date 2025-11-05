@@ -276,3 +276,15 @@
 - [x] Fix sync to handle moved/changed appointments properly
 - [x] Fix duplicate appointments appearing (e.g., Sarah on Monday appearing multiple times)
 - [x] Verify appointment removal works correctly after sync
+
+## Implement Financial District Color Scheme
+- [x] Update SimplePractice appointments to use Deep Indigo (#243447) border and Indigo Wash (#E7E9EC) background
+- [x] Update Holidays/Notes to use Forest Pine (#3D5845) border and Sage Wash (#E9ECE9) background
+- [x] Update Work appointments to use Cool Slate (#4F5D67) border and Slate Wash (#EBEDEF) background
+- [x] Update Meetings to use Rich Caramel (#9A7547) border and Cream Wash (#F4F0E9) background
+- [x] Add Flight Events category with Merlot Red (#A63D3D) border and Rose Wash (#F6EAEA) background
+- [x] Update WeeklyView color mappings
+- [x] Update DailyView color mappings
+- [x] Update PDF export colors for all categories
+- [x] Update color legend with new Financial District colors and descriptions
+- [x] Test colors on all views (weekly, daily, PDF export)

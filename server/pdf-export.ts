@@ -159,22 +159,37 @@ function generateWeeklyGridPage(
     const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
     const width = columnWidth - 4;
 
-    // Check if SimplePractice appointment
+    // Determine category and apply Financial District colors
     const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
                             apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-
+    const isHoliday = apt.calendarId?.includes('holiday');
+    const isFlight = apt.title?.toLowerCase().includes('flight');
+    
+    let bgColor = '#E9ECE9'; // Default: Sage Wash
+    let borderColor = '#3D5845'; // Default: Forest Pine
+    
     if (isSimplePractice) {
-      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
-      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
-      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
-      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
-      doc.fillColor('#000000');
-    } else {
-      // Other events: green background
-      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
-      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
-      doc.fillColor('#000000');
+      bgColor = '#E7E9EC'; // Indigo Wash
+      borderColor = '#243447'; // Deep Indigo
+    } else if (isHoliday) {
+      bgColor = '#E9ECE9'; // Sage Wash
+      borderColor = '#3D5845'; // Forest Pine
+    } else if (apt.category === 'Work') {
+      bgColor = '#EBEDEF'; // Slate Wash
+      borderColor = '#4F5D67'; // Cool Slate
+    } else if (apt.category === 'Meeting') {
+      bgColor = '#F4F0E9'; // Cream Wash
+      borderColor = '#9A7547'; // Rich Caramel
+    } else if (isFlight) {
+      bgColor = '#F6EAEA'; // Rose Wash
+      borderColor = '#A63D3D'; // Merlot Red
     }
+    
+    // Apply Financial District styling
+    doc.fillColor(bgColor).rect(x, startY, width, height).fill();
+    doc.strokeColor(borderColor).lineWidth(1.5).rect(x, startY, width, height).stroke();
+    doc.fillColor(borderColor).rect(x, startY, 4, height).fill();
+    doc.fillColor('#000000');
 
     // Add link to daily page (page 2 = Monday, page 3 = Tuesday, etc.)
     const targetPage = dayIndex + 2;
@@ -288,22 +303,37 @@ function generateDailyGridPage(
     const x = margin + timeColumnWidth + 5;
     const width = contentWidth - 10;
 
-    // Check if SimplePractice appointment
+    // Determine category and apply Financial District colors
     const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
                             apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-
+    const isHoliday = apt.calendarId?.includes('holiday');
+    const isFlight = apt.title?.toLowerCase().includes('flight');
+    
+    let bgColor = '#E9ECE9'; // Default: Sage Wash
+    let borderColor = '#3D5845'; // Default: Forest Pine
+    
     if (isSimplePractice) {
-      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
-      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
-      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
-      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
-      doc.fillColor('#000000');
-    } else {
-      // Other events: green background
-      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
-      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
-      doc.fillColor('#000000');
+      bgColor = '#E7E9EC'; // Indigo Wash
+      borderColor = '#243447'; // Deep Indigo
+    } else if (isHoliday) {
+      bgColor = '#E9ECE9'; // Sage Wash
+      borderColor = '#3D5845'; // Forest Pine
+    } else if (apt.category === 'Work') {
+      bgColor = '#EBEDEF'; // Slate Wash
+      borderColor = '#4F5D67'; // Cool Slate
+    } else if (apt.category === 'Meeting') {
+      bgColor = '#F4F0E9'; // Cream Wash
+      borderColor = '#9A7547'; // Rich Caramel
+    } else if (isFlight) {
+      bgColor = '#F6EAEA'; // Rose Wash
+      borderColor = '#A63D3D'; // Merlot Red
     }
+    
+    // Apply Financial District styling
+    doc.fillColor(bgColor).rect(x, startY, width, height).fill();
+    doc.strokeColor(borderColor).lineWidth(1.5).rect(x, startY, width, height).stroke();
+    doc.fillColor(borderColor).rect(x, startY, 4, height).fill();
+    doc.fillColor('#000000');
 
     // Appointment text
     doc.fontSize(8).font('Helvetica-Bold');
