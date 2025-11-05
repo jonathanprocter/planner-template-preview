@@ -219,3 +219,13 @@
 - [x] Verify bidirectional links work correctly (weekly to daily and daily back to weekly)
 - [x] Adjust margins and spacing to ensure content fits within reMarkable dimensions
 - [x] Test final PDF has exactly 8 pages (1 weekly + 7 daily)
+
+## Improve Google Calendar Sync and Weekly View
+- [x] Enhance sync logic to detect moved appointments (compare existing vs new data)
+- [x] Enhance sync logic to detect deleted appointments (remove from DB if not in Google Calendar)
+- [x] Enhance sync logic to detect added appointments (insert new events)
+- [x] Test sync with moved appointments
+- [x] Test sync with deleted appointments
+- [x] Test sync with newly added appointments
+- [x] Add bottom hour labels to weekly view grid for better readability
+- [x] Ensure both weekly and daily views refresh after sync to show changes

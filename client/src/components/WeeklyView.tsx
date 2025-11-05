@@ -378,11 +378,19 @@ export default function WeeklyView() {
               const time = `${hour.toString().padStart(2, "0")}:00`;
               
               return (
-                <div key={hour} className="flex border-b border-gray-200" style={{ height: "100px" }}>
-                  {/* Time Label */}
+                <div key={hour} className="flex border-b border-gray-200 relative" style={{ height: "100px" }}>
+                  {/* Top Time Label */}
                   <div 
                     style={{ width: "100px" }} 
                     className="flex-shrink-0 pr-3 pt-1 text-right font-semibold text-gray-700"
+                  >
+                    {time}
+                  </div>
+                  
+                  {/* Bottom Time Label (positioned at bottom of hour block) */}
+                  <div 
+                    style={{ width: "100px", position: "absolute", bottom: "2px", left: "0" }} 
+                    className="pr-3 text-right text-xs text-gray-500"
                   >
                     {time}
                   </div>
