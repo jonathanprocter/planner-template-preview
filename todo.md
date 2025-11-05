@@ -130,3 +130,8 @@
 - [x] Identify SimplePractice calendar ID from synced calendars
 - [x] Update appointment styling: SimplePractice = white/ivory bg + cornflower border with thick left flag
 - [x] Keep holidays with current green solid style
+
+- [x] Create AppointmentDetailsModal component to show full appointment info
+- [x] Add click handler to appointments in WeeklyView to open modal
+- [x] Add click handler to appointments in DailyView to open modal
+- [x] Display client notes, date/time, category, and other details in modal

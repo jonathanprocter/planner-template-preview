@@ -6,6 +6,7 @@ import { AppointmentDialog } from "./AppointmentDialog";
 import { SearchBar } from "./SearchBar";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { EventTooltip } from "./EventTooltip";
+import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
 
 interface DailyConfig {
@@ -50,6 +51,8 @@ export default function DailyView() {
   const [newEventTitle, setNewEventTitle] = useState("");
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
@@ -509,6 +512,11 @@ export default function DailyView() {
                   minHeight: '40px',
                 }}
                 onMouseDown={(e) => handleDragStart(e, event.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedAppointment(event);
+                  setModalOpen(true);
+                }}
               >
                 <div className="font-semibold text-sm leading-tight mb-1 overflow-hidden text-ellipsis" style={{ 
                   display: '-webkit-box',
@@ -626,6 +634,32 @@ export default function DailyView() {
           </div>
         </div>
       </div>
+
+      <AppointmentDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSave={(data) => {
+          const newEvent: Event = {
+            id: Date.now().toString(),
+            title: data.title,
+            startTime: data.startTime,
+            endTime: data.endTime,
+            color: "#4285f4",
+            source: "local",
+            date: data.date,
+            category: data.category,
+          };
+          eventStore.addEvent(newEvent);
+          setDialogOpen(false);
+        }}
+        initialData={dialogData}
+      />
+
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 }

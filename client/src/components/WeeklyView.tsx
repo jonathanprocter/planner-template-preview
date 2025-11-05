@@ -7,6 +7,7 @@ import { AdvancedSearch } from "./AdvancedSearch";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { EventTooltip } from "./EventTooltip";
+import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
 
 export default function WeeklyView() {
@@ -14,6 +15,8 @@ export default function WeeklyView() {
   const [events, setEvents] = useState<Event[]>(eventStore.getEvents());
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
@@ -390,7 +393,11 @@ export default function WeeklyView() {
                     opacity: draggingEvent === event.id ? 0.7 : 1,
                   }}
                   onMouseDown={(e) => handleDragStart(e, event.id)}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedAppointment(event);
+                    setModalOpen(true);
+                  }}
                 >
                   <div className="font-semibold truncate">{event.title}</div>
                   <div className="text-xs opacity-90">
@@ -438,6 +445,12 @@ export default function WeeklyView() {
         onOpenChange={setDialogOpen}
         onSave={handleSaveAppointment}
         initialData={dialogData}
+      />
+
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
       />
     </div>
   );

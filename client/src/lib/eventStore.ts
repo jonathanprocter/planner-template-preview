@@ -1,4 +1,4 @@
-interface Event {
+export interface Event {
   id: string;
   title: string;
   startTime: string;
@@ -7,6 +7,7 @@ interface Event {
   source?: string;
   date?: string; // ISO date string (YYYY-MM-DD) for weekly view placement
   category?: string; // Category label (e.g., "Work", "Personal", "Meeting")
+  description?: string; // Client notes or appointment description
   recurring?: {
     frequency: "daily" | "weekly" | "monthly";
     endDate?: string; // Optional end date for recurring events
@@ -104,4 +105,4 @@ export const CATEGORIES = [
 ];
 
 export const eventStore = new EventStore();
-export type { Event, Task };
+export type { Task };
