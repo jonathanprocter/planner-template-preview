@@ -288,3 +288,8 @@
 - [x] Update PDF export colors for all categories
 - [x] Update color legend with new Financial District colors and descriptions
 - [x] Test colors on all views (weekly, daily, PDF export)
+
+## Fix Time Range to End at 22:00
+- [x] Update WeeklyView to stop displaying hours at 22:00 (10 PM)
+- [x] Update DailyView to stop displaying hours at 22:00 (10 PM)
+- [x] Verify PDF export already ends at 22:00
