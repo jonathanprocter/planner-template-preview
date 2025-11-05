@@ -115,3 +115,6 @@
 
 - [x] Verify all calendars sync completed successfully for 2025 (612 appointments across 5 calendars)
 - [x] Expand sync date range from 2025 to 2023-2025
+
+- [x] Expand sync to full 2015-2030 timeframe (15 years)
+- [ ] Test full 15-year sync with rate limiting
