@@ -182,3 +182,5 @@
 
 - [x] Update PDF export to generate 8 pages (1 weekly + 7 daily views)
 - [x] Test 8-page PDF export functionality
+
+- [x] Fix require() errors in backend by replacing with ES6 imports

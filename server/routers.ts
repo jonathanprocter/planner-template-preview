@@ -10,6 +10,10 @@ import {
   syncGoogleCalendarAppointments,
   upsertAppointment,
 } from "./appointments";
+import { getDb } from "./db";
+import { appointments } from "../drizzle/schema";
+import { and, eq, gte, lte, or, like } from "drizzle-orm";
+import { generateWeeklyPlannerPDF } from "./pdf-export";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -91,22 +95,23 @@ export const appRouter = router({
         })
       )
       .query(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) return [];
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq, gte, lte, or, like } = require("drizzle-orm");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
 
         const conditions = [eq(appointments.userId, ctx.user.id)];
 
         // Search in title and description
         if (input.query) {
-          conditions.push(
-            or(
-              like(appointments.title, `%${input.query}%`),
-              like(appointments.description, `%${input.query}%`)
-            )
+          const searchCondition = or(
+            like(appointments.title, `%${input.query}%`),
+            like(appointments.description, `%${input.query}%`)
           );
+          if (searchCondition) {
+            conditions.push(searchCondition);
+          }
         }
 
         // Date range filter
@@ -166,11 +171,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq } = require("drizzle-orm");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
 
         await db
           .update(appointments)
@@ -194,11 +199,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq } = require("drizzle-orm");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
 
         await db
           .update(appointments)
@@ -226,13 +231,13 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
+        // appointments already imported at top
 
         // Insert into database
-        const result = await db
+        await db
           .insert(appointments)
           .values({
             userId: ctx.user.id,
@@ -244,10 +249,9 @@ export const appRouter = router({
             description: input.description || '',
             googleEventId: `local-${Date.now()}`,
             calendarId: 'local',
-          })
-          .returning();
+          });
 
-        return { success: true, appointment: result[0] };
+        return { success: true };
       }),
 
     // Update appointment time/date
@@ -261,11 +265,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq } = require("drizzle-orm");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
 
         // Update in database
         await db
@@ -293,11 +297,11 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq } = require("drizzle-orm");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
 
         // Delete from database
         await db
@@ -321,12 +325,12 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await require("./db").getDb();
+        const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        const { appointments } = require("../drizzle/schema");
-        const { and, eq, gte, lte } = require("drizzle-orm");
-        const { generateWeeklyPlannerPDF } = require("./pdf-export");
+        // appointments already imported at top
+        // drizzle-orm functions already imported at top
+        // generateWeeklyPlannerPDF already imported at top
 
         // Fetch appointments for the date range
         const result = await db
