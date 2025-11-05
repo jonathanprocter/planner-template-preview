@@ -126,3 +126,7 @@
 - [x] Implement database fetch in WeeklyView to load synced events
 
 - [x] Fix DailyView to fetch and display events from database
+
+- [x] Identify SimplePractice calendar ID from synced calendars
+- [x] Update appointment styling: SimplePractice = white/ivory bg + cornflower border with thick left flag
+- [x] Keep holidays with current green solid style

@@ -52,17 +52,26 @@ export default function WeeklyView() {
   useEffect(() => {
     if (dbAppointments) {
       // Convert DB appointments to Event format
-      const dbEvents: Event[] = dbAppointments.map((apt: any) => ({
-        id: apt.googleEventId || `db-${apt.id}`,
-        title: apt.title,
-        startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-        color: apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
-        source: 'google',
-        date: apt.date,
-        category: apt.category || 'Other',
-        description: apt.description,
-      }));
+      const dbEvents: Event[] = dbAppointments.map((apt: any) => {
+        // Check if this is a SimplePractice calendar (appointments with lock emoji)
+        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+        const isHoliday = apt.calendarId?.includes('holiday');
+        
+        return {
+          id: apt.googleEventId || `db-${apt.id}`,
+          title: apt.title,
+          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          color: isHoliday ? '#34a853' : isSimplePractice ? '#6495ED' : apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
+          source: 'google',
+          date: apt.date,
+          category: apt.category || 'Other',
+          description: apt.description,
+          calendarId: apt.calendarId,
+          isSimplePractice,
+          isHoliday,
+        };
+      });
       
       // Merge with local events
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
@@ -367,13 +376,17 @@ export default function WeeklyView() {
             return (
               <EventTooltip key={event.id} event={event}>
                 <div
-                  className="absolute rounded-md px-2 py-1 text-white text-xs overflow-hidden z-10 cursor-move group shadow-sm border border-white/20"
+                  className="absolute rounded-md px-2 py-1 text-xs overflow-hidden z-10 cursor-move group shadow-sm"
                   style={{
                     left: `${x + 2}px`,
                     top: `${y}px`,
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
-                    backgroundColor: event.color,
+                    backgroundColor: (event as any).isSimplePractice ? '#F5F5F0' : event.color,
+                    color: (event as any).isSimplePractice ? '#333' : 'white',
+                    border: (event as any).isSimplePractice ? '1.5px solid #6495ED' : '1px solid rgba(255,255,255,0.2)',
+                    borderLeftWidth: (event as any).isSimplePractice ? '4px' : '1.5px',
+                    borderLeftColor: (event as any).isSimplePractice ? '#6495ED' : undefined,
                     opacity: draggingEvent === event.id ? 0.7 : 1,
                   }}
                   onMouseDown={(e) => handleDragStart(e, event.id)}
