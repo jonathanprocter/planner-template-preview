@@ -11,7 +11,7 @@ import {
   upsertAppointment,
 } from "./appointments";
 import { getDb } from "./db";
-import { appointments } from "../drizzle/schema";
+import { appointments, dailyNotes } from "../drizzle/schema";
 import { and, eq, gte, lte, or, like } from "drizzle-orm";
 import { generateWeeklyPlannerPDF } from "./pdf-export";
 
@@ -356,6 +356,95 @@ export const appRouter = router({
           pdf: pdfBuffer.toString('base64'),
           filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
         };
+      }),
+  }),
+
+  dailyNotes: router({
+    // Get notes for a date range
+    getByDateRange: protectedProcedure
+      .input(
+        z.object({
+          startDate: z.string(),
+          endDate: z.string(),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return [];
+
+        return await db
+          .select()
+          .from(dailyNotes)
+          .where(
+            and(
+              eq(dailyNotes.userId, ctx.user.id),
+              gte(dailyNotes.date, input.startDate),
+              lte(dailyNotes.date, input.endDate)
+            )
+          );
+      }),
+
+    // Get note for a specific date
+    getByDate: protectedProcedure
+      .input(z.object({ date: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return null;
+
+        const result = await db
+          .select()
+          .from(dailyNotes)
+          .where(
+            and(
+              eq(dailyNotes.userId, ctx.user.id),
+              eq(dailyNotes.date, input.date)
+            )
+          )
+          .limit(1);
+
+        return result[0] || null;
+      }),
+
+    // Upsert note for a specific date
+    upsert: protectedProcedure
+      .input(
+        z.object({
+          date: z.string(),
+          content: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Check if note exists
+        const existing = await db
+          .select()
+          .from(dailyNotes)
+          .where(
+            and(
+              eq(dailyNotes.userId, ctx.user.id),
+              eq(dailyNotes.date, input.date)
+            )
+          )
+          .limit(1);
+
+        if (existing.length > 0) {
+          // Update existing
+          await db
+            .update(dailyNotes)
+            .set({ content: input.content, updatedAt: new Date() })
+            .where(eq(dailyNotes.id, existing[0].id));
+          return { id: existing[0].id };
+        } else {
+          // Insert new
+          const result = await db.insert(dailyNotes).values({
+            userId: ctx.user.id,
+            date: input.date,
+            content: input.content,
+          });
+          return { id: result[0].insertId };
+        }
       }),
   }),
 });

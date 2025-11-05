@@ -57,6 +57,27 @@ export default function WeeklyView() {
     endDate: formatDateISO(weekDates[6]),
   });
 
+  // Fetch daily notes for the week
+  const { data: dailyNotes } = trpc.dailyNotes.getByDateRange.useQuery({
+    startDate: formatDateISO(weekDates[0]),
+    endDate: formatDateISO(weekDates[6]),
+  });
+
+  const [editingNoteDate, setEditingNoteDate] = useState<string | null>(null);
+  const [noteContent, setNoteContent] = useState<Record<string, string>>({});
+  const upsertNoteMutation = trpc.dailyNotes.upsert.useMutation();
+
+  // Initialize note content from fetched data
+  useEffect(() => {
+    if (dailyNotes) {
+      const notesMap: Record<string, string> = {};
+      dailyNotes.forEach((note: any) => {
+        notesMap[note.date] = note.content || '';
+      });
+      setNoteContent(notesMap);
+    }
+  }, [dailyNotes]);
+
   // Merge database appointments with local events
   useEffect(() => {
     if (dbAppointments) {
@@ -337,6 +358,31 @@ export default function WeeklyView() {
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
+        {/* Color Legend */}
+        <div className="absolute" style={{ left: "20px", top: "160px" }}>
+          <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
+            <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#6495ED' }}></div>
+                <span className="text-xs text-gray-600">SimplePractice</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#34a853' }}></div>
+                <span className="text-xs text-gray-600">Holidays</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4285f4' }}></div>
+                <span className="text-xs text-gray-600">Work</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ea4335' }}></div>
+                <span className="text-xs text-gray-600">Meetings</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Title */}
         <div
           className="absolute font-bold text-center"
@@ -360,16 +406,72 @@ export default function WeeklyView() {
           {/* Time Column + Day Headers */}
           <div className="flex border-b-2 border-gray-300" style={{ height: "60px" }}>
             <div style={{ width: "100px" }} className="flex-shrink-0"></div>
-            {dayNames.map((day, idx) => (
-              <div 
-                key={day}
-                className="flex-1 text-center font-semibold border-l border-gray-300 flex flex-col justify-center cursor-pointer hover:bg-blue-50 transition-colors"
-                onClick={() => handleDayHeaderClick(weekDates[idx])}
-              >
-                <div className="text-base">{day}</div>
-                <div className="text-sm text-gray-600">{weekDates[idx].getDate()}</div>
-              </div>
-            ))}
+            {dayNames.map((day, idx) => {
+              const isToday = formatDateISO(weekDates[idx]) === formatDateISO(new Date());
+              return (
+                <div 
+                  key={day}
+                  className={`flex-1 text-center font-semibold border-l border-gray-300 flex flex-col justify-center cursor-pointer hover:bg-blue-50 transition-colors ${
+                    isToday ? 'bg-blue-100' : ''
+                  }`}
+                  onClick={() => handleDayHeaderClick(weekDates[idx])}
+                >
+                  <div className={`text-base ${isToday ? 'text-blue-600' : ''}`}>{day}</div>
+                  <div className={`text-sm ${isToday ? 'text-blue-500' : 'text-gray-600'}`}>
+                    {weekDates[idx].getDate()}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Daily Notes Section */}
+          <div className="flex border-b border-gray-300" style={{ minHeight: "80px" }}>
+            <div style={{ width: "100px" }} className="flex-shrink-0 pr-3 pt-2 text-right text-xs text-gray-500 font-semibold">
+              Notes
+            </div>
+            {dayNames.map((day, idx) => {
+              const dateStr = formatDateISO(weekDates[idx]);
+              const isEditing = editingNoteDate === dateStr;
+              const content = noteContent[dateStr] || '';
+              
+              return (
+                <div 
+                  key={`note-${day}`}
+                  className="flex-1 border-l border-gray-300 p-2 relative group"
+                  onClick={() => {
+                    if (!isEditing) {
+                      setEditingNoteDate(dateStr);
+                    }
+                  }}
+                >
+                  {isEditing ? (
+                    <textarea
+                      value={content}
+                      onChange={(e) => {
+                        setNoteContent(prev => ({ ...prev, [dateStr]: e.target.value }));
+                      }}
+                      onBlur={async () => {
+                        setEditingNoteDate(null);
+                        if (content.trim()) {
+                          await upsertNoteMutation.mutateAsync({
+                            date: dateStr,
+                            content: content.trim(),
+                          });
+                        }
+                      }}
+                      className="w-full h-full text-xs border-none outline-none resize-none bg-yellow-50 p-1"
+                      placeholder="Add notes or goals for this day..."
+                      autoFocus
+                    />
+                  ) : (
+                    <div className="text-xs text-gray-600 whitespace-pre-wrap cursor-text hover:bg-yellow-50 transition-colors p-1 rounded min-h-[60px]">
+                      {content || <span className="text-gray-400 italic">Click to add notes...</span>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Time Grid */}
@@ -397,16 +499,37 @@ export default function WeeklyView() {
                   </div>
                   
                   {/* Day Columns */}
-                  {dayNames.map((day, dayIdx) => (
-                    <div 
-                      key={`${hour}-${dayIdx}`}
-                      className="flex-1 border-l border-gray-300 relative hover:bg-blue-50 transition-colors cursor-pointer"
-                      onClick={() => handleTimeSlotClick(dayIdx, hour)}
-                    >
-                      {/* Half-hour line */}
-                      <div className="absolute top-1/2 left-0 right-0 border-t border-gray-100"></div>
-                    </div>
-                  ))}
+                  {dayNames.map((day, dayIdx) => {
+                    const isToday = formatDateISO(weekDates[dayIdx]) === formatDateISO(new Date());
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    const showCurrentTimeIndicator = isToday && hour === currentHour;
+                    const indicatorPosition = (currentMinute / 60) * 100;
+                    
+                    return (
+                      <div 
+                        key={`${hour}-${dayIdx}`}
+                        className={`flex-1 border-l border-gray-300 relative hover:bg-blue-50 transition-colors cursor-pointer ${
+                          isToday ? 'bg-blue-50/30' : ''
+                        }`}
+                        onClick={() => handleTimeSlotClick(dayIdx, hour)}
+                      >
+                        {/* Half-hour line */}
+                        <div className="absolute top-1/2 left-0 right-0 border-t border-gray-100"></div>
+                        
+                        {/* Current time indicator */}
+                        {showCurrentTimeIndicator && (
+                          <div 
+                            className="absolute left-0 right-0 border-t-2 border-red-500 z-10"
+                            style={{ top: `${indicatorPosition}%` }}
+                          >
+                            <div className="absolute -left-1 -top-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               );
             })}

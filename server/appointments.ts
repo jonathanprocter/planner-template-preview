@@ -133,7 +133,10 @@ export async function syncGoogleCalendarAppointments(
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Get existing appointments
+  // Get list of calendar IDs being synced
+  const syncedCalendarIds = new Set(googleEvents.map((e) => e.calendarId));
+
+  // Get existing appointments only from calendars being synced
   const existing = await db
     .select()
     .from(appointments)
@@ -145,12 +148,17 @@ export async function syncGoogleCalendarAppointments(
   const incomingGoogleIds = new Set(googleEvents.map((e) => e.id));
 
   // Delete appointments that no longer exist in Google Calendar
+  // BUT only delete from calendars we're currently syncing
+  let deletedCount = 0;
   for (const appointment of existing) {
     if (
       appointment.googleEventId &&
+      appointment.calendarId &&
+      syncedCalendarIds.has(appointment.calendarId) &&
       !incomingGoogleIds.has(appointment.googleEventId)
     ) {
       await deleteAppointmentByGoogleId(userId, appointment.googleEventId);
+      deletedCount++;
     }
   }
 
@@ -173,8 +181,6 @@ export async function syncGoogleCalendarAppointments(
 
   return {
     synced: googleEvents.length,
-    deleted: existing.filter(
-      (a) => a.googleEventId && !incomingGoogleIds.has(a.googleEventId)
-    ).length,
+    deleted: deletedCount,
   };
 }

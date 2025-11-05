@@ -59,3 +59,21 @@ export const appointments = mysqlTable("appointments", {
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
+
+/**
+ * Daily notes table for storing notes and goals for each day
+ */
+export const dailyNotes = mysqlTable("dailyNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  /** User ID who owns this note */
+  userId: int("userId").notNull(),
+  /** Date in YYYY-MM-DD format */
+  date: varchar("date", { length: 10 }).notNull(),
+  /** Note content */
+  content: text("content"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DailyNote = typeof dailyNotes.$inferSelect;
+export type InsertDailyNote = typeof dailyNotes.$inferInsert;

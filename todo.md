@@ -242,3 +242,28 @@
 
 ## Reposition Half-Hour Labels to Middle Line
 - [x] Move :30 time labels from bottom to middle of hour block (aligned with half-hour grid line)
+
+## Fix Calendar Sync to Remove Canceled/Moved Appointments
+- [x] Investigate why sync isn't removing canceled/moved appointments
+- [x] Fix sync logic to properly detect and remove appointments no longer in Google Calendar
+- [ ] Test sync with canceled appointments
+- [ ] Test sync with moved appointments
+
+## Add Daily Notes Section to Weekly View
+- [x] Design notes section layout for each day column
+- [x] Add database schema for daily notes
+- [x] Add API endpoints for daily notes (get, upsert)
+- [x] Implement notes input/editing functionality
+- [x] Display notes in weekly view
+
+## Implement Current Day and Time Highlighting
+- [x] Add visual highlight for current day column in weekly view
+- [x] Add visual highlight for current time row in weekly view
+- [ ] Add visual highlight for current day in daily view
+- [ ] Add current time indicator line in daily view
+
+## Add Color-Coding System for Appointment Types
+- [x] Define color scheme for different appointment categories
+- [x] Update appointment rendering to use category colors
+- [x] Add legend/key to explain color coding
+- [x] Ensure colors work well with SimplePractice styling
