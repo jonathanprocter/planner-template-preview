@@ -1,5 +1,18 @@
 import PDFDocument from 'pdfkit';
 
+// Remove emojis and special characters from text
+function removeEmojis(text: string): string {
+  // Remove emojis, symbols, and other non-standard characters
+  // Using surrogate pair ranges for emoji support without 'u' flag
+  return text
+    .replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '') // Surrogate pairs (emojis)
+    .replace(/[\u2600-\u27BF]/g, '') // Misc symbols
+    .replace(/[\uFE00-\uFE0F]/g, '') // Variation selectors
+    .replace(/[\u200D]/g, '') // Zero-width joiner
+    .replace(/[\u20E3]/g, '') // Combining enclosing keycap
+    .trim();
+}
+
 interface Appointment {
   id: number | string;
   title: string;
@@ -119,20 +132,23 @@ function generateWeeklyGridPage(
   // Draw appointments
   appointments.forEach(apt => {
     const aptDate = new Date(apt.startTime);
+    // Convert UTC to EST (UTC-5)
+    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
     const dayIndex = weekDays.findIndex(d => 
-      d.getFullYear() === aptDate.getFullYear() &&
-      d.getMonth() === aptDate.getMonth() &&
-      d.getDate() === aptDate.getDate()
+      d.getFullYear() === estDate.getFullYear() &&
+      d.getMonth() === estDate.getMonth() &&
+      d.getDate() === estDate.getDate()
     );
 
     if (dayIndex === -1) return;
 
-    const hour = aptDate.getHours();
-    const minute = aptDate.getMinutes();
+    const hour = estDate.getHours();
+    const minute = estDate.getMinutes();
     
     const endDate = new Date(apt.endTime);
-    const endHour = endDate.getHours();
-    const endMinute = endDate.getMinutes();
+    const estEndDate = new Date(endDate.getTime() - 5 * 60 * 60 * 1000);
+    const endHour = estEndDate.getHours();
+    const endMinute = estEndDate.getMinutes();
     
     if (hour < startHour || hour > endHour) return;
 
@@ -167,7 +183,8 @@ function generateWeeklyGridPage(
     // Appointment text
     doc.fontSize(5).font('Helvetica');
     const timeStr = `${hour % 12 || 12}:${minute.toString().padStart(2, '0')}${hour < 12 ? 'a' : 'p'}`;
-    doc.text(`${timeStr} ${apt.title}`, x + 6, startY + 2, {
+    const cleanTitle = removeEmojis(apt.title);
+    doc.text(`${timeStr} ${cleanTitle}`, x + 6, startY + 2, {
       width: width - 8,
       height: height - 4,
       ellipsis: true
@@ -236,23 +253,28 @@ function generateDailyGridPage(
     }
   }
 
-  // Filter appointments for this day
+  // Filter appointments for this day (convert to EST for comparison)
   const dayAppointments = appointments.filter(apt => {
     const aptDate = new Date(apt.startTime);
-    return aptDate.getFullYear() === day.getFullYear() &&
-           aptDate.getMonth() === day.getMonth() &&
-           aptDate.getDate() === day.getDate();
+    // Convert UTC to EST (UTC-5)
+    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
+    return estDate.getFullYear() === day.getFullYear() &&
+           estDate.getMonth() === day.getMonth() &&
+           estDate.getDate() === day.getDate();
   });
 
   // Draw appointments
   dayAppointments.forEach(apt => {
     const aptDate = new Date(apt.startTime);
-    const hour = aptDate.getHours();
-    const minute = aptDate.getMinutes();
+    // Convert UTC to EST (UTC-5)
+    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
+    const hour = estDate.getHours();
+    const minute = estDate.getMinutes();
     
     const endDate = new Date(apt.endTime);
-    const endHour = endDate.getHours();
-    const endMinute = endDate.getMinutes();
+    const estEndDate = new Date(endDate.getTime() - 5 * 60 * 60 * 1000);
+    const endHour = estEndDate.getHours();
+    const endMinute = estEndDate.getMinutes();
     
     if (hour < startHour || hour > endHour) return;
 
@@ -283,7 +305,8 @@ function generateDailyGridPage(
     // Appointment text
     doc.fontSize(8).font('Helvetica-Bold');
     const timeStr = `${hour % 12 || 12}:${minute.toString().padStart(2, '0')}${hour < 12 ? 'AM' : 'PM'}`;
-    doc.text(`${timeStr} - ${apt.title}`, x + 6, startY + 3, {
+    const cleanTitle = removeEmojis(apt.title);
+    doc.text(`${timeStr} - ${cleanTitle}`, x + 6, startY + 3, {
       width: width - 12,
       ellipsis: true
     });

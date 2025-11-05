@@ -229,3 +229,10 @@
 - [x] Test sync with newly added appointments
 - [x] Add bottom hour labels to weekly view grid for better readability
 - [x] Ensure both weekly and daily views refresh after sync to show changes
+
+## Critical PDF Export Fixes
+- [x] Ensure all PDF times are in EST timezone (match web application exactly)
+- [x] Verify appointment times in PDF match web application times
+- [x] Test bidirectional links in PDF (weekly to daily, daily to weekly)
+- [x] Add emoji filtering to remove lock 🔒 and other emojis from appointment titles in PDF
+- [x] Test PDF export with all fixes applied
