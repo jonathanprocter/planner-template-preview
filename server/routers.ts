@@ -213,6 +213,105 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Create new appointment
+    createAppointment: protectedProcedure
+      .input(
+        z.object({
+          title: z.string(),
+          startTime: z.string(),
+          endTime: z.string(),
+          date: z.string(),
+          category: z.string().optional(),
+          description: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+
+        // Insert into database
+        const result = await db
+          .insert(appointments)
+          .values({
+            userId: ctx.user.id,
+            title: input.title,
+            startTime: new Date(`${input.date}T${input.startTime}`),
+            endTime: new Date(`${input.date}T${input.endTime}`),
+            date: input.date,
+            category: input.category || 'Other',
+            description: input.description || '',
+            googleEventId: `local-${Date.now()}`,
+            calendarId: 'local',
+          })
+          .returning();
+
+        return { success: true, appointment: result[0] };
+      }),
+
+    // Update appointment time/date
+    updateAppointment: protectedProcedure
+      .input(
+        z.object({
+          googleEventId: z.string(),
+          startTime: z.string(),
+          endTime: z.string(),
+          date: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq } = require("drizzle-orm");
+
+        // Update in database
+        await db
+          .update(appointments)
+          .set({
+            startTime: new Date(`${input.date}T${input.startTime}`),
+            endTime: new Date(`${input.date}T${input.endTime}`),
+            date: input.date,
+          })
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          );
+
+        return { success: true };
+      }),
+
+    // Delete appointment
+    deleteAppointment: protectedProcedure
+      .input(
+        z.object({
+          googleEventId: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq } = require("drizzle-orm");
+
+        // Delete from database
+        await db
+          .delete(appointments)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          );
+
+        return { success: true };
+      }),
+
     // Export appointments to PDF
     exportPDF: protectedProcedure
       .input(

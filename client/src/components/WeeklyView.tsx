@@ -22,6 +22,11 @@ export default function WeeklyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
   const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
+  
+  const updateMutation = trpc.appointments.updateAppointment.useMutation();
+  const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
+  const createMutation = trpc.appointments.createAppointment.useMutation();
+  const utils = trpc.useUtils();
 
   // Fetch appointments from database for current week
   const getWeekDates = () => {
@@ -126,12 +131,31 @@ export default function WeeklyView() {
     setDialogOpen(true);
   };
 
-  const handleSaveAppointment = (eventData: Omit<Event, "id">) => {
+  const handleSaveAppointment = async (eventData: Omit<Event, "id">) => {
+    // Add to local store immediately for responsiveness
     const newEvent: Event = {
       ...eventData,
       id: Date.now().toString(),
     };
     eventStore.addEvent(newEvent);
+
+    // Save to database
+    try {
+      await createMutation.mutateAsync({
+        title: eventData.title,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        date: eventData.date || formatDateISO(new Date()),
+        category: eventData.category,
+        description: eventData.description,
+      });
+      // Refresh data from database
+      utils.appointments.getByDateRange.invalidate();
+    } catch (error) {
+      console.error('Failed to create appointment:', error);
+      // Remove from local store on error
+      eventStore.deleteEvent(newEvent.id);
+    }
   };
 
   const handleDragStart = (e: React.MouseEvent, eventId: string) => {
@@ -151,7 +175,7 @@ export default function WeeklyView() {
     e.preventDefault();
   };
 
-  const handleDragEnd = (e: React.MouseEvent) => {
+  const handleDragEnd = async (e: React.MouseEvent) => {
     if (!draggingEvent) return;
     
     const gridContainer = document.getElementById('weekly-grid');
@@ -180,12 +204,36 @@ export default function WeeklyView() {
         const newEndH = Math.floor(newEndMinutes / 60);
         const newEndM = newEndMinutes % 60;
         const newEndTime = `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`;
+        const newDateISO = formatDateISO(newDate);
         
+        // Update local state immediately for responsiveness
         eventStore.updateEvent(draggingEvent, {
           startTime: newStartTime,
           endTime: newEndTime,
-          date: formatDateISO(newDate),
+          date: newDateISO,
         });
+        
+        // Save to database if it's a Google Calendar event
+        if (event.source === 'google' && event.id) {
+          try {
+            await updateMutation.mutateAsync({
+              googleEventId: event.id,
+              startTime: newStartTime,
+              endTime: newEndTime,
+              date: newDateISO,
+            });
+            // Refresh data from database
+            utils.appointments.getByDateRange.invalidate();
+          } catch (error) {
+            console.error('Failed to update appointment:', error);
+            // Revert on error
+            eventStore.updateEvent(draggingEvent, {
+              startTime: event.startTime,
+              endTime: event.endTime,
+              date: event.date || '',
+            });
+          }
+        }
       }
     }
     

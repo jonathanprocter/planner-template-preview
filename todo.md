@@ -167,3 +167,13 @@
 - [x] Generate PDF with current week's appointments
 - [x] Optimize PDF for reMarkable 2 Pro (509×679 points, optimized dimensions)
 - [x] Test PDF download and transfer to reMarkable (ready for user testing)
+
+## Bi-directional Calendar Functionality
+
+- [x] Add drag-and-drop to reschedule appointments to different times/days
+- [ ] Add resize handles to change appointment duration (SKIPPED - not needed for e-ink)
+- [x] Add click empty slot to create new appointments
+- [x] Add delete button in appointment details modal
+- [x] Create backend endpoints to update/delete/create appointments in database
+- [x] Test drag, create, delete operations
+- [x] All changes save to database automatically

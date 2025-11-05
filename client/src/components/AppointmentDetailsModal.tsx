@@ -28,6 +28,8 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
 
   const updateNotesMutation = trpc.appointments.updateNotes.useMutation();
   const updateTagsMutation = trpc.appointments.updateNoteTags.useMutation();
+  const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
+  const utils = trpc.useUtils();
 
   const appointmentId = appointment ? appointment.id : null;
   const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
@@ -108,6 +110,25 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     setIsEditing(false);
     setSaveStatus("idle");
     toast.success("Notes updated!");
+  };
+
+  const handleDelete = async () => {
+    if (!appointment || !hasCalendarId) return;
+    
+    const confirmed = window.confirm(`Are you sure you want to delete "${appointment.title}"?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteMutation.mutateAsync({
+        googleEventId: appointment.id,
+      });
+      toast.success("Appointment deleted successfully!");
+      utils.appointments.getByDateRange.invalidate();
+      onClose();
+    } catch (error) {
+      console.error('Failed to delete appointment:', error);
+      toast.error("Failed to delete appointment");
+    }
   };
 
   const handleTagToggle = async (tagId: string) => {
@@ -309,9 +330,16 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
           )}
         </div>
 
-        {/* Close button */}
+        {/* Action buttons */}
         {!isEditing && (
-          <div className="flex justify-end mt-6">
+          <div className="flex justify-between mt-6">
+            <button
+              onClick={handleDelete}
+              disabled={!hasCalendarId || deleteMutation.isPending}
+              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </button>
             <button
               onClick={onClose}
               className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
