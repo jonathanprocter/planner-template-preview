@@ -175,3 +175,34 @@
     }
   }
 }
+
+/* reMarkable 2 Pro E-ink Optimizations */
+@layer utilities {
+  /* Disable animations and transitions for e-ink display */
+  * {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+  
+  /* Increase minimum touch target sizes for stylus/finger */
+  button, [role="button"], a {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem 1rem;
+  }
+  
+  /* Increase font sizes for better e-ink readability */
+  body {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  
+  /* Higher contrast for e-ink display */
+  .text-gray-500 {
+    color: #666 !important;
+  }
+  
+  .text-gray-400 {
+    color: #777 !important;
+  }
+}

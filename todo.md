@@ -154,3 +154,10 @@
 - [x] Add category filter to calendar views (can be added later if needed)
 
 - [x] Move Google Calendar sync button to avoid Saturday/Sunday overlap
+
+- [x] Research reMarkable 2 Pro specifications (11.8" display, 2160×1620, 229 PPI)
+- [x] Set viewport dimensions for reMarkable 2 Pro (1620×2160 pixels)
+- [x] Optimize colors for e-ink display (higher contrast)
+- [x] Increase touch target sizes for finger/stylus interaction (44px minimum)
+- [x] Remove animations and transitions for e-ink performance
+- [x] Test layout on reMarkable 2 Pro dimensions
