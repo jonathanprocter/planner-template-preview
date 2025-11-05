@@ -293,3 +293,8 @@
 - [x] Update WeeklyView to stop displaying hours at 22:00 (10 PM)
 - [x] Update DailyView to stop displaying hours at 22:00 (10 PM)
 - [x] Verify PDF export already ends at 22:00
+
+## Remove 22:00 Hour Box
+- [x] Change weekly view to end at 21:00 (so last appointment slot is 21:00-22:00)
+- [x] Change daily view to end at 21:00 (so last appointment slot is 21:00-22:00)
+- [x] Verify appointments can still be scheduled up to 22:00 but 22:00 hour label is not shown

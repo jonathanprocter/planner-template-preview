@@ -123,7 +123,7 @@ export default function WeeklyView() {
   const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hours = Array.from({ length: 17 }, (_, i) => i + 6); // 6am to 10pm (22:00)
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm (21:00), appointments can go until 22:00
 
   const getEventDayIndex = (event: Event) => {
     if (!event.date) return 0;
