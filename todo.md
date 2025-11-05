@@ -267,3 +267,12 @@
 - [x] Update appointment rendering to use category colors
 - [x] Add legend/key to explain color coding
 - [x] Ensure colors work well with SimplePractice styling
+
+## Critical Bug Fixes
+- [x] Fix PDF export formatting to match SimplePractice styling
+- [x] Fix PDF bidirectional links (week view to daily view)
+- [x] Fix UI layout - top elements bleeding into weekly view
+- [x] Fix daily view appointment deletion (currently deletes all appointments for the day)
+- [x] Fix sync to handle moved/changed appointments properly
+- [x] Fix duplicate appointments appearing (e.g., Sarah on Monday appearing multiple times)
+- [x] Verify appointment removal works correctly after sync

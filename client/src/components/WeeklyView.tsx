@@ -400,7 +400,7 @@ export default function WeeklyView() {
         <div 
           id="weekly-grid"
           className="absolute" 
-          style={{ top: "150px", left: "20px", right: "20px" }}
+          style={{ top: "300px", left: "20px", right: "20px" }}
         >
           
           {/* Time Column + Day Headers */}

@@ -57,6 +57,10 @@ export default function DailyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
+  // Add delete mutation
+  const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
+  const utils = trpc.useUtils();
+
   // Get date from URL parameter or use today
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
@@ -222,8 +226,24 @@ export default function DailyView() {
     setNewEventTitle("");
   };
 
-  const handleDeleteEvent = (id: string) => {
-    eventStore.deleteEvent(id);
+  const handleDeleteEvent = async (id: string) => {
+    // Find the event to get its googleEventId
+    const event = events.find(e => e.id === id);
+    if (!event) return;
+
+    try {
+      // If it's a Google Calendar event, delete from database
+      if (event.source === 'google' && event.id) {
+        await deleteMutation.mutateAsync({ googleEventId: event.id });
+        // Invalidate queries to refresh the view
+        utils.appointments.getByDateRange.invalidate();
+      } else {
+        // For local events, delete from eventStore
+        eventStore.deleteEvent(id);
+      }
+    } catch (error) {
+      console.error('Failed to delete appointment:', error);
+    }
   };
 
   const handleDragStart = (e: React.MouseEvent, eventId: string) => {

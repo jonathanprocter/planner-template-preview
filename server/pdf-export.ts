@@ -178,7 +178,7 @@ function generateWeeklyGridPage(
 
     // Add link to daily page (page 2 = Monday, page 3 = Tuesday, etc.)
     const targetPage = dayIndex + 2;
-    doc.link(x, startY, width, height, `#page=${targetPage}`);
+    doc.link(x, startY, width, height, `page=${targetPage}`);
 
     // Appointment text
     doc.fontSize(5).font('Helvetica');
@@ -215,9 +215,12 @@ function generateDailyGridPage(
 
   // Add "← Week View" link back to page 1
   doc.fontSize(8).font('Helvetica')
-    .fillColor('#0000EE')
-    .text('← Week View', margin, 20, { link: '#page=1', underline: true })
-    .fillColor('#000000');
+    .fillColor('#0000EE');
+  const backLinkText = '← Week View';
+  const backLinkWidth = doc.widthOfString(backLinkText);
+  doc.text(backLinkText, margin, 20, { underline: true });
+  doc.link(margin, 20, backLinkWidth, 10, 'page=1');
+  doc.fillColor('#000000');
 
   // Grid setup
   const gridTop = headerHeight;
