@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type Event } from "@/lib/eventStore";
 import { trpc } from "@/lib/trpc";
@@ -13,52 +13,101 @@ interface AppointmentDetailsModalProps {
 export function AppointmentDetailsModal({ appointment, open, onClose }: AppointmentDetailsModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   const updateNotesMutation = trpc.appointments.updateNotes.useMutation();
 
-  if (!appointment) return null;
+  const appointmentId = appointment ? appointment.id : null;
+  const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
+  const isHoliday = appointment ? (appointment as any).isHoliday : false;
+  const hasCalendarId = appointment ? !!(appointment as any).calendarId : false;
 
-  const isSimplePractice = (appointment as any).isSimplePractice;
-  const isHoliday = (appointment as any).isHoliday;
-  const appointmentId = (appointment as any).calendarId ? appointment.id : null;
+  // Auto-save effect with debouncing
+  useEffect(() => {
+    if (!isEditing || !appointmentId || !hasCalendarId) return;
+
+    // Don't auto-save if notes haven't changed
+    if (editedNotes === (appointment?.description || "")) return;
+
+    setSaveStatus("saving");
+
+    // Debounce: wait 2 seconds after user stops typing
+    const timeoutId = setTimeout(async () => {
+      try {
+        await updateNotesMutation.mutateAsync({
+          googleEventId: appointmentId,
+          notes: editedNotes,
+        });
+        
+        // Update local appointment object
+        if (appointment) {
+          appointment.description = editedNotes;
+        }
+        
+        setSaveStatus("saved");
+        
+        // Reset to idle after 2 seconds
+        setTimeout(() => {
+          setSaveStatus("idle");
+        }, 2000);
+      } catch (error) {
+        setSaveStatus("error");
+        console.error("Error auto-saving notes:", error);
+        
+        // Reset to idle after 3 seconds
+        setTimeout(() => {
+          setSaveStatus("idle");
+        }, 3000);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timeoutId);
+  }, [editedNotes, isEditing, appointmentId, hasCalendarId, appointment]);
+
+  if (!appointment) return null;
 
   const handleEditClick = () => {
     setEditedNotes(appointment.description || "");
     setIsEditing(true);
-  };
-
-  const handleSaveClick = async () => {
-    if (!appointmentId) {
-      toast.error("Cannot update notes for local appointments");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await updateNotesMutation.mutateAsync({
-        googleEventId: appointmentId,
-        notes: editedNotes,
-      });
-      
-      // Update local appointment object
-      if (appointment) {
-        appointment.description = editedNotes;
-      }
-      
-      toast.success("Notes saved successfully!");
-      setIsEditing(false);
-    } catch (error) {
-      toast.error("Failed to save notes");
-      console.error("Error saving notes:", error);
-    } finally {
-      setIsSaving(false);
-    }
+    setSaveStatus("idle");
   };
 
   const handleCancelClick = () => {
     setIsEditing(false);
     setEditedNotes("");
+    setSaveStatus("idle");
+  };
+
+  const handleDoneClick = () => {
+    setIsEditing(false);
+    setSaveStatus("idle");
+    toast.success("Notes updated!");
+  };
+
+  const getSaveStatusText = () => {
+    switch (saveStatus) {
+      case "saving":
+        return "💾 Saving...";
+      case "saved":
+        return "✓ Saved";
+      case "error":
+        return "⚠️ Error saving";
+      default:
+        return "";
+    }
+  };
+
+  const getSaveStatusColor = () => {
+    switch (saveStatus) {
+      case "saving":
+        return "text-blue-600";
+      case "saved":
+        return "text-green-600";
+      case "error":
+        return "text-red-600";
+      default:
+        return "";
+    }
   };
 
   return (
@@ -99,8 +148,15 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
           {/* Client Notes / Description */}
           <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-sm text-amber-700">📝 Client Notes</h3>
-              {!isEditing && appointmentId && (
+              <div className="flex items-center gap-3">
+                <h3 className="font-semibold text-sm text-amber-700">📝 Client Notes</h3>
+                {isEditing && saveStatus !== "idle" && (
+                  <span className={`text-xs font-medium ${getSaveStatusColor()}`}>
+                    {getSaveStatusText()}
+                  </span>
+                )}
+              </div>
+              {!isEditing && hasCalendarId && (
                 <button
                   onClick={handleEditClick}
                   className="text-sm px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded transition-colors"
@@ -116,23 +172,27 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
                   value={editedNotes}
                   onChange={(e) => setEditedNotes(e.target.value)}
                   className="w-full min-h-[150px] p-3 border border-amber-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 resize-vertical"
-                  placeholder="Enter client notes here..."
+                  placeholder="Enter client notes here... (auto-saves as you type)"
+                  autoFocus
                 />
-                <div className="flex gap-2 justify-end">
-                  <button
-                    onClick={handleCancelClick}
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors disabled:opacity-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveClick}
-                    disabled={isSaving}
-                    className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50"
-                  >
-                    {isSaving ? 'Saving...' : 'Save'}
-                  </button>
+                <div className="flex gap-2 justify-between items-center">
+                  <p className="text-xs text-gray-500 italic">
+                    Changes are saved automatically after you stop typing
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleCancelClick}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDoneClick}
+                      className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (

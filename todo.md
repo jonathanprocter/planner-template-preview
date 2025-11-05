@@ -141,3 +141,7 @@
 - [x] Create backend endpoint to update appointment notes
 - [x] Integrate save functionality with database
 - [x] Test edit and save flow
+
+- [x] Add debounced auto-save with useEffect hook
+- [x] Add visual save status indicator (Saving.../Saved/Error)
+- [x] Test auto-save with 2-3 second delay
