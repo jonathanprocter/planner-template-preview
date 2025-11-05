@@ -18,10 +18,12 @@ export async function generateWeeklyPlannerPDF(
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
-      // Create PDF document optimized for reMarkable 2 Pro
+      // Create PDF document optimized for reMarkable Paper Pro
+      // Weekly view: Landscape 679×509 points
+      // Daily views: Portrait 509×679 points
       const doc = new PDFDocument({
-        size: [509, 679], // reMarkable 2 Pro dimensions in points
-        margins: { top: 30, bottom: 30, left: 20, right: 20 },
+        size: [679, 509], // Start with landscape for weekly view
+        margins: { top: 20, bottom: 20, left: 20, right: 20 },
       });
 
       const buffers: Buffer[] = [];
@@ -37,12 +39,12 @@ export async function generateWeeklyPlannerPDF(
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // Page 1: Weekly Overview (Grid Layout)
+      // Page 1: Weekly Overview (Landscape - Grid Layout)
       generateWeeklyGridPage(doc, weekDays, appointments);
 
-      // Pages 2-8: Daily Views (Grid Layout)
+      // Pages 2-8: Daily Views (Portrait - Grid Layout)
       weekDays.forEach((day, index) => {
-        doc.addPage();
+        doc.addPage({ size: [509, 679] }); // Portrait orientation for daily views
         generateDailyGridPage(doc, day, appointments);
       });
 
@@ -58,8 +60,8 @@ function generateWeeklyGridPage(
   weekDays: Date[],
   appointments: Appointment[]
 ) {
-  const pageWidth = 509;
-  const pageHeight = 679;
+  const pageWidth = 679; // Landscape orientation
+  const pageHeight = 509;
   const margin = 20;
   const headerHeight = 60;
   
@@ -102,83 +104,77 @@ function generateWeeklyGridPage(
   }
 
   // Horizontal lines and time labels
-  for (let hour = 0; hour <= totalHours; hour++) {
-    const y = gridTop + 25 + hour * hourHeight;
+  doc.fontSize(6).font('Helvetica');
+  for (let i = 0; i <= totalHours; i++) {
+    const y = gridTop + 25 + i * hourHeight;
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
     
-    if (hour < totalHours) {
-      const displayHour = startHour + hour;
-      const timeLabel = `${displayHour.toString().padStart(2, '0')}:00`;
-      doc.fontSize(6).font('Helvetica').fillColor('#000000')
-        .text(timeLabel, margin + 2, y + 2, { width: timeColumnWidth - 4 });
+    if (i < totalHours) {
+      const hour = startHour + i;
+      const timeLabel = hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`;
+      doc.text(timeLabel, margin + 2, y + 2, { width: timeColumnWidth - 4, align: 'left' });
     }
   }
 
   // Draw appointments
-  weekDays.forEach((day, dayIndex) => {
-    const dayAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.startTime);
-      return aptDate.toDateString() === day.toDateString();
-    });
+  appointments.forEach(apt => {
+    const aptDate = new Date(apt.startTime);
+    const dayIndex = weekDays.findIndex(d => 
+      d.getFullYear() === aptDate.getFullYear() &&
+      d.getMonth() === aptDate.getMonth() &&
+      d.getDate() === aptDate.getDate()
+    );
 
-    dayAppointments.forEach(apt => {
-      const startTime = new Date(apt.startTime);
-      const endTime = new Date(apt.endTime);
-      
-      // Convert to EST
-      const estStartTime = new Date(startTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      const estEndTime = new Date(endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-      
-      const startHourFloat = estStartTime.getHours() + estStartTime.getMinutes() / 60;
-      const endHourFloat = estEndTime.getHours() + estEndTime.getMinutes() / 60;
-      
-      if (startHourFloat >= startHour && startHourFloat <= endHour) {
-        const startY = gridTop + 25 + (startHourFloat - startHour) * hourHeight;
-        const height = Math.max((endHourFloat - startHourFloat) * hourHeight, 10);
-        const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
-        const width = columnWidth - 4;
+    if (dayIndex === -1) return;
 
-        // Determine color based on calendar
-        const isSimplePractice = apt.calendarId?.includes('6ac7ac649a345a77') || 
-                                  apt.calendarId?.includes('79dfcb90ce59b1b0');
-        
-        if (isSimplePractice) {
-          // SimplePractice: white bg with cornflower border
-          doc.rect(x, startY, width, height)
-            .fillAndStroke('#F5F5F0', '#6495ED');
-          doc.lineWidth(1.5);
-          doc.moveTo(x, startY).lineTo(x, startY + height).stroke('#6495ED');
-          doc.lineWidth(0.5);
-          
-          // Add clickable link to jump to daily page
-          doc.link(x, startY, width, height, `#daily-page-${dayIndex}`);
-          doc.ref({ Type: 'Action', S: 'GoTo', D: [`daily-page-${dayIndex}`, 'FitH', 0] });
-          
-          doc.fontSize(5).font('Helvetica').fillColor('#333333')
-            .text(apt.title, x + 2, startY + 2, { 
-              width: width - 4, 
-              height: height - 4,
-              ellipsis: true 
-            });
-        } else {
-          // Other events: green
-          doc.rect(x, startY, width, height)
-            .fillAndStroke('#90EE90', '#228B22');
-          
-          // Add clickable link to jump to daily page
-          doc.link(x, startY, width, height, `#daily-page-${dayIndex}`);
-          doc.ref({ Type: 'Action', S: 'GoTo', D: [`daily-page-${dayIndex}`, 'FitH', 0] });
-          
-          doc.fontSize(5).font('Helvetica').fillColor('#000000')
-            .text(apt.title, x + 2, startY + 2, { 
-              width: width - 4, 
-              height: height - 4,
-              ellipsis: true 
-            });
-        }
-      }
+    const hour = aptDate.getHours();
+    const minute = aptDate.getMinutes();
+    
+    const endDate = new Date(apt.endTime);
+    const endHour = endDate.getHours();
+    const endMinute = endDate.getMinutes();
+    
+    if (hour < startHour || hour > endHour) return;
+
+    const startY = gridTop + 25 + (hour - startHour + minute / 60) * hourHeight;
+    const duration = (endHour - hour) + (endMinute - minute) / 60;
+    const height = Math.max(duration * hourHeight, 10);
+
+    const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
+    const width = columnWidth - 4;
+
+    // Check if SimplePractice appointment
+    const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
+                            apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+
+    if (isSimplePractice) {
+      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
+      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
+      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
+      doc.fillColor('#000000');
+    } else {
+      // Other events: green background
+      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
+      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#000000');
+    }
+
+    // Add link to daily page (page 2 = Monday, page 3 = Tuesday, etc.)
+    const targetPage = dayIndex + 2;
+    doc.link(x, startY, width, height, `#page=${targetPage}`);
+
+    // Appointment text
+    doc.fontSize(5).font('Helvetica');
+    const timeStr = `${hour % 12 || 12}:${minute.toString().padStart(2, '0')}${hour < 12 ? 'a' : 'p'}`;
+    doc.text(`${timeStr} ${apt.title}`, x + 6, startY + 2, {
+      width: width - 8,
+      height: height - 4,
+      ellipsis: true
     });
   });
+
+  doc.fillColor('#000000').strokeColor('#000000');
 }
 
 function generateDailyGridPage(
@@ -186,7 +182,7 @@ function generateDailyGridPage(
   day: Date,
   appointments: Appointment[]
 ) {
-  const pageWidth = 509;
+  const pageWidth = 509; // Portrait orientation
   const pageHeight = 679;
   const margin = 20;
   const headerHeight = 50;
@@ -194,29 +190,23 @@ function generateDailyGridPage(
   // Title
   const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
   const dateStr = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  
   doc.fontSize(14).font('Helvetica-Bold')
-    .text(dayName, margin, 20, { width: pageWidth - 2 * margin, align: 'center' });
-  doc.fontSize(10).font('Helvetica')
-    .text(dateStr, margin, 38, { width: pageWidth - 2 * margin, align: 'center' });
-  
-  // Add "Back to Week" link button
-  const buttonX = pageWidth - margin - 80;
-  const buttonY = 20;
-  const buttonWidth = 75;
-  const buttonHeight = 20;
-  doc.rect(buttonX, buttonY, buttonWidth, buttonHeight)
-    .fillAndStroke('#6495ED', '#4169E1');
-  doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
-    .text('← Week View', buttonX, buttonY + 6, { width: buttonWidth, align: 'center' });
-  doc.link(buttonX, buttonY, buttonWidth, buttonHeight, '#weekly-overview');
-  doc.ref({ Type: 'Action', S: 'GoTo', D: ['weekly-overview', 'FitH', 0] });
+    .text(`${dayName}, ${dateStr}`, margin, 20, {
+      width: pageWidth - 2 * margin,
+      align: 'center'
+    });
+
+  // Add "← Week View" link back to page 1
+  doc.fontSize(8).font('Helvetica')
+    .fillColor('#0000EE')
+    .text('← Week View', margin, 20, { link: '#page=1', underline: true })
+    .fillColor('#000000');
 
   // Grid setup
   const gridTop = headerHeight;
   const gridHeight = pageHeight - headerHeight - 40;
   const timeColumnWidth = 50;
-  const appointmentColumnWidth = pageWidth - 2 * margin - timeColumnWidth;
+  const contentWidth = pageWidth - 2 * margin - timeColumnWidth;
   
   // Hours to display (6 AM to 11 PM)
   const startHour = 6;
@@ -227,88 +217,86 @@ function generateDailyGridPage(
   // Draw grid
   doc.strokeColor('#CCCCCC').lineWidth(0.5);
   
-  // Vertical lines
-  doc.moveTo(margin, gridTop).lineTo(margin, gridTop + gridHeight).stroke();
+  // Vertical line separating time from content
   doc.moveTo(margin + timeColumnWidth, gridTop).lineTo(margin + timeColumnWidth, gridTop + gridHeight).stroke();
+  
+  // Right border
   doc.moveTo(pageWidth - margin, gridTop).lineTo(pageWidth - margin, gridTop + gridHeight).stroke();
 
   // Horizontal lines and time labels
-  for (let hour = 0; hour <= totalHours; hour++) {
-    const y = gridTop + hour * hourHeight;
+  doc.fontSize(8).font('Helvetica');
+  for (let i = 0; i <= totalHours; i++) {
+    const y = gridTop + i * hourHeight;
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
     
-    if (hour < totalHours) {
-      const displayHour = startHour + hour;
-      const timeLabel = `${displayHour.toString().padStart(2, '0')}:00`;
-      doc.fontSize(8).font('Helvetica').fillColor('#000000')
-        .text(timeLabel, margin + 5, y + 5, { width: timeColumnWidth - 10 });
+    if (i < totalHours) {
+      const hour = startHour + i;
+      const timeLabel = hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`;
+      doc.text(timeLabel, margin + 2, y + 5, { width: timeColumnWidth - 4, align: 'left' });
     }
   }
 
-  // Get appointments for this day
+  // Filter appointments for this day
   const dayAppointments = appointments.filter(apt => {
     const aptDate = new Date(apt.startTime);
-    return aptDate.toDateString() === day.toDateString();
+    return aptDate.getFullYear() === day.getFullYear() &&
+           aptDate.getMonth() === day.getMonth() &&
+           aptDate.getDate() === day.getDate();
   });
 
   // Draw appointments
   dayAppointments.forEach(apt => {
-    const startTime = new Date(apt.startTime);
-    const endTime = new Date(apt.endTime);
+    const aptDate = new Date(apt.startTime);
+    const hour = aptDate.getHours();
+    const minute = aptDate.getMinutes();
     
-    // Convert to EST
-    const estStartTime = new Date(startTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
-    const estEndTime = new Date(endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const endDate = new Date(apt.endTime);
+    const endHour = endDate.getHours();
+    const endMinute = endDate.getMinutes();
     
-    const startHourFloat = estStartTime.getHours() + estStartTime.getMinutes() / 60;
-    const endHourFloat = estEndTime.getHours() + estEndTime.getMinutes() / 60;
-    
-    if (startHourFloat >= startHour && startHourFloat <= endHour) {
-      const startY = gridTop + (startHourFloat - startHour) * hourHeight;
-      const height = Math.max((endHourFloat - startHourFloat) * hourHeight, 15);
-      const x = margin + timeColumnWidth + 3;
-      const width = appointmentColumnWidth - 6;
+    if (hour < startHour || hour > endHour) return;
 
-      // Determine color based on calendar
-      const isSimplePractice = apt.calendarId?.includes('6ac7ac649a345a77') || 
-                                apt.calendarId?.includes('79dfcb90ce59b1b0');
-      
-      if (isSimplePractice) {
-        // SimplePractice: white bg with cornflower border and thick left border
-        doc.rect(x, startY + 2, width, height - 4)
-          .fillAndStroke('#F5F5F0', '#6495ED');
-        
-        // Thick left border
-        doc.lineWidth(3);
-        doc.moveTo(x, startY + 2).lineTo(x, startY + height - 2).stroke('#6495ED');
-        doc.lineWidth(0.5);
-        
-        // Title
-        doc.fontSize(8).font('Helvetica-Bold').fillColor('#333333')
-          .text(apt.title, x + 6, startY + 5, { 
-            width: width - 10, 
-            ellipsis: true 
-          });
-        
-        // Time
-        const timeStr = `${estStartTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })} - ${estEndTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })}`;
-        doc.fontSize(6).font('Helvetica').fillColor('#666666')
-          .text(timeStr, x + 6, startY + 15, { width: width - 10 });
-      } else {
-        // Other events: green
-        doc.rect(x, startY + 2, width, height - 4)
-          .fillAndStroke('#90EE90', '#228B22');
-        
-        doc.fontSize(8).font('Helvetica-Bold').fillColor('#000000')
-          .text(apt.title, x + 4, startY + 5, { 
-            width: width - 8, 
-            ellipsis: true 
-          });
-        
-        const timeStr = `${estStartTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })} - ${estEndTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })}`;
-        doc.fontSize(6).font('Helvetica').fillColor('#000000')
-          .text(timeStr, x + 4, startY + 15, { width: width - 8 });
-      }
+    const startY = gridTop + (hour - startHour + minute / 60) * hourHeight;
+    const duration = (endHour - hour) + (endMinute - minute) / 60;
+    const height = Math.max(duration * hourHeight, 15);
+
+    const x = margin + timeColumnWidth + 5;
+    const width = contentWidth - 10;
+
+    // Check if SimplePractice appointment
+    const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
+                            apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+
+    if (isSimplePractice) {
+      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
+      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
+      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
+      doc.fillColor('#000000');
+    } else {
+      // Other events: green background
+      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
+      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#000000');
+    }
+
+    // Appointment text
+    doc.fontSize(8).font('Helvetica-Bold');
+    const timeStr = `${hour % 12 || 12}:${minute.toString().padStart(2, '0')}${hour < 12 ? 'AM' : 'PM'}`;
+    doc.text(`${timeStr} - ${apt.title}`, x + 6, startY + 3, {
+      width: width - 12,
+      ellipsis: true
+    });
+
+    if (apt.description && height > 25) {
+      doc.fontSize(7).font('Helvetica');
+      doc.text(apt.description, x + 6, startY + 15, {
+        width: width - 12,
+        height: height - 18,
+        ellipsis: true
+      });
     }
   });
+
+  doc.fillColor('#000000').strokeColor('#000000');
 }

@@ -203,3 +203,12 @@
 - [x] Add clickable links from weekly view appointments to daily pages
 - [x] Add navigation links from daily pages back to weekly view (← Week View button)
 - [x] Test PDF links work on reMarkable 2 Pro (ready for user testing)
+
+## Verify PDF Export for reMarkable 2 Pro
+- [x] Test PDF generation with current week's appointments
+- [x] Verify PDF dimensions (679×509 landscape, 509×679 portrait)
+- [x] Check EST timezone conversion accuracy
+- [x] Verify clickable links work in PDF
+- [x] Fix weekly view to landscape (679×509) and daily views to portrait (509×679)
+- [ ] Check visual layout matches screen
+- [ ] Optimize for e-ink if needed
