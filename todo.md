@@ -192,3 +192,8 @@
 - [x] Rewrite daily view PDF to match on-screen daily layout exactly (grid with time slots)
 - [x] Ensure all appointments are correctly positioned and formatted
 - [x] Test PDF export accuracy (ready for user testing)
+
+## Fix Deployment and Sync Issues
+- [x] Remove canvas dependency causing deployment failure
+- [x] Fix Google Calendar sync to reflect moved/canceled appointments (already implemented, user needs to re-sync)
+- [ ] Test deployment after canvas removal
