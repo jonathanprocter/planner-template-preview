@@ -376,6 +376,7 @@ export default function WeeklyView() {
           <div className="relative">
             {hours.map((hour, idx) => {
               const time = `${hour.toString().padStart(2, "0")}:00`;
+              const halfHourTime = `${hour.toString().padStart(2, "0")}:30`;
               
               return (
                 <div key={hour} className="flex border-b border-gray-200 relative" style={{ height: "100px" }}>
@@ -387,12 +388,12 @@ export default function WeeklyView() {
                     {time}
                   </div>
                   
-                  {/* Bottom Time Label (positioned at bottom of hour block) */}
+                  {/* Bottom Time Label - Half Hour Marker */}
                   <div 
                     style={{ width: "100px", position: "absolute", bottom: "2px", left: "0" }} 
                     className="pr-3 text-right text-xs text-gray-500"
                   >
-                    {time}
+                    {halfHourTime}
                   </div>
                   
                   {/* Day Columns */}

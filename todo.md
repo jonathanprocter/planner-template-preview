@@ -236,3 +236,6 @@
 - [x] Test bidirectional links in PDF (weekly to daily, daily to weekly)
 - [x] Add emoji filtering to remove lock 🔒 and other emojis from appointment titles in PDF
 - [x] Test PDF export with all fixes applied
+
+## Fix Weekly View Bottom Time Labels
+- [x] Change bottom time labels from repeating hour times to half-hour markers (e.g., 6:30, 7:30, 8:30)
