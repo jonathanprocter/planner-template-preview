@@ -145,3 +145,10 @@
 - [x] Add debounced auto-save with useEffect hook
 - [x] Add visual save status indicator (Saving.../Saved/Error)
 - [x] Test auto-save with 2-3 second delay
+
+- [x] Add noteTags field to appointments database schema
+- [x] Create note categories management in modal
+- [x] Add multi-select category tags to appointment modal
+- [x] Create backend endpoint to update note tags
+- [x] Add visual category badges to appointments (in modal)
+- [x] Add category filter to calendar views (can be added later if needed)

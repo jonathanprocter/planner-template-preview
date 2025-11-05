@@ -10,17 +10,43 @@ interface AppointmentDetailsModalProps {
   onClose: () => void;
 }
 
+// Predefined note categories
+const NOTE_CATEGORIES = [
+  { id: "session", label: "Session Notes", color: "bg-blue-100 text-blue-800 border-blue-300" },
+  { id: "treatment", label: "Treatment Plan", color: "bg-purple-100 text-purple-800 border-purple-300" },
+  { id: "progress", label: "Progress", color: "bg-green-100 text-green-800 border-green-300" },
+  { id: "administrative", label: "Administrative", color: "bg-gray-100 text-gray-800 border-gray-300" },
+  { id: "billing", label: "Billing", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  { id: "followup", label: "Follow-up", color: "bg-pink-100 text-pink-800 border-pink-300" },
+];
+
 export function AppointmentDetailsModal({ appointment, open, onClose }: AppointmentDetailsModalProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const updateNotesMutation = trpc.appointments.updateNotes.useMutation();
+  const updateTagsMutation = trpc.appointments.updateNoteTags.useMutation();
 
   const appointmentId = appointment ? appointment.id : null;
   const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
   const isHoliday = appointment ? (appointment as any).isHoliday : false;
   const hasCalendarId = appointment ? !!(appointment as any).calendarId : false;
+
+  // Load tags when appointment changes
+  useEffect(() => {
+    if (appointment && (appointment as any).noteTags) {
+      try {
+        const tags = JSON.parse((appointment as any).noteTags);
+        setSelectedTags(Array.isArray(tags) ? tags : []);
+      } catch {
+        setSelectedTags([]);
+      }
+    } else {
+      setSelectedTags([]);
+    }
+  }, [appointment]);
 
   // Auto-save effect with debouncing
   useEffect(() => {
@@ -84,6 +110,38 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     toast.success("Notes updated!");
   };
 
+  const handleTagToggle = async (tagId: string) => {
+    if (!hasCalendarId || !appointmentId) {
+      toast.error("Cannot update tags for local appointments");
+      return;
+    }
+
+    const newTags = selectedTags.includes(tagId)
+      ? selectedTags.filter(t => t !== tagId)
+      : [...selectedTags, tagId];
+    
+    setSelectedTags(newTags);
+
+    try {
+      await updateTagsMutation.mutateAsync({
+        googleEventId: appointmentId,
+        tags: newTags,
+      });
+      
+      // Update local appointment object
+      if (appointment) {
+        (appointment as any).noteTags = JSON.stringify(newTags);
+      }
+      
+      toast.success("Tags updated!");
+    } catch (error) {
+      // Revert on error
+      setSelectedTags(selectedTags);
+      toast.error("Failed to update tags");
+      console.error("Error updating tags:", error);
+    }
+  };
+
   const getSaveStatusText = () => {
     switch (saveStatus) {
       case "saving":
@@ -112,7 +170,7 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">{appointment.title}</DialogTitle>
         </DialogHeader>
@@ -144,6 +202,35 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
               </p>
             </div>
           </div>
+
+          {/* Note Tags */}
+          {hasCalendarId && (
+            <div className="bg-indigo-50 p-4 rounded-lg border-l-4 border-indigo-400">
+              <h3 className="font-semibold text-sm text-indigo-700 mb-3">🏷️ Note Categories</h3>
+              <div className="flex flex-wrap gap-2">
+                {NOTE_CATEGORIES.map((category) => {
+                  const isSelected = selectedTags.includes(category.id);
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => handleTagToggle(category.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border-2 transition-all ${
+                        isSelected
+                          ? category.color + " shadow-sm"
+                          : "bg-white text-gray-600 border-gray-300 hover:border-gray-400"
+                      }`}
+                    >
+                      {isSelected && "✓ "}
+                      {category.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedTags.length === 0 && (
+                <p className="text-xs text-gray-500 italic mt-2">Click to add note categories</p>
+              )}
+            </div>
+          )}
 
           {/* Client Notes / Description */}
           <div className="bg-amber-50 p-4 rounded-lg border-l-4 border-amber-400">

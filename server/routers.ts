@@ -184,6 +184,34 @@ export const appRouter = router({
 
         return { success: true };
       }),
+
+    // Update appointment note tags
+    updateNoteTags: protectedProcedure
+      .input(
+        z.object({
+          googleEventId: z.string(),
+          tags: z.array(z.string()),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq } = require("drizzle-orm");
+
+        await db
+          .update(appointments)
+          .set({ noteTags: JSON.stringify(input.tags) })
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          );
+
+        return { success: true };
+      }),
   }),
 });
 

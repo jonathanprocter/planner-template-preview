@@ -15,6 +15,13 @@
       "when": 1762279379920,
       "tag": "0001_slow_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1762312403667,
+      "tag": "0002_abnormal_ben_grimm",
+      "breakpoints": true
     }
   ]
 }

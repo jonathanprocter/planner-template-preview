@@ -47,6 +47,8 @@ export const appointments = mysqlTable("appointments", {
   date: varchar("date", { length: 10 }).notNull(),
   /** Category for color-coding */
   category: varchar("category", { length: 100 }),
+  /** Note tags for categorizing notes (JSON array of strings) */
+  noteTags: text("noteTags"),
   /** Recurring appointment settings (JSON) */
   recurrence: text("recurrence"),
   /** Last synced with Google Calendar */
