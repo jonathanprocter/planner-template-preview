@@ -121,3 +121,6 @@
 
 - [x] Investigate why exactly 250 events are synced per calendar (found maxResults: 250 hardcoded)
 - [x] Implement proper pagination to fetch all events beyond 250 limit
+
+- [x] Investigate why synced events (5968 in DB) aren't displaying on calendar
+- [x] Implement database fetch in WeeklyView to load synced events

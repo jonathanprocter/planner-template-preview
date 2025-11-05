@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
@@ -7,6 +7,7 @@ import { AdvancedSearch } from "./AdvancedSearch";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { EventTooltip } from "./EventTooltip";
+import { trpc } from "@/lib/trpc";
 
 export default function WeeklyView() {
   const [, setLocation] = useLocation();
@@ -18,14 +19,7 @@ export default function WeeklyView() {
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
   const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
 
-  useEffect(() => {
-    const unsubscribe = eventStore.subscribe(() => {
-      setEvents(eventStore.getEvents());
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+  // Fetch appointments from database for current week
   const getWeekDates = () => {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -42,17 +36,55 @@ export default function WeeklyView() {
   };
 
   const weekDates = getWeekDates();
-  const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
-
-  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 6am to 11pm
-
   const formatDateISO = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  const { data: dbAppointments, isLoading } = trpc.appointments.getByDateRange.useQuery({
+    startDate: formatDateISO(weekDates[0]),
+    endDate: formatDateISO(weekDates[6]),
+  });
+
+  // Merge database appointments with local events
+  useEffect(() => {
+    if (dbAppointments) {
+      // Convert DB appointments to Event format
+      const dbEvents: Event[] = dbAppointments.map((apt: any) => ({
+        id: apt.googleEventId || `db-${apt.id}`,
+        title: apt.title,
+        startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        color: apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
+        source: 'google',
+        date: apt.date,
+        category: apt.category || 'Other',
+        description: apt.description,
+      }));
+      
+      // Merge with local events
+      const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
+      setEvents([...localEvents, ...dbEvents]);
+    }
+  }, [dbAppointments]);
+
+  useEffect(() => {
+    const unsubscribe = eventStore.subscribe(() => {
+      // Only update local events, keep DB events
+      const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
+      const googleEvents = events.filter(e => e.source === 'google');
+      setEvents([...localEvents, ...googleEvents]);
+    });
+
+    return () => unsubscribe();
+  }, [events]);
+
+  const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
+
+  const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const hours = Array.from({ length: 18 }, (_, i) => i + 6); // 6am to 11pm
 
   const getEventDayIndex = (event: Event) => {
     if (!event.date) return 0;
