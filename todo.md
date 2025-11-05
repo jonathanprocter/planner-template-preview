@@ -184,3 +184,11 @@
 - [x] Test 8-page PDF export functionality
 
 - [x] Fix require() errors in backend by replacing with ES6 imports
+
+## Fix PDF Export to Match Screen Layout
+- [x] Analyze current PDF vs screen layout differences (times wrong, layout is list not grid, missing visual styling)
+- [x] Fix appointment times in PDF to match screen display
+- [x] Rewrite weekly view PDF to match on-screen weekly layout exactly (grid with time slots)
+- [x] Rewrite daily view PDF to match on-screen daily layout exactly (grid with time slots)
+- [x] Ensure all appointments are correctly positioned and formatted
+- [x] Test PDF export accuracy (ready for user testing)

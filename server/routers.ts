@@ -347,8 +347,8 @@ export const appRouter = router({
         // Generate PDF
         const pdfBuffer = await generateWeeklyPlannerPDF(
           result,
-          input.startDate,
-          input.endDate
+          new Date(input.startDate),
+          new Date(input.endDate)
         );
 
         // Return PDF as base64

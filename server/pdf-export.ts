@@ -1,200 +1,286 @@
-import PDFDocument from "pdfkit";
-import { Readable } from "stream";
+import PDFDocument from 'pdfkit';
 
 interface Appointment {
-  id: number;
+  id: number | string;
   title: string;
-  description: string | null;
   startTime: Date;
   endTime: Date;
   date: string;
-  category: string | null;
+  category?: string | null;
+  description?: string | null;
+  calendarId?: string | null;
 }
 
 export async function generateWeeklyPlannerPDF(
   appointments: Appointment[],
-  startDate: string,
-  endDate: string
+  startDate: Date,
+  endDate: Date
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     try {
-      // Create PDF optimized for reMarkable 2 Pro (portrait orientation)
-      // reMarkable dimensions: 1620×2160 pixels at 229 PPI
-      // Convert to points (72 PPI): 1620/229*72 = 509.2pt width, 2160/229*72 = 679pt height
+      // Create PDF document optimized for reMarkable 2 Pro
       const doc = new PDFDocument({
-        size: [509, 679], // Custom size for reMarkable 2 Pro
-        margins: { top: 30, bottom: 30, left: 30, right: 30 },
-        info: {
-          Title: `Weekly Planner ${startDate} to ${endDate}`,
-          Author: 'Planner App',
-        },
+        size: [509, 679], // reMarkable 2 Pro dimensions in points
+        margins: { top: 30, bottom: 30, left: 20, right: 20 },
       });
 
       const buffers: Buffer[] = [];
       doc.on('data', buffers.push.bind(buffers));
-      doc.on('end', () => {
-        const pdfBuffer = Buffer.concat(buffers);
-        resolve(pdfBuffer);
-      });
+      doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Group appointments by date
-      const appointmentsByDate: { [key: string]: Appointment[] } = {};
-      appointments.forEach((apt) => {
-        if (!appointmentsByDate[apt.date]) {
-          appointmentsByDate[apt.date] = [];
-        }
-        appointmentsByDate[apt.date].push(apt);
-      });
-
-      // Get all 7 days of the week
-      const weekDays: string[] = [];
-      const start = new Date(startDate + 'T00:00:00');
+      // Generate week dates
+      const weekDays = [];
+      const currentDate = new Date(startDate);
       for (let i = 0; i < 7; i++) {
-        const day = new Date(start);
-        day.setDate(start.getDate() + i);
-        const dateStr = day.toISOString().split('T')[0];
-        weekDays.push(dateStr);
-        // Ensure each day has an entry
-        if (!appointmentsByDate[dateStr]) {
-          appointmentsByDate[dateStr] = [];
-        }
+        weekDays.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      // ===== PAGE 1: WEEKLY OVERVIEW =====
-      doc.fontSize(24).font('Helvetica-Bold').text('Weekly Overview', { align: 'center' });
-      doc.fontSize(14).font('Helvetica').text(`${startDate} to ${endDate}`, { align: 'center' });
-      doc.moveDown(2);
+      // Page 1: Weekly Overview (Grid Layout)
+      generateWeeklyGridPage(doc, weekDays, appointments);
 
-      // Render weekly summary
-      weekDays.forEach((date) => {
-        const dayAppointments = appointmentsByDate[date] || [];
-        const dateObj = new Date(date + 'T00:00:00');
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        
-        doc.fontSize(12).font('Helvetica-Bold').text(`${dayName}, ${dateStr}`, { underline: true });
-        doc.moveDown(0.3);
-
-        if (dayAppointments.length === 0) {
-          doc.fontSize(10).font('Helvetica').fillColor('#666666').text('  No appointments');
-          doc.fillColor('#000000'); // Reset color
-        } else {
-          // Sort appointments by start time
-          dayAppointments.sort((a, b) => {
-            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-          });
-
-          dayAppointments.forEach((apt) => {
-            const startTime = new Date(apt.startTime).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit',
-              hour12: true 
-            });
-            const endTime = new Date(apt.endTime).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit',
-              hour12: true 
-            });
-
-            doc.fontSize(10).font('Helvetica').text(`  ${startTime} - ${endTime}: ${apt.title}`);
-          });
-        }
-        
-        doc.moveDown(0.8);
-      });
-
-      // ===== PAGES 2-8: DAILY VIEWS =====
-      weekDays.forEach((date, dayIndex) => {
+      // Pages 2-8: Daily Views (Grid Layout)
+      weekDays.forEach((day, index) => {
         doc.addPage();
-        
-        const dayAppointments = appointmentsByDate[date] || [];
-        const dateObj = new Date(date + 'T00:00:00');
-        const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        
-        // Daily page header
-        doc.fontSize(22).font('Helvetica-Bold').text(dayName, { align: 'center' });
-        doc.fontSize(14).font('Helvetica').text(dateStr, { align: 'center' });
-        doc.moveDown(2);
-
-        if (dayAppointments.length === 0) {
-          doc.fontSize(12).font('Helvetica').fillColor('#999999').text('No appointments scheduled', { align: 'center' });
-          doc.fillColor('#000000'); // Reset color
-        } else {
-          // Sort appointments by start time
-          dayAppointments.sort((a, b) => {
-            return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
-          });
-
-          // Render appointments with details
-          dayAppointments.forEach((apt, index) => {
-            const startTime = new Date(apt.startTime).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit',
-              hour12: true 
-            });
-            const endTime = new Date(apt.endTime).toLocaleTimeString('en-US', { 
-              hour: 'numeric', 
-              minute: '2-digit',
-              hour12: true 
-            });
-
-            // Time and title
-            doc.fontSize(14).font('Helvetica-Bold').text(`${startTime} - ${endTime}`);
-            doc.fontSize(12).font('Helvetica-Bold').text(apt.title, { indent: 10 });
-            
-            // Category
-            if (apt.category) {
-              doc.fontSize(10).font('Helvetica').fillColor('#666666').text(`Category: ${apt.category}`, { indent: 10 });
-              doc.fillColor('#000000'); // Reset color
-            }
-            
-            // Description
-            if (apt.description) {
-              doc.fontSize(10).font('Helvetica').text(`Notes: ${apt.description}`, { 
-                indent: 10,
-                width: 440,
-                align: 'left'
-              });
-            }
-            
-            // Separator line
-            if (index < dayAppointments.length - 1) {
-              doc.moveDown(0.5);
-              doc.strokeColor('#CCCCCC')
-                 .lineWidth(0.5)
-                 .moveTo(30, doc.y)
-                 .lineTo(479, doc.y)
-                 .stroke();
-              doc.moveDown(0.5);
-            } else {
-              doc.moveDown(1);
-            }
-          });
-        }
-
-        // Add notes section at bottom
-        doc.moveDown(2);
-        doc.fontSize(10).font('Helvetica-Bold').text('Notes:', { underline: true });
-        doc.moveDown(0.5);
-        
-        // Draw lines for notes
-        const linesRemaining = Math.floor((619 - doc.y) / 20); // Calculate remaining space
-        for (let i = 0; i < Math.min(linesRemaining, 10); i++) {
-          doc.strokeColor('#DDDDDD')
-             .lineWidth(0.5)
-             .moveTo(30, doc.y + 15)
-             .lineTo(479, doc.y + 15)
-             .stroke();
-          doc.moveDown(1.2);
-        }
+        generateDailyGridPage(doc, day, appointments);
       });
 
-      // Finalize PDF
       doc.end();
     } catch (error) {
       reject(error);
+    }
+  });
+}
+
+function generateWeeklyGridPage(
+  doc: PDFKit.PDFDocument,
+  weekDays: Date[],
+  appointments: Appointment[]
+) {
+  const pageWidth = 509;
+  const pageHeight = 679;
+  const margin = 20;
+  const headerHeight = 60;
+  
+  // Title
+  doc.fontSize(16).font('Helvetica-Bold')
+    .text('Week of November 3 - November 9, 2025', margin, 20, {
+      width: pageWidth - 2 * margin,
+      align: 'center'
+    });
+
+  // Grid setup
+  const gridTop = headerHeight;
+  const gridHeight = pageHeight - headerHeight - 40;
+  const columnWidth = (pageWidth - 2 * margin - 40) / 7; // 40 for time column
+  const timeColumnWidth = 40;
+  
+  // Hours to display (6 AM to 11 PM)
+  const startHour = 6;
+  const endHour = 23;
+  const totalHours = endHour - startHour + 1;
+  const hourHeight = gridHeight / totalHours;
+
+  // Draw day headers
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  doc.fontSize(8).font('Helvetica-Bold');
+  dayNames.forEach((day, i) => {
+    const x = margin + timeColumnWidth + i * columnWidth;
+    doc.text(day, x, gridTop, { width: columnWidth, align: 'center' });
+    const date = weekDays[i].getDate();
+    doc.fontSize(7).font('Helvetica').text(date.toString(), x, gridTop + 12, { width: columnWidth, align: 'center' });
+  });
+
+  // Draw grid
+  doc.strokeColor('#CCCCCC').lineWidth(0.5);
+  
+  // Vertical lines
+  for (let i = 0; i <= 8; i++) {
+    const x = margin + (i === 0 ? 0 : timeColumnWidth + (i - 1) * columnWidth);
+    doc.moveTo(x, gridTop + 25).lineTo(x, gridTop + gridHeight).stroke();
+  }
+
+  // Horizontal lines and time labels
+  for (let hour = 0; hour <= totalHours; hour++) {
+    const y = gridTop + 25 + hour * hourHeight;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+    
+    if (hour < totalHours) {
+      const displayHour = startHour + hour;
+      const timeLabel = `${displayHour.toString().padStart(2, '0')}:00`;
+      doc.fontSize(6).font('Helvetica').fillColor('#000000')
+        .text(timeLabel, margin + 2, y + 2, { width: timeColumnWidth - 4 });
+    }
+  }
+
+  // Draw appointments
+  weekDays.forEach((day, dayIndex) => {
+    const dayAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.startTime);
+      return aptDate.toDateString() === day.toDateString();
+    });
+
+    dayAppointments.forEach(apt => {
+      const startTime = new Date(apt.startTime);
+      const endTime = new Date(apt.endTime);
+      
+      const startHourFloat = startTime.getHours() + startTime.getMinutes() / 60;
+      const endHourFloat = endTime.getHours() + endTime.getMinutes() / 60;
+      
+      if (startHourFloat >= startHour && startHourFloat <= endHour) {
+        const startY = gridTop + 25 + (startHourFloat - startHour) * hourHeight;
+        const height = Math.max((endHourFloat - startHourFloat) * hourHeight, 10);
+        const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
+        const width = columnWidth - 4;
+
+        // Determine color based on calendar
+        const isSimplePractice = apt.calendarId?.includes('6ac7ac649a345a77') || 
+                                  apt.calendarId?.includes('79dfcb90ce59b1b0');
+        
+        if (isSimplePractice) {
+          // SimplePractice: white bg with cornflower border
+          doc.rect(x, startY, width, height)
+            .fillAndStroke('#F5F5F0', '#6495ED');
+          doc.lineWidth(1.5);
+          doc.moveTo(x, startY).lineTo(x, startY + height).stroke('#6495ED');
+          doc.lineWidth(0.5);
+          
+          doc.fontSize(5).font('Helvetica').fillColor('#333333')
+            .text(apt.title, x + 2, startY + 2, { 
+              width: width - 4, 
+              height: height - 4,
+              ellipsis: true 
+            });
+        } else {
+          // Other events: green
+          doc.rect(x, startY, width, height)
+            .fillAndStroke('#90EE90', '#228B22');
+          
+          doc.fontSize(5).font('Helvetica').fillColor('#000000')
+            .text(apt.title, x + 2, startY + 2, { 
+              width: width - 4, 
+              height: height - 4,
+              ellipsis: true 
+            });
+        }
+      }
+    });
+  });
+}
+
+function generateDailyGridPage(
+  doc: PDFKit.PDFDocument,
+  day: Date,
+  appointments: Appointment[]
+) {
+  const pageWidth = 509;
+  const pageHeight = 679;
+  const margin = 20;
+  const headerHeight = 50;
+  
+  // Title
+  const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  
+  doc.fontSize(14).font('Helvetica-Bold')
+    .text(dayName, margin, 20, { width: pageWidth - 2 * margin, align: 'center' });
+  doc.fontSize(10).font('Helvetica')
+    .text(dateStr, margin, 38, { width: pageWidth - 2 * margin, align: 'center' });
+
+  // Grid setup
+  const gridTop = headerHeight;
+  const gridHeight = pageHeight - headerHeight - 40;
+  const timeColumnWidth = 50;
+  const appointmentColumnWidth = pageWidth - 2 * margin - timeColumnWidth;
+  
+  // Hours to display (6 AM to 11 PM)
+  const startHour = 6;
+  const endHour = 23;
+  const totalHours = endHour - startHour + 1;
+  const hourHeight = gridHeight / totalHours;
+
+  // Draw grid
+  doc.strokeColor('#CCCCCC').lineWidth(0.5);
+  
+  // Vertical lines
+  doc.moveTo(margin, gridTop).lineTo(margin, gridTop + gridHeight).stroke();
+  doc.moveTo(margin + timeColumnWidth, gridTop).lineTo(margin + timeColumnWidth, gridTop + gridHeight).stroke();
+  doc.moveTo(pageWidth - margin, gridTop).lineTo(pageWidth - margin, gridTop + gridHeight).stroke();
+
+  // Horizontal lines and time labels
+  for (let hour = 0; hour <= totalHours; hour++) {
+    const y = gridTop + hour * hourHeight;
+    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+    
+    if (hour < totalHours) {
+      const displayHour = startHour + hour;
+      const timeLabel = `${displayHour.toString().padStart(2, '0')}:00`;
+      doc.fontSize(8).font('Helvetica').fillColor('#000000')
+        .text(timeLabel, margin + 5, y + 5, { width: timeColumnWidth - 10 });
+    }
+  }
+
+  // Get appointments for this day
+  const dayAppointments = appointments.filter(apt => {
+    const aptDate = new Date(apt.startTime);
+    return aptDate.toDateString() === day.toDateString();
+  });
+
+  // Draw appointments
+  dayAppointments.forEach(apt => {
+    const startTime = new Date(apt.startTime);
+    const endTime = new Date(apt.endTime);
+    
+    const startHourFloat = startTime.getHours() + startTime.getMinutes() / 60;
+    const endHourFloat = endTime.getHours() + endTime.getMinutes() / 60;
+    
+    if (startHourFloat >= startHour && startHourFloat <= endHour) {
+      const startY = gridTop + (startHourFloat - startHour) * hourHeight;
+      const height = Math.max((endHourFloat - startHourFloat) * hourHeight, 15);
+      const x = margin + timeColumnWidth + 3;
+      const width = appointmentColumnWidth - 6;
+
+      // Determine color based on calendar
+      const isSimplePractice = apt.calendarId?.includes('6ac7ac649a345a77') || 
+                                apt.calendarId?.includes('79dfcb90ce59b1b0');
+      
+      if (isSimplePractice) {
+        // SimplePractice: white bg with cornflower border and thick left border
+        doc.rect(x, startY + 2, width, height - 4)
+          .fillAndStroke('#F5F5F0', '#6495ED');
+        
+        // Thick left border
+        doc.lineWidth(3);
+        doc.moveTo(x, startY + 2).lineTo(x, startY + height - 2).stroke('#6495ED');
+        doc.lineWidth(0.5);
+        
+        // Title
+        doc.fontSize(8).font('Helvetica-Bold').fillColor('#333333')
+          .text(apt.title, x + 6, startY + 5, { 
+            width: width - 10, 
+            ellipsis: true 
+          });
+        
+        // Time
+        const timeStr = `${startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+        doc.fontSize(6).font('Helvetica').fillColor('#666666')
+          .text(timeStr, x + 6, startY + 15, { width: width - 10 });
+      } else {
+        // Other events: green
+        doc.rect(x, startY + 2, width, height - 4)
+          .fillAndStroke('#90EE90', '#228B22');
+        
+        doc.fontSize(8).font('Helvetica-Bold').fillColor('#000000')
+          .text(apt.title, x + 4, startY + 5, { 
+            width: width - 8, 
+            ellipsis: true 
+          });
+        
+        const timeStr = `${startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+        doc.fontSize(6).font('Helvetica').fillColor('#000000')
+          .text(timeStr, x + 4, startY + 15, { width: width - 8 });
+      }
     }
   });
 }
