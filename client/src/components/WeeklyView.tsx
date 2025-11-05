@@ -388,9 +388,9 @@ export default function WeeklyView() {
                     {time}
                   </div>
                   
-                  {/* Bottom Time Label - Half Hour Marker */}
+                  {/* Half-Hour Time Label - Positioned at middle line */}
                   <div 
-                    style={{ width: "100px", position: "absolute", bottom: "2px", left: "0" }} 
+                    style={{ width: "100px", position: "absolute", top: "50%", transform: "translateY(-50%)", left: "0" }} 
                     className="pr-3 text-right text-xs text-gray-500"
                   >
                     {halfHourTime}

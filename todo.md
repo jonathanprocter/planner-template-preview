@@ -239,3 +239,6 @@
 
 ## Fix Weekly View Bottom Time Labels
 - [x] Change bottom time labels from repeating hour times to half-hour markers (e.g., 6:30, 7:30, 8:30)
+
+## Reposition Half-Hour Labels to Middle Line
+- [x] Move :30 time labels from bottom to middle of hour block (aligned with half-hour grid line)
