@@ -125,8 +125,12 @@ function generateWeeklyGridPage(
       const startTime = new Date(apt.startTime);
       const endTime = new Date(apt.endTime);
       
-      const startHourFloat = startTime.getHours() + startTime.getMinutes() / 60;
-      const endHourFloat = endTime.getHours() + endTime.getMinutes() / 60;
+      // Convert to EST
+      const estStartTime = new Date(startTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      const estEndTime = new Date(endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+      
+      const startHourFloat = estStartTime.getHours() + estStartTime.getMinutes() / 60;
+      const endHourFloat = estEndTime.getHours() + estEndTime.getMinutes() / 60;
       
       if (startHourFloat >= startHour && startHourFloat <= endHour) {
         const startY = gridTop + 25 + (startHourFloat - startHour) * hourHeight;
@@ -146,6 +150,10 @@ function generateWeeklyGridPage(
           doc.moveTo(x, startY).lineTo(x, startY + height).stroke('#6495ED');
           doc.lineWidth(0.5);
           
+          // Add clickable link to jump to daily page
+          doc.link(x, startY, width, height, `#daily-page-${dayIndex}`);
+          doc.ref({ Type: 'Action', S: 'GoTo', D: [`daily-page-${dayIndex}`, 'FitH', 0] });
+          
           doc.fontSize(5).font('Helvetica').fillColor('#333333')
             .text(apt.title, x + 2, startY + 2, { 
               width: width - 4, 
@@ -156,6 +164,10 @@ function generateWeeklyGridPage(
           // Other events: green
           doc.rect(x, startY, width, height)
             .fillAndStroke('#90EE90', '#228B22');
+          
+          // Add clickable link to jump to daily page
+          doc.link(x, startY, width, height, `#daily-page-${dayIndex}`);
+          doc.ref({ Type: 'Action', S: 'GoTo', D: [`daily-page-${dayIndex}`, 'FitH', 0] });
           
           doc.fontSize(5).font('Helvetica').fillColor('#000000')
             .text(apt.title, x + 2, startY + 2, { 
@@ -187,6 +199,18 @@ function generateDailyGridPage(
     .text(dayName, margin, 20, { width: pageWidth - 2 * margin, align: 'center' });
   doc.fontSize(10).font('Helvetica')
     .text(dateStr, margin, 38, { width: pageWidth - 2 * margin, align: 'center' });
+  
+  // Add "Back to Week" link button
+  const buttonX = pageWidth - margin - 80;
+  const buttonY = 20;
+  const buttonWidth = 75;
+  const buttonHeight = 20;
+  doc.rect(buttonX, buttonY, buttonWidth, buttonHeight)
+    .fillAndStroke('#6495ED', '#4169E1');
+  doc.fontSize(8).font('Helvetica-Bold').fillColor('#FFFFFF')
+    .text('← Week View', buttonX, buttonY + 6, { width: buttonWidth, align: 'center' });
+  doc.link(buttonX, buttonY, buttonWidth, buttonHeight, '#weekly-overview');
+  doc.ref({ Type: 'Action', S: 'GoTo', D: ['weekly-overview', 'FitH', 0] });
 
   // Grid setup
   const gridTop = headerHeight;
@@ -232,8 +256,12 @@ function generateDailyGridPage(
     const startTime = new Date(apt.startTime);
     const endTime = new Date(apt.endTime);
     
-    const startHourFloat = startTime.getHours() + startTime.getMinutes() / 60;
-    const endHourFloat = endTime.getHours() + endTime.getMinutes() / 60;
+    // Convert to EST
+    const estStartTime = new Date(startTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    const estEndTime = new Date(endTime.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+    
+    const startHourFloat = estStartTime.getHours() + estStartTime.getMinutes() / 60;
+    const endHourFloat = estEndTime.getHours() + estEndTime.getMinutes() / 60;
     
     if (startHourFloat >= startHour && startHourFloat <= endHour) {
       const startY = gridTop + (startHourFloat - startHour) * hourHeight;
@@ -263,7 +291,7 @@ function generateDailyGridPage(
           });
         
         // Time
-        const timeStr = `${startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+        const timeStr = `${estStartTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })} - ${estEndTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })}`;
         doc.fontSize(6).font('Helvetica').fillColor('#666666')
           .text(timeStr, x + 6, startY + 15, { width: width - 10 });
       } else {
@@ -277,7 +305,7 @@ function generateDailyGridPage(
             ellipsis: true 
           });
         
-        const timeStr = `${startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} - ${endTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
+        const timeStr = `${estStartTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })} - ${estEndTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'America/New_York' })}`;
         doc.fontSize(6).font('Helvetica').fillColor('#000000')
           .text(timeStr, x + 4, startY + 15, { width: width - 8 });
       }

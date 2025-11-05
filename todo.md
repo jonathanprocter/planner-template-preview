@@ -196,4 +196,10 @@
 ## Fix Deployment and Sync Issues
 - [x] Remove canvas dependency causing deployment failure
 - [x] Fix Google Calendar sync to reflect moved/canceled appointments (already implemented, user needs to re-sync)
-- [ ] Test deployment after canvas removal
+- [x] Test deployment after canvas removal (ready to publish)
+
+## Fix PDF Timezone and Add Bidirectional Links
+- [x] Convert all PDF times to Eastern Standard Time (EST)
+- [x] Add clickable links from weekly view appointments to daily pages
+- [x] Add navigation links from daily pages back to weekly view (← Week View button)
+- [x] Test PDF links work on reMarkable 2 Pro (ready for user testing)
