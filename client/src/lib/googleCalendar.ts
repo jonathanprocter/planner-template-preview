@@ -1,14 +1,15 @@
-/// <reference types="google.accounts" />
+// Google Calendar API integration
 /// <reference types="gapi" />
 /// <reference types="gapi.client.calendar" />
 
 declare const gapi: any;
+declare const google: any;
 
 const CLIENT_ID = '839967078225-1ljq2t2nhgh2h2io55cgkmvul4sn8r4v.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyAUXmnozR1UJuaV2TLwyLcJY9XDoYrcDhA';
 const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
 
-let tokenClient: google.accounts.oauth2.TokenClient | null = null;
+let tokenClient: any | null = null;
 let accessToken: string | null = null;
 let gapiInited = false;
 
@@ -83,14 +84,14 @@ export const signIn = (): Promise<string> => {
       return;
     }
 
-    (tokenClient as any).callback = async (response: google.accounts.oauth2.TokenResponse) => {
+    (tokenClient as any).callback = async (response: any) => {
       if (response.error) {
         reject(response);
         return;
       }
       accessToken = response.access_token;
       gapi.client.setToken({ access_token: accessToken });
-      resolve(accessToken);
+      resolve(accessToken!);
     };
 
     if (accessToken) {
@@ -105,7 +106,7 @@ export const signIn = (): Promise<string> => {
 
 // Sign out
 export const signOut = (): void => {
-  if (accessToken) {
+  if (accessToken && typeof google !== 'undefined') {
     google.accounts.oauth2.revoke(accessToken, () => {
       console.log('Access token revoked');
     });
@@ -114,9 +115,9 @@ export const signOut = (): void => {
   }
 };
 
-// Check if user is signed in
-export const isUserSignedIn = (): boolean => {
-  return accessToken !== null;
+// Check if signed in
+export const isSignedIn = (): boolean => {
+  return !!accessToken;
 };
 
 // Get calendar list
@@ -130,23 +131,37 @@ export const getCalendarList = async (): Promise<any[]> => {
   }
 };
 
-// Get events from a specific calendar
+// Get events from a specific calendar with pagination support
 export const getEvents = async (
   calendarId: string = 'primary',
   timeMin?: Date,
   timeMax?: Date
 ): Promise<GoogleCalendarEvent[]> => {
   try {
-    const response = await gapi.client.calendar.events.list({
-      calendarId,
-      timeMin: (timeMin || new Date()).toISOString(),
-      timeMax: (timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).toISOString(),
-      showDeleted: false,
-      singleEvents: true,
-      maxResults: 250,
-      orderBy: 'startTime',
-    });
-    return response.result.items || [];
+    const allEvents: GoogleCalendarEvent[] = [];
+    let pageToken: string | undefined = undefined;
+    
+    // Fetch all pages of events
+    do {
+      const response: any = await gapi.client.calendar.events.list({
+        calendarId,
+        timeMin: (timeMin || new Date()).toISOString(),
+        timeMax: (timeMax || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)).toISOString(),
+        showDeleted: false,
+        singleEvents: true,
+        maxResults: 250, // Max per page
+        orderBy: 'startTime',
+        pageToken, // Use page token for subsequent requests
+      });
+      
+      const events = response.result.items || [];
+      allEvents.push(...events);
+      
+      // Get next page token if there are more results
+      pageToken = response.result.nextPageToken;
+    } while (pageToken);
+    
+    return allEvents;
   } catch (error) {
     console.error('Error fetching events:', error);
     return [];
@@ -206,7 +221,14 @@ export const createEvent = async (
 export const updateEvent = async (
   calendarId: string = 'primary',
   eventId: string,
-  event: Partial<GoogleCalendarEvent>
+  event: {
+    summary?: string;
+    start?: { dateTime: string; timeZone?: string };
+    end?: { dateTime: string; timeZone?: string };
+    description?: string;
+    location?: string;
+    recurrence?: string[];
+  }
 ): Promise<GoogleCalendarEvent | null> => {
   try {
     const response = await gapi.client.calendar.events.patch({
@@ -236,22 +258,4 @@ export const deleteEvent = async (
     console.error('Error deleting event:', error);
     return false;
   }
-};
-
-// Convert Google Calendar color to hex
-export const getColorForEvent = (colorId?: string): string => {
-  const colorMap: { [key: string]: string } = {
-    '1': '#a4bdfc', // Lavender
-    '2': '#7ae7bf', // Sage
-    '3': '#dbadff', // Grape
-    '4': '#ff887c', // Flamingo
-    '5': '#fbd75b', // Banana
-    '6': '#ffb878', // Tangerine
-    '7': '#46d6db', // Peacock
-    '8': '#e1e1e1', // Graphite
-    '9': '#5484ed', // Blueberry
-    '10': '#51b749', // Basil
-    '11': '#dc2127', // Tomato
-  };
-  return colorMap[colorId || '9'] || '#3b82f6';
 };

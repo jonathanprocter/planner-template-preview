@@ -118,3 +118,6 @@
 
 - [x] Expand sync to full 2015-2030 timeframe (15 years)
 - [ ] Test full 15-year sync with rate limiting
+
+- [x] Investigate why exactly 250 events are synced per calendar (found maxResults: 250 hardcoded)
+- [x] Implement proper pagination to fetch all events beyond 250 limit
