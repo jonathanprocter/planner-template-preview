@@ -212,3 +212,10 @@
 - [x] Fix weekly view to landscape (679×509) and daily views to portrait (509×679)
 - [ ] Check visual layout matches screen
 - [ ] Optimize for e-ink if needed
+
+## PDF Refinement for Pixel-Perfect Layout
+- [x] Fix daily view PDF to keep all content within page boundaries (currently overflows to page 3)
+- [x] Change time range end from 11 PM (23:00) to 10 PM (22:00) in both weekly and daily views
+- [x] Verify bidirectional links work correctly (weekly to daily and daily back to weekly)
+- [x] Adjust margins and spacing to ensure content fits within reMarkable dimensions
+- [x] Test final PDF has exactly 8 pages (1 weekly + 7 daily)

@@ -78,9 +78,9 @@ function generateWeeklyGridPage(
   const columnWidth = (pageWidth - 2 * margin - 40) / 7; // 40 for time column
   const timeColumnWidth = 40;
   
-  // Hours to display (6 AM to 11 PM)
+  // Hours to display (6 AM to 10 PM)
   const startHour = 6;
-  const endHour = 23;
+  const endHour = 22;
   const totalHours = endHour - startHour + 1;
   const hourHeight = gridHeight / totalHours;
 
@@ -208,9 +208,9 @@ function generateDailyGridPage(
   const timeColumnWidth = 50;
   const contentWidth = pageWidth - 2 * margin - timeColumnWidth;
   
-  // Hours to display (6 AM to 11 PM)
+  // Hours to display (6 AM to 10 PM)
   const startHour = 6;
-  const endHour = 23;
+  const endHour = 22;
   const totalHours = endHour - startHour + 1;
   const hourHeight = gridHeight / totalHours;
 
