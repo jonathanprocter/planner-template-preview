@@ -212,6 +212,48 @@ export const appRouter = router({
 
         return { success: true };
       }),
+
+    // Export appointments to PDF
+    exportPDF: protectedProcedure
+      .input(
+        z.object({
+          startDate: z.string(),
+          endDate: z.string(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await require("./db").getDb();
+        if (!db) throw new Error("Database not available");
+
+        const { appointments } = require("../drizzle/schema");
+        const { and, eq, gte, lte } = require("drizzle-orm");
+        const { generateWeeklyPlannerPDF } = require("./pdf-export");
+
+        // Fetch appointments for the date range
+        const result = await db
+          .select()
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              gte(appointments.date, input.startDate),
+              lte(appointments.date, input.endDate)
+            )
+          );
+
+        // Generate PDF
+        const pdfBuffer = await generateWeeklyPlannerPDF(
+          result,
+          input.startDate,
+          input.endDate
+        );
+
+        // Return PDF as base64
+        return {
+          pdf: pdfBuffer.toString('base64'),
+          filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
+        };
+      }),
   }),
 });
 

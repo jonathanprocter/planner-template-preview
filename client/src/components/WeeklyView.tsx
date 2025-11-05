@@ -6,6 +6,7 @@ import { AppointmentDialog } from "./AppointmentDialog";
 import { AdvancedSearch } from "./AdvancedSearch";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
+import { ExportPDFButton } from "./ExportPDFButton";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
@@ -281,6 +282,11 @@ export default function WeeklyView() {
         {/* Google Calendar Sync Button */}
         <div className="absolute" style={{ right: "20px", top: "-60px" }}>
           <GoogleCalendarSync />
+        </div>
+
+        {/* Export to PDF Button */}
+        <div className="absolute" style={{ right: "220px", top: "-60px" }}>
+          <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
         {/* Title */}

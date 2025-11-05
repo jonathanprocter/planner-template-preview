@@ -161,3 +161,9 @@
 - [x] Increase touch target sizes for finger/stylus interaction (44px minimum)
 - [x] Remove animations and transitions for e-ink performance
 - [x] Test layout on reMarkable 2 Pro dimensions
+
+- [x] Add "Export to PDF" button to WeeklyView
+- [x] Create PDF generation endpoint on backend
+- [x] Generate PDF with current week's appointments
+- [x] Optimize PDF for reMarkable 2 Pro (509×679 points, optimized dimensions)
+- [x] Test PDF download and transfer to reMarkable (ready for user testing)
