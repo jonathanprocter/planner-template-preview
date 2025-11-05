@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event, type Task } from "@/lib/eventStore";
@@ -6,6 +6,7 @@ import { AppointmentDialog } from "./AppointmentDialog";
 import { SearchBar } from "./SearchBar";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { EventTooltip } from "./EventTooltip";
+import { trpc } from "@/lib/trpc";
 
 interface DailyConfig {
   header: {
@@ -53,6 +54,23 @@ export default function DailyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
+  // Get date from URL parameter or use today
+  const urlParams = new URLSearchParams(window.location.search);
+  const dateParam = urlParams.get('date');
+  const currentDate = dateParam ? (() => {
+    const [year, month, day] = dateParam.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  })() : new Date();
+  
+  // Format current date as YYYY-MM-DD for filtering
+  const currentDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
+
+  // Fetch appointments from database for current day
+  const { data: dbAppointments, isLoading: isLoadingAppointments } = trpc.appointments.getByDateRange.useQuery({
+    startDate: currentDateStr,
+    endDate: currentDateStr,
+  });
+
   useEffect(() => {
     fetch("/day-config.json")
       .then((res) => res.json())
@@ -70,26 +88,38 @@ export default function DailyView() {
     return () => unsubscribe();
   }, []);
 
+  // Merge database appointments with local events
+  useEffect(() => {
+    if (dbAppointments) {
+      // Convert DB appointments to Event format
+      const dbEvents: Event[] = dbAppointments.map((apt: any) => ({
+        id: apt.googleEventId || `db-${apt.id}`,
+        title: apt.title,
+        startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        color: apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
+        source: 'google',
+        date: apt.date,
+        category: apt.category || 'Other',
+        description: apt.description,
+      }));
+      
+      // Merge with local events for this date
+      const localEvents = eventStore.getEvents().filter(e => e.source !== 'google' && e.date === currentDateStr);
+      setEvents([...localEvents, ...dbEvents]);
+    }
+  }, [dbAppointments, currentDateStr]);
+
   if (!config || !svgContent) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 
-  // Get date from URL parameter or use today
-  const urlParams = new URLSearchParams(window.location.search);
-  const dateParam = urlParams.get('date');
-  const currentDate = dateParam ? (() => {
-    const [year, month, day] = dateParam.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  })() : new Date();
   const dateString = currentDate.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
-  
-  // Format current date as YYYY-MM-DD for filtering
-  const currentDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
   
   // Filter events for today only
   const todayEvents = events.filter(event => event.date === currentDateStr);

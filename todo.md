@@ -124,3 +124,5 @@
 
 - [x] Investigate why synced events (5968 in DB) aren't displaying on calendar
 - [x] Implement database fetch in WeeklyView to load synced events
+
+- [x] Fix DailyView to fetch and display events from database
