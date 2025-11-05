@@ -333,7 +333,7 @@ export default function WeeklyView() {
         </div>
 
         {/* Export to PDF Button */}
-        <div className="absolute" style={{ right: "220px", top: "-60px" }}>
+        <div className="absolute" style={{ left: "20px", top: "100px" }}>
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 

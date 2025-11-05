@@ -177,3 +177,5 @@
 - [x] Create backend endpoints to update/delete/create appointments in database
 - [x] Test drag, create, delete operations
 - [x] All changes save to database automatically
+
+- [x] Fix Export PDF button visibility - reposition to accessible location
