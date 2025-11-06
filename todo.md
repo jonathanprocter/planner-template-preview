@@ -279,3 +279,12 @@
 - [x] Fix daily view to show appointments in PDF (currently empty)
 - [x] Fix "Week View" text in upper left corner to be a clickable button like web app
 - [x] Verify all appointments align correctly with time slots in PDF
+
+## PDF Export Audit Findings and Fixes
+- [x] Replace old SimplePractice colors with Financial District Deep Indigo (#243447) and Indigo Wash (#E7E9EC)
+- [x] Implement full Financial District color scheme for all appointment categories
+- [x] Fix hardcoded week title to use actual weekDays dates dynamically
+- [x] Fix hour range logic (hour >= endHour instead of hour > endHour)
+- [x] Verify grid calculations to prevent appointment overflow
+- [ ] Add half-hour grid lines to match web application
+- [x] Ensure consistent styling between web app and PDF export
