@@ -297,3 +297,12 @@
 - [x] Update PDF export color function to use official colors
 - [x] Update color legend to show "StimulusPractice" instead of "SimplePractice"
 - [x] Test all views to ensure colors match the official guide
+
+## Critical PDF Export and View Alignment Fixes
+- [x] Fix weekly view - appointments are misaligned with time grid
+- [x] Fix PDF export - grid and appointments appear on separate pages
+- [x] Fix PDF export - daily appointments not showing up correctly
+- [x] Fix PDF export - bidirectional links working (already implemented)
+- [x] Ensure PDF appointments align exactly with time slots
+- [x] Ensure web view appointments align exactly with time slots
+- [x] Test PDF export matches web application display exactly

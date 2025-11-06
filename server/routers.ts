@@ -363,9 +363,22 @@ export const appRouter = router({
             )
           );
 
+        // Fetch daily notes for the date range
+        const notes = await db
+          .select()
+          .from(dailyNotes)
+          .where(
+            and(
+              eq(dailyNotes.userId, ctx.user.id),
+              gte(dailyNotes.date, input.startDate),
+              lte(dailyNotes.date, input.endDate)
+            )
+          );
+
         // Generate PDF
         const pdfBuffer = await generateWeeklyPlannerPDF(
           result,
+          notes,
           new Date(input.startDate),
           new Date(input.endDate)
         );

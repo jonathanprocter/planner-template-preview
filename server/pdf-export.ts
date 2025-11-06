@@ -50,8 +50,14 @@ interface Appointment {
   calendarId?: string | null;
 }
 
+interface DailyNote {
+  date: string;
+  content: string | null;
+}
+
 export async function generateWeeklyPlannerPDF(
   appointments: Appointment[],
+  dailyNotes: DailyNote[],
   startDate: Date,
   endDate: Date
 ): Promise<Buffer> {
@@ -79,12 +85,12 @@ export async function generateWeeklyPlannerPDF(
       }
 
       // Page 1: Weekly Overview (Landscape - Grid Layout)
-      generateWeeklyGridPage(doc, weekDays, appointments);
+      generateWeeklyGridPage(doc, weekDays, appointments, dailyNotes);
 
       // Pages 2-8: Daily Views (Portrait - Grid Layout)
       weekDays.forEach((day, index) => {
         doc.addPage({ size: [509, 679] }); // Portrait orientation for daily views
-        generateDailyGridPage(doc, day, appointments);
+        generateDailyGridPage(doc, day, appointments, dailyNotes);
       });
 
       doc.end();
@@ -97,7 +103,8 @@ export async function generateWeeklyPlannerPDF(
 function generateWeeklyGridPage(
   doc: PDFKit.PDFDocument,
   weekDays: Date[],
-  appointments: Appointment[]
+  appointments: Appointment[],
+  dailyNotes: DailyNote[]
 ) {
   const pageWidth = 679; // Landscape orientation
   const pageHeight = 509;
@@ -135,19 +142,55 @@ function generateWeeklyGridPage(
     doc.fontSize(7).font('Helvetica').text(date.toString(), x, gridTop + 12, { width: columnWidth, align: 'center' });
   });
 
+  // Create notes map for quick lookup
+  const notesMap = new Map<string, string>();
+  dailyNotes.forEach(note => {
+    if (note.content) {
+      notesMap.set(note.date, note.content);
+    }
+  });
+
+  // Draw daily notes section
+  const notesY = gridTop + 25;
+  const notesHeight = 35;
+  doc.fontSize(5).font('Helvetica');
+  weekDays.forEach((day, i) => {
+    const x = margin + timeColumnWidth + i * columnWidth;
+    const dateStr = day.toISOString().split('T')[0];
+    const noteContent = notesMap.get(dateStr);
+    
+    // Draw notes box
+    doc.strokeColor('#CCCCCC').lineWidth(0.5);
+    doc.rect(x + 1, notesY, columnWidth - 2, notesHeight).stroke();
+    
+    if (noteContent) {
+      doc.fontSize(4).font('Helvetica');
+      doc.text(noteContent, x + 3, notesY + 2, {
+        width: columnWidth - 6,
+        height: notesHeight - 4,
+        ellipsis: true
+      });
+    }
+  });
+
+  // Adjust grid top to account for notes section
+  const adjustedGridTop = notesY + notesHeight;
+  const adjustedGridHeight = pageHeight - adjustedGridTop - 20;
+  const adjustedHourHeight = adjustedGridHeight / totalHours;
+
   // Draw grid
   doc.strokeColor('#CCCCCC').lineWidth(0.5);
   
   // Vertical lines
   for (let i = 0; i <= 8; i++) {
     const x = margin + (i === 0 ? 0 : timeColumnWidth + (i - 1) * columnWidth);
-    doc.moveTo(x, gridTop + 25).lineTo(x, gridTop + gridHeight).stroke();
+    doc.moveTo(x, adjustedGridTop).lineTo(x, adjustedGridTop + adjustedGridHeight).stroke();
   }
 
   // Horizontal lines and time labels
   doc.fontSize(6).font('Helvetica');
   for (let i = 0; i <= totalHours; i++) {
-    const y = gridTop + 25 + i * hourHeight;
+    const y = adjustedGridTop + i * adjustedHourHeight;
     doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
     
     if (i < totalHours) {
@@ -175,11 +218,12 @@ function generateWeeklyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < startHour || hour >= endHour) return;
+    // Only show appointments that start between 6am and 9pm (21:00)
+    if (hour < startHour || hour >= 22) return;
 
-    const startY = gridTop + 25 + (hour - startHour + minute / 60) * hourHeight;
+    const startY = adjustedGridTop + (hour - startHour + minute / 60) * adjustedHourHeight;
     const duration = (endHour - hour) + (endMinute - minute) / 60;
-    const height = Math.max(duration * hourHeight, 10);
+    const height = Math.max(duration * adjustedHourHeight, 10);
 
     const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
     const width = columnWidth - 4;
@@ -214,7 +258,8 @@ function generateWeeklyGridPage(
 function generateDailyGridPage(
   doc: PDFKit.PDFDocument,
   day: Date,
-  appointments: Appointment[]
+  appointments: Appointment[],
+  dailyNotes: DailyNote[]
 ) {
   const pageWidth = 509; // Portrait orientation
   const pageHeight = 679;
@@ -223,9 +268,9 @@ function generateDailyGridPage(
   
   // Title
   const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
-  const dateStr = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  const dateDisplay = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   doc.fontSize(14).font('Helvetica-Bold')
-    .text(`${dayName}, ${dateStr}`, margin, 20, {
+    .text(`${dayName}, ${dateDisplay}`, margin, 20, {
       width: pageWidth - 2 * margin,
       align: 'center'
     });
@@ -255,9 +300,35 @@ function generateDailyGridPage(
     })
     .fillColor('#000000');
 
-  // Grid setup
-  const gridTop = headerHeight;
-  const gridHeight = pageHeight - headerHeight - 40;
+  // Find note for this day
+  const dateStr = day.toISOString().split('T')[0];
+  const dayNote = dailyNotes.find(note => note.date === dateStr);
+  
+  // Draw notes section
+  const notesY = headerHeight;
+  const notesHeight = 60;
+  doc.fontSize(10).font('Helvetica-Bold');
+  doc.text('Notes & Goals:', margin, notesY + 5, { width: pageWidth - 2 * margin });
+  
+  doc.strokeColor('#CCCCCC').lineWidth(0.5);
+  doc.rect(margin, notesY + 20, pageWidth - 2 * margin, notesHeight - 20).stroke();
+  
+  if (dayNote && dayNote.content) {
+    doc.fontSize(8).font('Helvetica');
+    doc.text(dayNote.content, margin + 5, notesY + 25, {
+      width: pageWidth - 2 * margin - 10,
+      height: notesHeight - 30,
+      ellipsis: true
+    });
+  } else {
+    doc.fontSize(8).font('Helvetica-Oblique').fillColor('#999999');
+    doc.text('No notes for this day', margin + 5, notesY + 25);
+    doc.fillColor('#000000');
+  }
+  
+  // Grid setup - adjust for notes section
+  const gridTop = notesY + notesHeight + 10;
+  const gridHeight = pageHeight - gridTop - 40;
   const timeColumnWidth = 50;
   const contentWidth = pageWidth - 2 * margin - timeColumnWidth;
   
@@ -307,7 +378,8 @@ function generateDailyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < startHour || hour >= endHour) return;
+    // Only show appointments that start between 6am and 9pm (21:00)
+    if (hour < startHour || hour >= 22) return;;
 
     const startY = gridTop + (hour - startHour + minute / 60) * hourHeight;
     const duration = (endHour - hour) + (endMinute - minute) / 60;

@@ -564,13 +564,16 @@ export default function WeeklyView() {
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
             
-            if (startH < 6 || startH >= 24) return null;
+            // Only show appointments that start between 6am and 9pm (21:00)
+            // Appointments can extend to 10pm (22:00) but shouldn't start after 9pm
+            if (startH < 6 || startH >= 22) return null;
             
             const startMinutes = (startH - 6) * 60 + startM;
             const endMinutes = (endH - 6) * 60 + endM;
             const pixelsPerMinute = 100 / 60;
             
-            const y = 60 + startMinutes * pixelsPerMinute;
+            // Account for day headers (60px) + notes section (80px minimum)
+            const y = 140 + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
             
             const dayIdx = getEventDayIndex(event);
