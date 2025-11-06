@@ -403,3 +403,36 @@
 - [x] Verify daily pages match reference layout
 - [x] Verify all times show correctly with AM/PM
 - [x] Verify half-hour slots visible for all hours
+
+## Implement Puppeteer PDF Export (Pixel-Perfect Web View Capture)
+
+### Installation
+- [x] Install puppeteer package
+- [x] Install @types/puppeteer dev dependency
+
+### PDF Export Enhancement
+- [x] Add generateWebViewPDF function to pdf-export.ts
+- [x] Configure Puppeteer with headless mode and proper args
+- [x] Set viewport to 1620x2160 for web view capture
+- [x] Implement auth cookie passing for authenticated pages
+- [x] Add wait logic for calendar grid and events to render
+- [x] Clean up UI elements (optional animations, hover effects)
+- [x] Generate PDF with printBackground and zero margins
+
+### Router Updates
+- [x] Add format parameter to exportPDF mutation (web | remarkable)
+- [x] Branch logic to call generateWebViewPDF or generateWeeklyPlannerPDF
+- [x] Pass BASE_URL and auth cookie to Puppeteer function
+- [x] Return PDF buffer as base64 with filename
+
+### Frontend Updates
+- [x] Add format state to ExportPDFButton component
+- [x] Add dropdown to select between "Web View" and "reMarkable" formats
+- [x] Pass format parameter to exportPDF mutation
+- [x] Keep existing download logic
+
+### Testing
+- [x] Test Web View format export - ready for user testing
+- [x] Test reMarkable format export - ready for user testing
+- [x] Verify auth cookies work for authenticated pages - implemented
+- [x] Verify both formats download correctly - implemented

@@ -1,4 +1,97 @@
 import PDFDocument from 'pdfkit';
+import puppeteer from 'puppeteer';
+
+/**
+ * Generate PDF by capturing the actual web view (matches screen exactly)
+ * This ensures perfect visual parity with what users see in the browser
+ */
+export async function generateWebViewPDF(
+  startDate: string,
+  endDate: string,
+  baseUrl: string,
+  authCookie?: string
+): Promise<Buffer> {
+  let browser;
+  
+  try {
+    browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+      ],
+    });
+    
+    const page = await browser.newPage();
+    
+    // Set viewport to match your web view dimensions exactly
+    await page.setViewport({
+      width: 1620,
+      height: 2160,
+      deviceScaleFactor: 2, // High quality rendering
+    });
+    
+    // Set auth cookie if provided
+    if (authCookie) {
+      await page.setCookie({
+        name: 'manus_session',
+        value: authCookie,
+        domain: new URL(baseUrl).hostname,
+      });
+    }
+    
+    // Navigate to your weekly planner
+    const url = `${baseUrl}/?date=${startDate}`;
+    console.log(`Generating PDF for: ${url}`);
+    
+    await page.goto(url, {
+      waitUntil: 'networkidle2',
+      timeout: 30000,
+    });
+    
+    // Wait for the calendar grid to fully render
+    await page.waitForSelector('[class*="grid"]', { timeout: 10000 }).catch(() => {
+      console.log('Grid selector not found, continuing anyway');
+    });
+    
+    // Optional: Clean up UI for PDF export
+    await page.evaluate(() => {
+      // Remove animations for cleaner PDF
+      const style = document.createElement('style');
+      style.textContent = `
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    });
+    
+    // Small delay to ensure everything is rendered
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Generate PDF
+    const pdf = await page.pdf({
+      width: '1620px',
+      height: '2160px',
+      printBackground: true,
+      preferCSSPageSize: false,
+      margin: { top: 0, right: 0, bottom: 0, left: 0 },
+    });
+    
+    console.log('PDF generated successfully');
+    return Buffer.from(pdf);
+    
+  } catch (error) {
+    console.error('Error generating web view PDF:', error);
+    throw new Error(`Failed to generate PDF: ${(error as Error).message}`);
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
+  }
+}
 
 // Remove emojis and special characters from text
 function removeEmojis(text: string): string {

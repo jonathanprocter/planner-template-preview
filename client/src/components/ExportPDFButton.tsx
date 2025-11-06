@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Download } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useState } from "react";
 
 interface ExportPDFButtonProps {
   weekStart: Date;
@@ -10,6 +11,7 @@ interface ExportPDFButtonProps {
 
 export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   const exportMutation = trpc.appointments.exportPDF.useMutation();
+  const [format, setFormat] = useState<'web' | 'remarkable'>('remarkable');
 
   const handleExport = async () => {
     toast.info("Generating PDF...");
@@ -25,6 +27,7 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
       const result = await exportMutation.mutateAsync({
         startDate: formatDate(weekStart),
         endDate: formatDate(weekEnd),
+        format,
       });
 
       // Convert base64 to blob
@@ -53,14 +56,24 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   };
 
   return (
-    <Button
-      onClick={handleExport}
-      disabled={exportMutation.isPending}
-      variant="outline"
-      className="flex items-center gap-2"
-    >
-      <Download className="w-4 h-4" />
-      {exportMutation.isPending ? "Exporting..." : "Export to PDF"}
-    </Button>
+    <div className="flex gap-2">
+      <select 
+        value={format} 
+        onChange={(e) => setFormat(e.target.value as 'web' | 'remarkable')}
+        className="border rounded px-3 py-2 text-sm bg-background"
+      >
+        <option value="remarkable">reMarkable (679×509)</option>
+        <option value="web">Web View (1620×2160)</option>
+      </select>
+      <Button
+        onClick={handleExport}
+        disabled={exportMutation.isPending}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <Download className="w-4 h-4" />
+        {exportMutation.isPending ? "Exporting..." : "Export to PDF"}
+      </Button>
+    </div>
   );
 }

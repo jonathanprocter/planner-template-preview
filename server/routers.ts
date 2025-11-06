@@ -13,7 +13,7 @@ import {
 import { getDb } from "./db";
 import { appointments, dailyNotes } from "../drizzle/schema";
 import { and, eq, gte, lte, or, like } from "drizzle-orm";
-import { generateWeeklyPlannerPDF } from "./pdf-export";
+import { generateWeeklyPlannerPDF, generateWebViewPDF } from "./pdf-export";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -341,47 +341,57 @@ export const appRouter = router({
         z.object({
           startDate: z.string(),
           endDate: z.string(),
+          format: z.enum(['web', 'remarkable']).default('remarkable'),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
-        // generateWeeklyPlannerPDF already imported at top
-
-        // Fetch appointments for the date range
-        const result = await db
-          .select()
-          .from(appointments)
-          .where(
-            and(
-              eq(appointments.userId, ctx.user.id),
-              gte(appointments.date, input.startDate),
-              lte(appointments.date, input.endDate)
-            )
+        let pdfBuffer: Buffer;
+        
+        if (input.format === 'web') {
+          // Use Puppeteer to capture web view
+          const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+          const authCookie = ctx.req.cookies['manus_session'];
+          
+          pdfBuffer = await generateWebViewPDF(
+            input.startDate,
+            input.endDate,
+            baseUrl,
+            authCookie
           );
+        } else {
+          // Use reMarkable-optimized PDF
+          const result = await db
+            .select()
+            .from(appointments)
+            .where(
+              and(
+                eq(appointments.userId, ctx.user.id),
+                gte(appointments.date, input.startDate),
+                lte(appointments.date, input.endDate)
+              )
+            );
 
-        // Fetch daily notes for the date range
-        const notes = await db
-          .select()
-          .from(dailyNotes)
-          .where(
-            and(
-              eq(dailyNotes.userId, ctx.user.id),
-              gte(dailyNotes.date, input.startDate),
-              lte(dailyNotes.date, input.endDate)
-            )
+          const notes = await db
+            .select()
+            .from(dailyNotes)
+            .where(
+              and(
+                eq(dailyNotes.userId, ctx.user.id),
+                gte(dailyNotes.date, input.startDate),
+                lte(dailyNotes.date, input.endDate)
+              )
+            );
+
+          pdfBuffer = await generateWeeklyPlannerPDF(
+            result,
+            notes,
+            new Date(input.startDate),
+            new Date(input.endDate)
           );
-
-        // Generate PDF
-        const pdfBuffer = await generateWeeklyPlannerPDF(
-          result,
-          notes,
-          new Date(input.startDate),
-          new Date(input.endDate)
-        );
+        }
 
         // Return PDF as base64
         return {
