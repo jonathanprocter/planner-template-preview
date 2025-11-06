@@ -337,3 +337,15 @@
 - [x] Test all appointment links navigate to correct daily pages
 - [x] Test Daily View button navigates back to weekly view
 - [x] Test yesterday/tomorrow links navigate to adjacent days
+
+## PDF Export Bug Fixes
+
+- [x] Fix time label spacing - hour and half-hour labels overlapping in weekly view
+- [x] Fix time label spacing in daily view
+- [x] Fix EST timezone conversion - appointments showing wrong times in PDF
+- [x] Style "Week View" button properly (matching web design with background/border)
+- [x] Style "Yesterday" and "Tomorrow" buttons properly
+- [x] Fix PDF internal links - use named destinations and goTo actions instead of external URLs
+- [x] Test all appointment links navigate within PDF (not external)
+- [x] Verify all times match EST timezone in PDF
+- [x] Verify button styling matches web application

@@ -89,6 +89,9 @@ export async function generateWeeklyPlannerPDF(
       doc.on('end', () => resolve(Buffer.concat(chunks)));
       doc.on('error', reject);
       
+      // Add named destination for page 1 (weekly view)
+      doc.addNamedDestination('page_1', 'XYZ', 0, doc.page.height, 1);
+      
       // Generate weekly grid page
       generateWeeklyGridPage(doc, weekDays, appointments, notesMap);
       
@@ -98,6 +101,10 @@ export async function generateWeeklyPlannerPDF(
           size: [509, 679], // Portrait for reMarkable 2 Pro
           margins: { top: 20, bottom: 20, left: 20, right: 20 }
         });
+        
+        // Add named destination for this page
+        const pageNum = index + 2; // Pages 2-8
+        doc.addNamedDestination(`page_${pageNum}`, 'XYZ', 0, doc.page.height, 1);
         
         generateDailyGridPage(doc, day, index, appointments, notesMap);
       });
@@ -197,13 +204,13 @@ function generateWeeklyGridPage(
        .lineTo(pageWidth - margin, y)
        .stroke();
     
-    // Hour time label (bold, larger)
+    // Hour time label (bold, larger) - positioned at top of hour block
     if (i < totalHours) {
       const hour = startHour + i;
       const timeLabel = hour < 12 ? `${hour}:00` : hour === 12 ? '12:00' : `${hour - 12}:00`;
-      doc.fontSize(8).font('Helvetica-Bold')
+      doc.fontSize(9).font('Helvetica-Bold')
          .fillColor('#000000')
-         .text(timeLabel, margin, y + 2, { width: timeColumnWidth - 5, align: 'right' });
+         .text(timeLabel, margin, y + 4, { width: timeColumnWidth - 5, align: 'right' });
     }
     
     // Half-hour line and label
@@ -216,12 +223,12 @@ function generateWeeklyGridPage(
          .lineTo(pageWidth - margin, halfY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter)
+      // Half-hour time label (smaller, lighter) - positioned at middle of hour block
       const hour = startHour + i;
       const halfTimeLabel = hour < 12 ? `${hour}:30` : hour === 12 ? '12:30' : `${hour - 12}:30`;
-      doc.fontSize(6).font('Helvetica')
-         .fillColor('#666666')
-         .text(halfTimeLabel, margin, halfY - 3, { width: timeColumnWidth - 5, align: 'right' });
+      doc.fontSize(7).font('Helvetica')
+         .fillColor('#999999')
+         .text(halfTimeLabel, margin, halfY - 8, { width: timeColumnWidth - 5, align: 'right' });
     }
   }
   
@@ -239,13 +246,24 @@ function generateWeeklyGridPage(
     });
     
     dayAppointments.forEach(apt => {
+      // Convert to EST (UTC-5) by creating date in EST timezone
       const aptStart = new Date(apt.startTime);
       const aptEnd = new Date(apt.endTime);
       
-      const startHourVal = aptStart.getHours();
-      const startMinute = aptStart.getMinutes();
-      const endHourVal = aptEnd.getHours();
-      const endMinute = aptEnd.getMinutes();
+      // Get EST time by using toLocaleString with America/New_York timezone
+      const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+      const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+      
+      // Parse EST time components
+      const estStartParts = estStartStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
+      const estEndParts = estEndStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
+      
+      if (!estStartParts || !estEndParts) return;
+      
+      const startHourVal = parseInt(estStartParts[4]);
+      const startMinute = parseInt(estStartParts[5]);
+      const endHourVal = parseInt(estEndParts[4]);
+      const endMinute = parseInt(estEndParts[5]);
       
       // Skip if outside display range
       if (startHourVal < startHour || startHourVal >= 22) return;
@@ -288,7 +306,8 @@ function generateWeeklyGridPage(
       
       // Make appointment clickable (link to daily page)
       const targetPage = dayIndex + 2; // Page 2 is Monday, Page 3 is Tuesday, etc.
-      doc.link(boxX, startY, boxWidth, height, `#page=${targetPage}`);
+      // Use goTo action for internal PDF navigation
+      doc.goTo(boxX, startY, boxWidth, height, `page_${targetPage}`);
     });
   });
 }
@@ -316,22 +335,25 @@ function generateDailyGridPage(
   // "← Week View" button
   const buttonX = margin;
   const buttonY = margin;
-  const buttonWidth = 80;
-  const buttonHeight = 20;
+  const buttonWidth = 100;
+  const buttonHeight = 24;
   
-  doc.fillColor('#E7E9EC')
+  // Button background
+  doc.fillColor('#F5F5F5')
      .rect(buttonX, buttonY, buttonWidth, buttonHeight)
      .fill();
   
-  doc.strokeColor('#243447').lineWidth(1)
+  // Button border
+  doc.strokeColor('#243447').lineWidth(1.5)
      .rect(buttonX, buttonY, buttonWidth, buttonHeight)
      .stroke();
   
+  // Button text
   doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
-  doc.text('← Week View', buttonX, buttonY + 5, { width: buttonWidth, align: 'center' });
+  doc.text('← Week View', buttonX, buttonY + 7, { width: buttonWidth, align: 'center' });
   
-  // Make button clickable
-  doc.link(buttonX, buttonY, buttonWidth, buttonHeight, '#page=1');
+  // Make button clickable (use goTo action for internal navigation)
+  doc.goTo(buttonX, buttonY, buttonWidth, buttonHeight, 'page_1');
   
   // Date header
   const dateStr = day.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -382,16 +404,16 @@ function generateDailyGridPage(
        .lineTo(pageWidth - margin, y)
        .stroke();
     
-    // Hour time label (bold, larger)
+    // Hour time label (bold, larger) - positioned at top of hour block
     if (i < totalHours) {
       const hour = startHour + i;
       const isPM = hour >= 12;
       const displayHour = hour > 12 ? hour - 12 : hour;
       const timeLabel = `${displayHour}:00 ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(10).font('Helvetica-Bold')
+      doc.fontSize(11).font('Helvetica-Bold')
          .fillColor('#000000')
-         .text(timeLabel, margin, y + 5, { width: timeColumnWidth - 10, align: 'right' });
+         .text(timeLabel, margin, y + 6, { width: timeColumnWidth - 10, align: 'right' });
     }
     
     // Half-hour line and label
@@ -404,15 +426,15 @@ function generateDailyGridPage(
          .lineTo(pageWidth - margin, halfY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter)
+      // Half-hour time label (smaller, lighter) - positioned at middle of hour block
       const hour = startHour + i;
       const isPM = hour >= 12;
       const displayHour = hour > 12 ? hour - 12 : hour;
       const halfTimeLabel = `${displayHour}:30 ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(8).font('Helvetica')
-         .fillColor('#666666')
-         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 10, align: 'right' });
+      doc.fontSize(9).font('Helvetica')
+         .fillColor('#999999')
+         .text(halfTimeLabel, margin, halfY - 10, { width: timeColumnWidth - 10, align: 'right' });
     }
   }
   
@@ -425,13 +447,24 @@ function generateDailyGridPage(
   });
   
   dayAppointments.forEach(apt => {
+    // Convert to EST (UTC-5) by creating date in EST timezone
     const aptStart = new Date(apt.startTime);
     const aptEnd = new Date(apt.endTime);
     
-    const startHourVal = aptStart.getHours();
-    const startMinute = aptStart.getMinutes();
-    const endHourVal = aptEnd.getHours();
-    const endMinute = aptEnd.getMinutes();
+    // Get EST time by using toLocaleString with America/New_York timezone
+    const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+    const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+    
+    // Parse EST time components
+    const estStartParts = estStartStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
+    const estEndParts = estEndStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
+    
+    if (!estStartParts || !estEndParts) return;
+    
+    const startHourVal = parseInt(estStartParts[4]);
+    const startMinute = parseInt(estStartParts[5]);
+    const endHourVal = parseInt(estEndParts[4]);
+    const endMinute = parseInt(estEndParts[5]);
     
     // Skip if outside display range
     if (startHourVal < startHour || startHourVal >= 22) return;
@@ -481,45 +514,53 @@ function generateDailyGridPage(
   });
   
   // Add navigation footer (yesterday/tomorrow)
-  const footerY = pageHeight - margin - 25;
-  const navButtonWidth = 100;
-  const navButtonHeight = 20;
+  const footerY = pageHeight - margin - 28;
+  const navButtonWidth = 110;
+  const navButtonHeight = 24;
   
   // Yesterday button (left side)
   const yesterdayX = margin;
-  doc.fillColor('#E7E9EC')
+  
+  // Button background
+  doc.fillColor('#F5F5F5')
      .rect(yesterdayX, footerY, navButtonWidth, navButtonHeight)
      .fill();
   
-  doc.strokeColor('#243447').lineWidth(1)
+  // Button border
+  doc.strokeColor('#243447').lineWidth(1.5)
      .rect(yesterdayX, footerY, navButtonWidth, navButtonHeight)
      .stroke();
   
-  doc.fillColor('#243447').fontSize(9).font('Helvetica');
-  doc.text('← Yesterday', yesterdayX, footerY + 5, { width: navButtonWidth, align: 'center' });
+  // Button text
+  doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
+  doc.text('← Yesterday', yesterdayX, footerY + 7, { width: navButtonWidth, align: 'center' });
   
   // Link to previous day (if not first day)
   if (dayIndex > 0) {
     const prevPage = dayIndex + 1; // dayIndex is 0-based, pages are 2-8
-    doc.link(yesterdayX, footerY, navButtonWidth, navButtonHeight, `#page=${prevPage}`);
+    doc.goTo(yesterdayX, footerY, navButtonWidth, navButtonHeight, `page_${prevPage}`);
   }
   
   // Tomorrow button (right side)
   const tomorrowX = pageWidth - margin - navButtonWidth;
-  doc.fillColor('#E7E9EC')
+  
+  // Button background
+  doc.fillColor('#F5F5F5')
      .rect(tomorrowX, footerY, navButtonWidth, navButtonHeight)
      .fill();
   
-  doc.strokeColor('#243447').lineWidth(1)
+  // Button border
+  doc.strokeColor('#243447').lineWidth(1.5)
      .rect(tomorrowX, footerY, navButtonWidth, navButtonHeight)
      .stroke();
   
-  doc.fillColor('#243447').fontSize(9).font('Helvetica');
-  doc.text('Tomorrow →', tomorrowX, footerY + 5, { width: navButtonWidth, align: 'center' });
+  // Button text
+  doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
+  doc.text('Tomorrow →', tomorrowX, footerY + 7, { width: navButtonWidth, align: 'center' });
   
   // Link to next day (if not last day)
   if (dayIndex < 6) {
     const nextPage = dayIndex + 3; // dayIndex is 0-based, pages are 2-8
-    doc.link(tomorrowX, footerY, navButtonWidth, navButtonHeight, `#page=${nextPage}`);
+    doc.goTo(tomorrowX, footerY, navButtonWidth, navButtonHeight, `page_${nextPage}`);
   }
 }
