@@ -288,3 +288,12 @@
 - [x] Verify grid calculations to prevent appointment overflow
 - [ ] Add half-hour grid lines to match web application
 - [x] Ensure consistent styling between web app and PDF export
+
+## Correct Color Scheme to Match Official Financial District Guide
+- [x] Change "SimplePractice" to "StimulusPractice" in all code and comments
+- [x] Verify all color values exactly match the guide (no deviations)
+- [x] Update WeeklyView color mappings to use official colors
+- [x] Update DailyView color mappings to use official colors
+- [x] Update PDF export color function to use official colors
+- [x] Update color legend to show "StimulusPractice" instead of "SimplePractice"
+- [x] Test all views to ensure colors match the official guide

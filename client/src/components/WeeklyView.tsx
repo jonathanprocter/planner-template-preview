@@ -83,23 +83,34 @@ export default function WeeklyView() {
     if (dbAppointments) {
       // Convert DB appointments to Event format
       const dbEvents: Event[] = dbAppointments.map((apt: any) => {
-        // Check if this is a SimplePractice calendar (appointments with lock emoji)
-        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+        // Check if this is a StimulusPractice calendar
+        const isStimulusPractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
+        const isFlight = apt.title?.toLowerCase().includes('flight');
+        const isMeeting = apt.title?.toLowerCase().includes('meeting');
+        
+        // Financial District color scheme
+        let color = '#4F5D67'; // Default: Work (Cool Slate)
+        if (isStimulusPractice) color = '#243447'; // Deep Indigo
+        else if (isFlight) color = '#A63D3D'; // Merlot Red
+        else if (isHoliday) color = '#3D5845'; // Forest Pine
+        else if (isMeeting) color = '#9A7547'; // Rich Caramel
         
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
           startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          color: isHoliday ? '#34a853' : isSimplePractice ? '#6495ED' : apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
+          color,
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
           description: apt.description,
           calendarId: apt.calendarId,
-          isSimplePractice,
+          isStimulusPractice,
           isHoliday,
+          isFlight,
+          isMeeting,
         };
       });
       
@@ -364,20 +375,24 @@ export default function WeeklyView() {
             <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#6495ED' }}></div>
-                <span className="text-xs text-gray-600">SimplePractice</span>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#243447' }}></div>
+                <span className="text-xs text-gray-600">StimulusPractice</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#34a853' }}></div>
-                <span className="text-xs text-gray-600">Holidays</span>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3D5845' }}></div>
+                <span className="text-xs text-gray-600">Holidays/Notes</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4285f4' }}></div>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4F5D67' }}></div>
                 <span className="text-xs text-gray-600">Work</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ea4335' }}></div>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#9A7547' }}></div>
                 <span className="text-xs text-gray-600">Meetings</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A63D3D' }}></div>
+                <span className="text-xs text-gray-600">Flight Events</span>
               </div>
             </div>
           </div>
@@ -571,11 +586,17 @@ export default function WeeklyView() {
                     top: `${y}px`,
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
-                    backgroundColor: (event as any).isSimplePractice ? '#F5F5F0' : event.color,
-                    color: (event as any).isSimplePractice ? '#333' : 'white',
-                    border: (event as any).isSimplePractice ? '1.5px solid #6495ED' : '1px solid rgba(255,255,255,0.2)',
-                    borderLeftWidth: (event as any).isSimplePractice ? '4px' : '1.5px',
-                    borderLeftColor: (event as any).isSimplePractice ? '#6495ED' : undefined,
+                    backgroundColor: (() => {
+                      if ((event as any).isStimulusPractice) return '#E7E9EC';
+                      if ((event as any).isFlight) return '#F6EAEA';
+                      if ((event as any).isHoliday) return '#E9ECE9';
+                      if ((event as any).isMeeting) return '#F4F0E9';
+                      return '#EBEDEF'; // Work
+                    })(),
+                    color: '#333',
+                    border: `1.5px solid ${event.color}`,
+                    borderLeftWidth: '4px',
+                    borderLeftColor: event.color,
                     opacity: draggingEvent === event.id ? 0.7 : 1,
                   }}
                   onMouseDown={(e) => handleDragStart(e, event.id)}

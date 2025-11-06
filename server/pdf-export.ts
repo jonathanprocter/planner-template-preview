@@ -15,7 +15,7 @@ function removeEmojis(text: string): string {
 
 // Financial District color scheme for reMarkable 2 Pro
 function getFinancialDistrictColors(calendarId?: string | null, title?: string) {
-  // SimplePractice calendars
+  // StimulusPractice calendars
   if (calendarId?.startsWith('6ac7ac649a345a77') || calendarId?.startsWith('79dfcb90ce59b1b0')) {
     return { border: '#243447', background: '#E7E9EC', leftFlag: '#243447' }; // Deep Indigo
   }
