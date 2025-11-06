@@ -306,3 +306,21 @@
 - [x] Ensure PDF appointments align exactly with time slots
 - [x] Ensure web view appointments align exactly with time slots
 - [x] Test PDF export matches web application display exactly
+
+## Implement Correct PDF Export Based on Specifications
+- [x] Rewrite generateWeeklyGridPage with correct grid calculations
+- [x] Rewrite generateDailyGridPage with correct grid calculations
+- [x] Fix appointment rendering to draw on same page as grid
+- [x] Implement proper Y-position calculation: gridTop + (hour - startHour + minute / 60) * hourHeight
+- [x] Add daily notes rendering to weekly view (below day headers)
+- [x] Add daily notes rendering to daily view (below page header)
+- [x] Ensure time range stops at 21:00 (no 22:00 or 23:00)
+- [x] Fix appointment filtering: hour >= 22 instead of hour > endHour
+- [x] Verify Financial District colors are applied correctly
+- [x] Verify emoji removal is working
+- [x] Verify bidirectional links work (weekly → daily, daily → weekly)
+- [x] Test PDF has exactly 8 pages
+- [x] Test page 1 is landscape (679×509)
+- [x] Test pages 2-8 are portrait (509×679)
+- [x] Test appointments align perfectly with time grid
+- [x] Test all appointments visible (no separate pages)
