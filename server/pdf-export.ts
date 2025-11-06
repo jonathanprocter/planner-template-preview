@@ -187,21 +187,41 @@ function generateWeeklyGridPage(
     doc.moveTo(lineX, gridTop).lineTo(lineX, gridTop + gridHeight).stroke();
   }
   
-  // Horizontal lines (hours) and time labels
+  // Horizontal lines (hours and half-hours) and time labels
   for (let i = 0; i <= totalHours; i++) {
     const y = gridTop + (i * hourHeight);
     
-    // Hour line
+    // Hour line (thicker)
+    doc.strokeColor('#CCCCCC').lineWidth(1);
     doc.moveTo(margin + timeColumnWidth, y)
        .lineTo(pageWidth - margin, y)
        .stroke();
     
-    // Time label
+    // Hour time label (bold, larger)
     if (i < totalHours) {
       const hour = startHour + i;
-      const timeLabel = hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`;
-      doc.fontSize(8).font('Helvetica')
+      const timeLabel = hour < 12 ? `${hour}:00` : hour === 12 ? '12:00' : `${hour - 12}:00`;
+      doc.fontSize(8).font('Helvetica-Bold')
+         .fillColor('#000000')
          .text(timeLabel, margin, y + 2, { width: timeColumnWidth - 5, align: 'right' });
+    }
+    
+    // Half-hour line and label
+    if (i < totalHours) {
+      const halfY = y + (hourHeight / 2);
+      
+      // Half-hour line (thinner, lighter)
+      doc.strokeColor('#E0E0E0').lineWidth(0.5);
+      doc.moveTo(margin + timeColumnWidth, halfY)
+         .lineTo(pageWidth - margin, halfY)
+         .stroke();
+      
+      // Half-hour time label (smaller, lighter)
+      const hour = startHour + i;
+      const halfTimeLabel = hour < 12 ? `${hour}:30` : hour === 12 ? '12:30' : `${hour - 12}:30`;
+      doc.fontSize(6).font('Helvetica')
+         .fillColor('#666666')
+         .text(halfTimeLabel, margin, halfY - 3, { width: timeColumnWidth - 5, align: 'right' });
     }
   }
   
@@ -352,24 +372,47 @@ function generateDailyGridPage(
      .lineTo(margin + timeColumnWidth, gridTop + gridHeight)
      .stroke();
   
-  // Horizontal lines and time labels
+  // Horizontal lines and time labels (hours and half-hours)
   for (let i = 0; i <= totalHours; i++) {
     const y = gridTop + (i * hourHeight);
     
-    // Hour line
+    // Hour line (thicker)
+    doc.strokeColor('#CCCCCC').lineWidth(1);
     doc.moveTo(margin, y)
        .lineTo(pageWidth - margin, y)
        .stroke();
     
-    // Time label
+    // Hour time label (bold, larger)
     if (i < totalHours) {
       const hour = startHour + i;
       const isPM = hour >= 12;
       const displayHour = hour > 12 ? hour - 12 : hour;
       const timeLabel = `${displayHour}:00 ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(9).font('Helvetica')
+      doc.fontSize(10).font('Helvetica-Bold')
+         .fillColor('#000000')
          .text(timeLabel, margin, y + 5, { width: timeColumnWidth - 10, align: 'right' });
+    }
+    
+    // Half-hour line and label
+    if (i < totalHours) {
+      const halfY = y + (hourHeight / 2);
+      
+      // Half-hour line (thinner, lighter)
+      doc.strokeColor('#E0E0E0').lineWidth(0.5);
+      doc.moveTo(margin, halfY)
+         .lineTo(pageWidth - margin, halfY)
+         .stroke();
+      
+      // Half-hour time label (smaller, lighter)
+      const hour = startHour + i;
+      const isPM = hour >= 12;
+      const displayHour = hour > 12 ? hour - 12 : hour;
+      const halfTimeLabel = `${displayHour}:30 ${isPM ? 'PM' : 'AM'}`;
+      
+      doc.fontSize(8).font('Helvetica')
+         .fillColor('#666666')
+         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 10, align: 'right' });
     }
   }
   
@@ -436,4 +479,47 @@ function generateDailyGridPage(
       width: boxWidth - 12
     });
   });
+  
+  // Add navigation footer (yesterday/tomorrow)
+  const footerY = pageHeight - margin - 25;
+  const navButtonWidth = 100;
+  const navButtonHeight = 20;
+  
+  // Yesterday button (left side)
+  const yesterdayX = margin;
+  doc.fillColor('#E7E9EC')
+     .rect(yesterdayX, footerY, navButtonWidth, navButtonHeight)
+     .fill();
+  
+  doc.strokeColor('#243447').lineWidth(1)
+     .rect(yesterdayX, footerY, navButtonWidth, navButtonHeight)
+     .stroke();
+  
+  doc.fillColor('#243447').fontSize(9).font('Helvetica');
+  doc.text('← Yesterday', yesterdayX, footerY + 5, { width: navButtonWidth, align: 'center' });
+  
+  // Link to previous day (if not first day)
+  if (dayIndex > 0) {
+    const prevPage = dayIndex + 1; // dayIndex is 0-based, pages are 2-8
+    doc.link(yesterdayX, footerY, navButtonWidth, navButtonHeight, `#page=${prevPage}`);
+  }
+  
+  // Tomorrow button (right side)
+  const tomorrowX = pageWidth - margin - navButtonWidth;
+  doc.fillColor('#E7E9EC')
+     .rect(tomorrowX, footerY, navButtonWidth, navButtonHeight)
+     .fill();
+  
+  doc.strokeColor('#243447').lineWidth(1)
+     .rect(tomorrowX, footerY, navButtonWidth, navButtonHeight)
+     .stroke();
+  
+  doc.fillColor('#243447').fontSize(9).font('Helvetica');
+  doc.text('Tomorrow →', tomorrowX, footerY + 5, { width: navButtonWidth, align: 'center' });
+  
+  // Link to next day (if not last day)
+  if (dayIndex < 6) {
+    const nextPage = dayIndex + 3; // dayIndex is 0-based, pages are 2-8
+    doc.link(tomorrowX, footerY, navButtonWidth, navButtonHeight, `#page=${nextPage}`);
+  }
 }

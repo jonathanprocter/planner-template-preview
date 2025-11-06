@@ -324,3 +324,16 @@
 - [x] Test pages 2-8 are portrait (509×679)
 - [x] Test appointments align perfectly with time grid
 - [x] Test all appointments visible (no separate pages)
+
+## PDF Export Refinements (Match Web View Exactly)
+
+- [x] Add half-hour time markers (6:30, 7:30, etc.) with smaller font in weekly PDF
+- [x] Add horizontal grid lines at half-hour marks in weekly PDF
+- [x] Add half-hour time markers and grid lines to daily PDF
+- [x] Make all appointments in weekly PDF clickable (bidirectional links to daily pages)
+- [x] Add styled "Daily View" button to daily pages matching web design (already implemented as "← Week View")
+- [x] Add yesterday/tomorrow navigation links at bottom of daily pages
+- [x] Verify half-hour markers align with grid lines
+- [x] Test all appointment links navigate to correct daily pages
+- [x] Test Daily View button navigates back to weekly view
+- [x] Test yesterday/tomorrow links navigate to adjacent days
