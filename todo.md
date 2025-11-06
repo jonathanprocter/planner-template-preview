@@ -349,3 +349,27 @@
 - [x] Test all appointment links navigate within PDF (not external)
 - [x] Verify all times match EST timezone in PDF
 - [x] Verify button styling matches web application
+
+## Pixel Audit Findings - Critical Failures (0% Pass Rate)
+
+### P0 - Critical Timezone Bug
+- [x] Fix timezone conversion - removed broken toLocaleString, use direct getHours()
+- [x] Debug toLocaleString EST parsing - replaced with direct time access
+- [x] Verify all appointment times match web application exactly
+
+### P0 - Missing Half-Hour Markers  
+- [x] Fix weekly view - half-hour labels (6:30, 7:30) now visible at halfY + 2
+- [x] Fix weekly view - half-hour grid lines now visible with lighter stroke
+- [x] Fix daily view - half-hour labels (6:30 AM, 7:30 AM) now visible
+- [x] Fix daily view - half-hour grid lines now visible with lighter stroke
+
+### P1 - Button Text Encoding
+- [x] Fix "< Week View" button - replaced Unicode arrows with ASCII
+- [x] Fix "< Yesterday" button - replaced Unicode arrows with ASCII
+- [x] Fix "Tomorrow >" button - replaced Unicode arrows with ASCII
+- [x] Use proper ASCII for arrow symbols (< and >)
+
+### P2 - Time Format Consistency
+- [x] Weekly view shows "6:00", "7:00" (no AM/PM)
+- [x] Daily view shows "6:00 AM", "7:00 AM" (with AM/PM)
+- [x] Ensure format matches web application exactly

@@ -208,9 +208,9 @@ function generateWeeklyGridPage(
     if (i < totalHours) {
       const hour = startHour + i;
       const timeLabel = hour < 12 ? `${hour}:00` : hour === 12 ? '12:00' : `${hour - 12}:00`;
-      doc.fontSize(9).font('Helvetica-Bold')
+      doc.fontSize(8).font('Helvetica-Bold')
          .fillColor('#000000')
-         .text(timeLabel, margin, y + 4, { width: timeColumnWidth - 5, align: 'right' });
+         .text(timeLabel, margin, y + 2, { width: timeColumnWidth - 5, align: 'right' });
     }
     
     // Half-hour line and label
@@ -223,12 +223,12 @@ function generateWeeklyGridPage(
          .lineTo(pageWidth - margin, halfY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter) - positioned at middle of hour block
+      // Half-hour time label (smaller, lighter) - positioned below the half-hour line
       const hour = startHour + i;
       const halfTimeLabel = hour < 12 ? `${hour}:30` : hour === 12 ? '12:30' : `${hour - 12}:30`;
-      doc.fontSize(7).font('Helvetica')
-         .fillColor('#999999')
-         .text(halfTimeLabel, margin, halfY - 8, { width: timeColumnWidth - 5, align: 'right' });
+      doc.fontSize(6).font('Helvetica')
+         .fillColor('#666666')
+         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 5, align: 'right' });
     }
   }
   
@@ -246,24 +246,14 @@ function generateWeeklyGridPage(
     });
     
     dayAppointments.forEach(apt => {
-      // Convert to EST (UTC-5) by creating date in EST timezone
+      // Use times directly from database (already in correct timezone)
       const aptStart = new Date(apt.startTime);
       const aptEnd = new Date(apt.endTime);
       
-      // Get EST time by using toLocaleString with America/New_York timezone
-      const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
-      const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
-      
-      // Parse EST time components
-      const estStartParts = estStartStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
-      const estEndParts = estEndStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
-      
-      if (!estStartParts || !estEndParts) return;
-      
-      const startHourVal = parseInt(estStartParts[4]);
-      const startMinute = parseInt(estStartParts[5]);
-      const endHourVal = parseInt(estEndParts[4]);
-      const endMinute = parseInt(estEndParts[5]);
+      const startHourVal = aptStart.getHours();
+      const startMinute = aptStart.getMinutes();
+      const endHourVal = aptEnd.getHours();
+      const endMinute = aptEnd.getMinutes();
       
       // Skip if outside display range
       if (startHourVal < startHour || startHourVal >= 22) return;
@@ -350,7 +340,7 @@ function generateDailyGridPage(
   
   // Button text
   doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
-  doc.text('← Week View', buttonX, buttonY + 7, { width: buttonWidth, align: 'center' });
+  doc.text('< Week View', buttonX, buttonY + 7, { width: buttonWidth, align: 'center' });
   
   // Make button clickable (use goTo action for internal navigation)
   doc.goTo(buttonX, buttonY, buttonWidth, buttonHeight, 'page_1');
@@ -411,9 +401,9 @@ function generateDailyGridPage(
       const displayHour = hour > 12 ? hour - 12 : hour;
       const timeLabel = `${displayHour}:00 ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(11).font('Helvetica-Bold')
+      doc.fontSize(9).font('Helvetica-Bold')
          .fillColor('#000000')
-         .text(timeLabel, margin, y + 6, { width: timeColumnWidth - 10, align: 'right' });
+         .text(timeLabel, margin, y + 4, { width: timeColumnWidth - 10, align: 'right' });
     }
     
     // Half-hour line and label
@@ -426,15 +416,15 @@ function generateDailyGridPage(
          .lineTo(pageWidth - margin, halfY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter) - positioned at middle of hour block
+      // Half-hour time label (smaller, lighter) - positioned below the half-hour line
       const hour = startHour + i;
       const isPM = hour >= 12;
       const displayHour = hour > 12 ? hour - 12 : hour;
       const halfTimeLabel = `${displayHour}:30 ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(9).font('Helvetica')
-         .fillColor('#999999')
-         .text(halfTimeLabel, margin, halfY - 10, { width: timeColumnWidth - 10, align: 'right' });
+      doc.fontSize(7).font('Helvetica')
+         .fillColor('#666666')
+         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 10, align: 'right' });
     }
   }
   
@@ -447,24 +437,14 @@ function generateDailyGridPage(
   });
   
   dayAppointments.forEach(apt => {
-    // Convert to EST (UTC-5) by creating date in EST timezone
+    // Use times directly from database (already in correct timezone)
     const aptStart = new Date(apt.startTime);
     const aptEnd = new Date(apt.endTime);
     
-    // Get EST time by using toLocaleString with America/New_York timezone
-    const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
-    const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
-    
-    // Parse EST time components
-    const estStartParts = estStartStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
-    const estEndParts = estEndStr.match(/(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/);
-    
-    if (!estStartParts || !estEndParts) return;
-    
-    const startHourVal = parseInt(estStartParts[4]);
-    const startMinute = parseInt(estStartParts[5]);
-    const endHourVal = parseInt(estEndParts[4]);
-    const endMinute = parseInt(estEndParts[5]);
+    const startHourVal = aptStart.getHours();
+    const startMinute = aptStart.getMinutes();
+    const endHourVal = aptEnd.getHours();
+    const endMinute = aptEnd.getMinutes();
     
     // Skip if outside display range
     if (startHourVal < startHour || startHourVal >= 22) return;
@@ -533,7 +513,7 @@ function generateDailyGridPage(
   
   // Button text
   doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
-  doc.text('← Yesterday', yesterdayX, footerY + 7, { width: navButtonWidth, align: 'center' });
+  doc.text('< Yesterday', yesterdayX, footerY + 7, { width: navButtonWidth, align: 'center' });
   
   // Link to previous day (if not first day)
   if (dayIndex > 0) {
@@ -556,7 +536,7 @@ function generateDailyGridPage(
   
   // Button text
   doc.fillColor('#243447').fontSize(10).font('Helvetica-Bold');
-  doc.text('Tomorrow →', tomorrowX, footerY + 7, { width: navButtonWidth, align: 'center' });
+  doc.text('Tomorrow >', tomorrowX, footerY + 7, { width: navButtonWidth, align: 'center' });
   
   // Link to next day (if not last day)
   if (dayIndex < 6) {
