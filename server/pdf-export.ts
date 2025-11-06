@@ -194,41 +194,34 @@ function generateWeeklyGridPage(
     doc.moveTo(lineX, gridTop).lineTo(lineX, gridTop + gridHeight).stroke();
   }
   
-  // Horizontal lines (hours and half-hours) and time labels
-  for (let i = 0; i <= totalHours; i++) {
-    const y = gridTop + (i * hourHeight);
-    
-    // Hour line (thicker)
-    doc.strokeColor('#CCCCCC').lineWidth(1);
-    doc.moveTo(margin + timeColumnWidth, y)
-       .lineTo(pageWidth - margin, y)
-       .stroke();
-    
-    // Hour time label (bold, larger) - positioned at top of hour block
-    if (i < totalHours) {
-      const hour = startHour + i;
-      const timeLabel = hour < 12 ? `${hour}:00` : hour === 12 ? '12:00' : `${hour - 12}:00`;
-      doc.fontSize(8).font('Helvetica-Bold')
-         .fillColor('#000000')
-         .text(timeLabel, margin, y + 2, { width: timeColumnWidth - 5, align: 'right' });
-    }
-    
-    // Half-hour line and label
-    if (i < totalHours) {
-      const halfY = y + (hourHeight / 2);
+  // Time grid - show every half-hour slot explicitly (like reference script)
+  let rowY = gridTop;
+  const rowHeight = hourHeight / 2; // Each half-hour gets its own row
+  
+  for (let hour = startHour; hour <= endHour; hour++) {
+    for (const minute of ['00', '30']) {
+      // Skip the last half-hour (we end at endHour:00)
+      if (hour === endHour && minute === '30') break;
       
-      // Half-hour line (thinner, lighter)
+      // Draw horizontal grid line
       doc.strokeColor('#E0E0E0').lineWidth(0.5);
-      doc.moveTo(margin + timeColumnWidth, halfY)
-         .lineTo(pageWidth - margin, halfY)
+      doc.moveTo(margin + timeColumnWidth, rowY)
+         .lineTo(pageWidth - margin, rowY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter) - positioned below the half-hour line
-      const hour = startHour + i;
-      const halfTimeLabel = hour < 12 ? `${hour}:30` : hour === 12 ? '12:30' : `${hour - 12}:30`;
-      doc.fontSize(6).font('Helvetica')
-         .fillColor('#666666')
-         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 5, align: 'right' });
+      // Format time label with AM/PM
+      const isPM = hour >= 12;
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      const timeLabel = `${displayHour}:${minute} ${isPM ? 'PM' : 'AM'}`;
+      
+      // Draw time label (bold for :00, regular for :30)
+      const font = minute === '00' ? 'Helvetica-Bold' : 'Helvetica';
+      const fontSize = minute === '00' ? 8 : 7;
+      doc.fontSize(fontSize).font(font)
+         .fillColor('#000000')
+         .text(timeLabel, margin, rowY + 2, { width: timeColumnWidth - 5, align: 'right' });
+      
+      rowY += rowHeight;
     }
   }
   
@@ -384,47 +377,34 @@ function generateDailyGridPage(
      .lineTo(margin + timeColumnWidth, gridTop + gridHeight)
      .stroke();
   
-  // Horizontal lines and time labels (hours and half-hours)
-  for (let i = 0; i <= totalHours; i++) {
-    const y = gridTop + (i * hourHeight);
-    
-    // Hour line (thicker)
-    doc.strokeColor('#CCCCCC').lineWidth(1);
-    doc.moveTo(margin, y)
-       .lineTo(pageWidth - margin, y)
-       .stroke();
-    
-    // Hour time label (bold, larger) - positioned at top of hour block
-    if (i < totalHours) {
-      const hour = startHour + i;
-      const isPM = hour >= 12;
-      const displayHour = hour > 12 ? hour - 12 : hour;
-      const timeLabel = `${displayHour}:00 ${isPM ? 'PM' : 'AM'}`;
+  // Time grid - show every half-hour slot explicitly (like reference script)
+  let rowY = gridTop;
+  const rowHeight = hourHeight / 2; // Each half-hour gets its own row
+  
+  for (let hour = startHour; hour <= endHour; hour++) {
+    for (const minute of ['00', '30']) {
+      // Skip the last half-hour (we end at endHour:00)
+      if (hour === endHour && minute === '30') break;
       
-      doc.fontSize(9).font('Helvetica-Bold')
-         .fillColor('#000000')
-         .text(timeLabel, margin, y + 4, { width: timeColumnWidth - 10, align: 'right' });
-    }
-    
-    // Half-hour line and label
-    if (i < totalHours) {
-      const halfY = y + (hourHeight / 2);
-      
-      // Half-hour line (thinner, lighter)
+      // Draw horizontal grid line
       doc.strokeColor('#E0E0E0').lineWidth(0.5);
-      doc.moveTo(margin, halfY)
-         .lineTo(pageWidth - margin, halfY)
+      doc.moveTo(margin, rowY)
+         .lineTo(pageWidth - margin, rowY)
          .stroke();
       
-      // Half-hour time label (smaller, lighter) - positioned below the half-hour line
-      const hour = startHour + i;
+      // Format time label with AM/PM
       const isPM = hour >= 12;
-      const displayHour = hour > 12 ? hour - 12 : hour;
-      const halfTimeLabel = `${displayHour}:30 ${isPM ? 'PM' : 'AM'}`;
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      const timeLabel = `${displayHour}:${minute} ${isPM ? 'PM' : 'AM'}`;
       
-      doc.fontSize(7).font('Helvetica')
-         .fillColor('#666666')
-         .text(halfTimeLabel, margin, halfY + 2, { width: timeColumnWidth - 10, align: 'right' });
+      // Draw time label (bold for :00, regular for :30)
+      const font = minute === '00' ? 'Helvetica-Bold' : 'Helvetica';
+      const fontSize = minute === '00' ? 9 : 7;
+      doc.fontSize(fontSize).font(font)
+         .fillColor('#000000')
+         .text(timeLabel, margin, rowY + 4, { width: timeColumnWidth - 10, align: 'right' });
+      
+      rowY += rowHeight;
     }
   }
   

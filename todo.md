@@ -373,3 +373,33 @@
 - [x] Weekly view shows "6:00", "7:00" (no AM/PM)
 - [x] Daily view shows "6:00 AM", "7:00 AM" (with AM/PM)
 - [x] Ensure format matches web application exactly
+
+## Rewrite PDF Export to Match Reference Implementation
+
+### Reference Script Analysis (Python ReportLab)
+- [x] Analyze exact layout from reference script
+- [x] Document time format: "6:00 AM" style (not 24-hour)
+- [x] Document half-hour slots: Both :00 and :30 for every hour
+- [x] Document grid line style: Light gray (0.9, 0.9, 0.9)
+- [x] Document spacing: 35px per hour in weekly, 20px per half-hour in daily
+
+### Weekly Overview Page Rewrite
+- [x] Match exact header format: "Week of November 3-9, 2025"
+- [x] Match day headers: "Mon 3", "Tue 4", etc.
+- [x] Match time labels: "6:00 AM", "7:00 PM" format - explicit loop for :00 and :30
+- [x] Match grid spacing: Calculated from hourHeight / 2
+- [ ] Match appointment display: Compact inline format
+
+### Daily Pages Rewrite
+- [x] Match header format: Day name only
+- [x] Show both :00 and :30 time slots for every hour - explicit loop
+- [x] Match time label format: "6:00 AM", "6:30 AM", etc.
+- [x] Match grid spacing: rowHeight = hourHeight / 2
+- [ ] Match appointment bullets: "• Name" format
+- [ ] Add Notes section at bottom with lines
+
+### Testing
+- [x] Verify weekly page matches reference layout
+- [x] Verify daily pages match reference layout
+- [x] Verify all times show correctly with AM/PM
+- [x] Verify half-hour slots visible for all hours
