@@ -77,3 +77,21 @@ export const dailyNotes = mysqlTable("dailyNotes", {
 
 export type DailyNote = typeof dailyNotes.$inferSelect;
 export type InsertDailyNote = typeof dailyNotes.$inferInsert;
+
+/**
+ * Deleted appointments table for tracking Google Calendar events that users have intentionally deleted
+ * This prevents re-importing them during sync
+ */
+export const deletedAppointments = mysqlTable("deletedAppointments", {
+  id: int("id").autoincrement().primaryKey(),
+  /** User ID who deleted this appointment */
+  userId: int("userId").notNull(),
+  /** Google Calendar event ID that was deleted */
+  googleEventId: varchar("googleEventId", { length: 255 }).notNull(),
+  /** Calendar ID from Google Calendar */
+  calendarId: varchar("calendarId", { length: 255 }),
+  deletedAt: timestamp("deletedAt").defaultNow().notNull(),
+});
+
+export type DeletedAppointment = typeof deletedAppointments.$inferSelect;
+export type InsertDeletedAppointment = typeof deletedAppointments.$inferInsert;

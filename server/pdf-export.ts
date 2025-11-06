@@ -91,9 +91,9 @@ function generateWeeklyGridPage(
   const columnWidth = (pageWidth - 2 * margin - 40) / 7; // 40 for time column
   const timeColumnWidth = 40;
   
-  // Hours to display (6 AM to 10 PM)
+  // Hours to display (6 AM to 9 PM, appointments can extend to 10 PM)
   const startHour = 6;
-  const endHour = 22;
+  const endHour = 21;
   const totalHours = endHour - startHour + 1;
   const hourHeight = gridHeight / totalHours;
 
@@ -132,23 +132,20 @@ function generateWeeklyGridPage(
   // Draw appointments
   appointments.forEach(apt => {
     const aptDate = new Date(apt.startTime);
-    // Convert UTC to EST (UTC-5)
-    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
     const dayIndex = weekDays.findIndex(d => 
-      d.getFullYear() === estDate.getFullYear() &&
-      d.getMonth() === estDate.getMonth() &&
-      d.getDate() === estDate.getDate()
+      d.getFullYear() === aptDate.getFullYear() &&
+      d.getMonth() === aptDate.getMonth() &&
+      d.getDate() === aptDate.getDate()
     );
 
     if (dayIndex === -1) return;
 
-    const hour = estDate.getHours();
-    const minute = estDate.getMinutes();
+    const hour = aptDate.getHours();
+    const minute = aptDate.getMinutes();
     
     const endDate = new Date(apt.endTime);
-    const estEndDate = new Date(endDate.getTime() - 5 * 60 * 60 * 1000);
-    const endHour = estEndDate.getHours();
-    const endMinute = estEndDate.getMinutes();
+    const endHour = endDate.getHours();
+    const endMinute = endDate.getMinutes();
     
     if (hour < startHour || hour > endHour) return;
 
@@ -159,41 +156,26 @@ function generateWeeklyGridPage(
     const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
     const width = columnWidth - 4;
 
-    // Determine category and apply Financial District colors
+    // Check if SimplePractice appointment
     const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
                             apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-    const isHoliday = apt.calendarId?.includes('holiday');
-    const isFlight = apt.title?.toLowerCase().includes('flight');
-    
-    let bgColor = '#E9ECE9'; // Default: Sage Wash
-    let borderColor = '#3D5845'; // Default: Forest Pine
-    
+
     if (isSimplePractice) {
-      bgColor = '#E7E9EC'; // Indigo Wash
-      borderColor = '#243447'; // Deep Indigo
-    } else if (isHoliday) {
-      bgColor = '#E9ECE9'; // Sage Wash
-      borderColor = '#3D5845'; // Forest Pine
-    } else if (apt.category === 'Work') {
-      bgColor = '#EBEDEF'; // Slate Wash
-      borderColor = '#4F5D67'; // Cool Slate
-    } else if (apt.category === 'Meeting') {
-      bgColor = '#F4F0E9'; // Cream Wash
-      borderColor = '#9A7547'; // Rich Caramel
-    } else if (isFlight) {
-      bgColor = '#F6EAEA'; // Rose Wash
-      borderColor = '#A63D3D'; // Merlot Red
+      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
+      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
+      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
+      doc.fillColor('#000000');
+    } else {
+      // Other events: green background
+      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
+      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#000000');
     }
-    
-    // Apply Financial District styling
-    doc.fillColor(bgColor).rect(x, startY, width, height).fill();
-    doc.strokeColor(borderColor).lineWidth(1.5).rect(x, startY, width, height).stroke();
-    doc.fillColor(borderColor).rect(x, startY, 4, height).fill();
-    doc.fillColor('#000000');
 
     // Add link to daily page (page 2 = Monday, page 3 = Tuesday, etc.)
     const targetPage = dayIndex + 2;
-    doc.link(x, startY, width, height, `page=${targetPage}`);
+    doc.link(x, startY, width, height, `#page=${targetPage}`);
 
     // Appointment text
     doc.fontSize(5).font('Helvetica');
@@ -228,14 +210,30 @@ function generateDailyGridPage(
       align: 'center'
     });
 
-  // Add "← Week View" link back to page 1
+  // Add "← Week View" button link back to page 1
+  const buttonX = margin;
+  const buttonY = 20;
+  const buttonWidth = 70;
+  const buttonHeight = 20;
+  
+  // Draw button background
+  doc.fillColor('#E7E9EC')
+    .rect(buttonX, buttonY, buttonWidth, buttonHeight)
+    .fill();
+  doc.strokeColor('#243447')
+    .lineWidth(1)
+    .rect(buttonX, buttonY, buttonWidth, buttonHeight)
+    .stroke();
+  
+  // Add button text with link
   doc.fontSize(8).font('Helvetica')
-    .fillColor('#0000EE');
-  const backLinkText = '← Week View';
-  const backLinkWidth = doc.widthOfString(backLinkText);
-  doc.text(backLinkText, margin, 20, { underline: true });
-  doc.link(margin, 20, backLinkWidth, 10, 'page=1');
-  doc.fillColor('#000000');
+    .fillColor('#243447')
+    .text('← Week View', buttonX + 5, buttonY + 6, { 
+      link: '#page=1',
+      width: buttonWidth - 10,
+      align: 'left'
+    })
+    .fillColor('#000000');
 
   // Grid setup
   const gridTop = headerHeight;
@@ -243,9 +241,9 @@ function generateDailyGridPage(
   const timeColumnWidth = 50;
   const contentWidth = pageWidth - 2 * margin - timeColumnWidth;
   
-  // Hours to display (6 AM to 10 PM)
+  // Hours to display (6 AM to 9 PM, appointments can extend to 10 PM)
   const startHour = 6;
-  const endHour = 22;
+  const endHour = 21;
   const totalHours = endHour - startHour + 1;
   const hourHeight = gridHeight / totalHours;
 
@@ -271,28 +269,23 @@ function generateDailyGridPage(
     }
   }
 
-  // Filter appointments for this day (convert to EST for comparison)
+  // Filter appointments for this day
   const dayAppointments = appointments.filter(apt => {
     const aptDate = new Date(apt.startTime);
-    // Convert UTC to EST (UTC-5)
-    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
-    return estDate.getFullYear() === day.getFullYear() &&
-           estDate.getMonth() === day.getMonth() &&
-           estDate.getDate() === day.getDate();
+    return aptDate.getFullYear() === day.getFullYear() &&
+           aptDate.getMonth() === day.getMonth() &&
+           aptDate.getDate() === day.getDate();
   });
 
   // Draw appointments
   dayAppointments.forEach(apt => {
     const aptDate = new Date(apt.startTime);
-    // Convert UTC to EST (UTC-5)
-    const estDate = new Date(aptDate.getTime() - 5 * 60 * 60 * 1000);
-    const hour = estDate.getHours();
-    const minute = estDate.getMinutes();
+    const hour = aptDate.getHours();
+    const minute = aptDate.getMinutes();
     
     const endDate = new Date(apt.endTime);
-    const estEndDate = new Date(endDate.getTime() - 5 * 60 * 60 * 1000);
-    const endHour = estEndDate.getHours();
-    const endMinute = estEndDate.getMinutes();
+    const endHour = endDate.getHours();
+    const endMinute = endDate.getMinutes();
     
     if (hour < startHour || hour > endHour) return;
 
@@ -303,37 +296,22 @@ function generateDailyGridPage(
     const x = margin + timeColumnWidth + 5;
     const width = contentWidth - 10;
 
-    // Determine category and apply Financial District colors
+    // Check if SimplePractice appointment
     const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || 
                             apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-    const isHoliday = apt.calendarId?.includes('holiday');
-    const isFlight = apt.title?.toLowerCase().includes('flight');
-    
-    let bgColor = '#E9ECE9'; // Default: Sage Wash
-    let borderColor = '#3D5845'; // Default: Forest Pine
-    
+
     if (isSimplePractice) {
-      bgColor = '#E7E9EC'; // Indigo Wash
-      borderColor = '#243447'; // Deep Indigo
-    } else if (isHoliday) {
-      bgColor = '#E9ECE9'; // Sage Wash
-      borderColor = '#3D5845'; // Forest Pine
-    } else if (apt.category === 'Work') {
-      bgColor = '#EBEDEF'; // Slate Wash
-      borderColor = '#4F5D67'; // Cool Slate
-    } else if (apt.category === 'Meeting') {
-      bgColor = '#F4F0E9'; // Cream Wash
-      borderColor = '#9A7547'; // Rich Caramel
-    } else if (isFlight) {
-      bgColor = '#F6EAEA'; // Rose Wash
-      borderColor = '#A63D3D'; // Merlot Red
+      // SimplePractice styling: white/ivory background, cornflower blue border, thick left flag
+      doc.fillColor('#F5F5F0').rect(x, startY, width, height).fill();
+      doc.strokeColor('#6495ED').lineWidth(1.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#6495ED').rect(x, startY, 4, height).fill();
+      doc.fillColor('#000000');
+    } else {
+      // Other events: green background
+      doc.fillColor('#90EE90').rect(x, startY, width, height).fill();
+      doc.strokeColor('#000000').lineWidth(0.5).rect(x, startY, width, height).stroke();
+      doc.fillColor('#000000');
     }
-    
-    // Apply Financial District styling
-    doc.fillColor(bgColor).rect(x, startY, width, height).fill();
-    doc.strokeColor(borderColor).lineWidth(1.5).rect(x, startY, width, height).stroke();
-    doc.fillColor(borderColor).rect(x, startY, 4, height).fill();
-    doc.fillColor('#000000');
 
     // Appointment text
     doc.fontSize(8).font('Helvetica-Bold');

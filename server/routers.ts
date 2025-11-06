@@ -300,8 +300,17 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
+        // Get the appointment details before deleting
+        const appointment = await db
+          .select()
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          )
+          .limit(1);
 
         // Delete from database
         await db
@@ -312,6 +321,16 @@ export const appRouter = router({
               eq(appointments.googleEventId, input.googleEventId)
             )
           );
+
+        // Track this deletion to prevent re-import during sync
+        if (appointment.length > 0) {
+          const { deletedAppointments } = await import("../drizzle/schema");
+          await db.insert(deletedAppointments).values({
+            userId: ctx.user.id,
+            googleEventId: input.googleEventId,
+            calendarId: appointment[0].calendarId,
+          });
+        }
 
         return { success: true };
       }),

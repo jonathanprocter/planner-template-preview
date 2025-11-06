@@ -92,7 +92,7 @@ export default function WeeklyView() {
           title: apt.title,
           startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          color: isHoliday ? '#3D5845' : isSimplePractice ? '#243447' : apt.category === 'Work' ? '#4F5D67' : apt.category === 'Meeting' ? '#9A7547' : apt.title?.toLowerCase().includes('flight') ? '#A63D3D' : '#3D5845',
+          color: isHoliday ? '#34a853' : isSimplePractice ? '#6495ED' : apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
@@ -123,7 +123,7 @@ export default function WeeklyView() {
   const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
 
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm (21:00), appointments can go until 22:00
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm (21:00), appointments can extend to 22:00
 
   const getEventDayIndex = (event: Event) => {
     if (!event.date) return 0;
@@ -358,30 +358,26 @@ export default function WeeklyView() {
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
-        {/* Color Legend - Financial District */}
+        {/* Color Legend */}
         <div className="absolute" style={{ left: "20px", top: "160px" }}>
           <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
-            <div className="text-xs font-semibold text-gray-700 mb-2">Financial District</div>
+            <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#243447', border: '1px solid #243447' }}></div>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#6495ED' }}></div>
                 <span className="text-xs text-gray-600">SimplePractice</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3D5845', border: '1px solid #3D5845' }}></div>
-                <span className="text-xs text-gray-600">Holidays/Notes</span>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#34a853' }}></div>
+                <span className="text-xs text-gray-600">Holidays</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4F5D67', border: '1px solid #4F5D67' }}></div>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4285f4' }}></div>
                 <span className="text-xs text-gray-600">Work</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#9A7547', border: '1px solid #9A7547' }}></div>
+                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ea4335' }}></div>
                 <span className="text-xs text-gray-600">Meetings</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A63D3D', border: '1px solid #A63D3D' }}></div>
-                <span className="text-xs text-gray-600">Flight Events</span>
               </div>
             </div>
           </div>
@@ -404,7 +400,7 @@ export default function WeeklyView() {
         <div 
           id="weekly-grid"
           className="absolute" 
-          style={{ top: "300px", left: "20px", right: "20px" }}
+          style={{ top: "150px", left: "20px", right: "20px" }}
         >
           
           {/* Time Column + Day Headers */}
@@ -575,18 +571,11 @@ export default function WeeklyView() {
                     top: `${y}px`,
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
-                    backgroundColor: (() => {
-                      if ((event as any).isSimplePractice) return '#E7E9EC';
-                      if ((event as any).isHoliday) return '#E9ECE9';
-                      if (event.category === 'Work') return '#EBEDEF';
-                      if (event.category === 'Meeting') return '#F4F0E9';
-                      if (event.title?.toLowerCase().includes('flight')) return '#F6EAEA';
-                      return '#E9ECE9';
-                    })(),
-                    color: event.color,
-                    border: `1.5px solid ${event.color}`,
-                    borderLeftWidth: '4px',
-                    borderLeftColor: event.color,
+                    backgroundColor: (event as any).isSimplePractice ? '#F5F5F0' : event.color,
+                    color: (event as any).isSimplePractice ? '#333' : 'white',
+                    border: (event as any).isSimplePractice ? '1.5px solid #6495ED' : '1px solid rgba(255,255,255,0.2)',
+                    borderLeftWidth: (event as any).isSimplePractice ? '4px' : '1.5px',
+                    borderLeftColor: (event as any).isSimplePractice ? '#6495ED' : undefined,
                     opacity: draggingEvent === event.id ? 0.7 : 1,
                   }}
                   onMouseDown={(e) => handleDragStart(e, event.id)}

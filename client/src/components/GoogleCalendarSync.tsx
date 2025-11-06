@@ -93,8 +93,8 @@ export default function GoogleCalendarSync() {
               const endHour = endDate.getHours();
               const endMinute = endDate.getMinutes();
 
-              // Create unique key for deduplication using Google Event ID
-              const eventKey = googleEvent.id;
+              // Create unique key for deduplication
+              const eventKey = `${googleEvent.summary}-${dateStr}-${startHour}:${startMinute}`;
               
               // Only add if not already in map (deduplication)
               if (!eventMap.has(eventKey)) {

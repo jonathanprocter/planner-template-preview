@@ -29,6 +29,13 @@
       "when": 1762383432702,
       "tag": "0003_wide_phalanx",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1762400097222,
+      "tag": "0004_loose_puppet_master",
+      "breakpoints": true
     }
   ]
 }

@@ -268,33 +268,14 @@
 - [x] Add legend/key to explain color coding
 - [x] Ensure colors work well with SimplePractice styling
 
-## Critical Bug Fixes
-- [x] Fix PDF export formatting to match SimplePractice styling
-- [x] Fix PDF bidirectional links (week view to daily view)
-- [x] Fix UI layout - top elements bleeding into weekly view
-- [x] Fix daily view appointment deletion (currently deletes all appointments for the day)
-- [x] Fix sync to handle moved/changed appointments properly
-- [x] Fix duplicate appointments appearing (e.g., Sarah on Monday appearing multiple times)
-- [x] Verify appointment removal works correctly after sync
+## Critical Fixes for PDF Export and Deletion
+- [x] Fix PDF export to end at 21:00 (currently showing 22:00 and 23:00)
+- [x] Verify PDF export uses Financial District colors (already implemented)
+- [x] Fix appointment deletion to prevent auto-repopulation after sync
+- [x] Ensure deleted appointments are removed from database permanently
 
-## Implement Financial District Color Scheme
-- [x] Update SimplePractice appointments to use Deep Indigo (#243447) border and Indigo Wash (#E7E9EC) background
-- [x] Update Holidays/Notes to use Forest Pine (#3D5845) border and Sage Wash (#E9ECE9) background
-- [x] Update Work appointments to use Cool Slate (#4F5D67) border and Slate Wash (#EBEDEF) background
-- [x] Update Meetings to use Rich Caramel (#9A7547) border and Cream Wash (#F4F0E9) background
-- [x] Add Flight Events category with Merlot Red (#A63D3D) border and Rose Wash (#F6EAEA) background
-- [x] Update WeeklyView color mappings
-- [x] Update DailyView color mappings
-- [x] Update PDF export colors for all categories
-- [x] Update color legend with new Financial District colors and descriptions
-- [x] Test colors on all views (weekly, daily, PDF export)
-
-## Fix Time Range to End at 22:00
-- [x] Update WeeklyView to stop displaying hours at 22:00 (10 PM)
-- [x] Update DailyView to stop displaying hours at 22:00 (10 PM)
-- [x] Verify PDF export already ends at 22:00
-
-## Remove 22:00 Hour Box
-- [x] Change weekly view to end at 21:00 (so last appointment slot is 21:00-22:00)
-- [x] Change daily view to end at 21:00 (so last appointment slot is 21:00-22:00)
-- [x] Verify appointments can still be scheduled up to 22:00 but 22:00 hour label is not shown
+## Fix PDF Export Appointment Positioning and Time Alignment
+- [x] Fix weekly view appointments off by 1 hour in PDF
+- [x] Fix daily view to show appointments in PDF (currently empty)
+- [x] Fix "Week View" text in upper left corner to be a clickable button like web app
+- [x] Verify all appointments align correctly with time slots in PDF

@@ -136,6 +136,14 @@ export async function syncGoogleCalendarAppointments(
   // Get list of calendar IDs being synced
   const syncedCalendarIds = new Set(googleEvents.map((e) => e.calendarId));
 
+  // Get list of deleted appointment IDs to skip during sync
+  const { deletedAppointments } = await import("../drizzle/schema");
+  const deleted = await db
+    .select()
+    .from(deletedAppointments)
+    .where(eq(deletedAppointments.userId, userId));
+  const deletedGoogleIds = new Set(deleted.map((d) => d.googleEventId));
+
   // Get existing appointments only from calendars being synced
   const existing = await db
     .select()
@@ -162,8 +170,13 @@ export async function syncGoogleCalendarAppointments(
     }
   }
 
-  // Upsert all incoming events
+  // Upsert all incoming events (skip deleted ones)
   for (const event of googleEvents) {
+    // Skip if user has deleted this appointment
+    if (deletedGoogleIds.has(event.id)) {
+      continue;
+    }
+    
     await upsertAppointment({
       userId,
       googleEventId: event.id,

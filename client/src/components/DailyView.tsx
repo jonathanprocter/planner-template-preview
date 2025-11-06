@@ -57,10 +57,6 @@ export default function DailyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
-  // Add delete mutation
-  const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
-  const utils = trpc.useUtils();
-
   // Get date from URL parameter or use today
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
@@ -109,7 +105,7 @@ export default function DailyView() {
           title: apt.title,
           startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          color: isHoliday ? '#3D5845' : isSimplePractice ? '#243447' : apt.category === 'Work' ? '#4F5D67' : apt.category === 'Meeting' ? '#9A7547' : apt.title?.toLowerCase().includes('flight') ? '#A63D3D' : '#3D5845',
+          color: isHoliday ? '#34a853' : isSimplePractice ? '#6495ED' : apt.category === 'Work' ? '#4285f4' : apt.category === 'Meeting' ? '#ea4335' : '#34a853',
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
@@ -226,24 +222,8 @@ export default function DailyView() {
     setNewEventTitle("");
   };
 
-  const handleDeleteEvent = async (id: string) => {
-    // Find the event to get its googleEventId
-    const event = events.find(e => e.id === id);
-    if (!event) return;
-
-    try {
-      // If it's a Google Calendar event, delete from database
-      if (event.source === 'google' && event.id) {
-        await deleteMutation.mutateAsync({ googleEventId: event.id });
-        // Invalidate queries to refresh the view
-        utils.appointments.getByDateRange.invalidate();
-      } else {
-        // For local events, delete from eventStore
-        eventStore.deleteEvent(id);
-      }
-    } catch (error) {
-      console.error('Failed to delete appointment:', error);
-    }
+  const handleDeleteEvent = (id: string) => {
+    eventStore.deleteEvent(id);
   };
 
   const handleDragStart = (e: React.MouseEvent, eventId: string) => {
@@ -523,18 +503,11 @@ export default function DailyView() {
                   top: `${startY}px`,
                   width: `${config.timeBlocks.width - config.timeBlocks.labelWidth - 20}px`,
                   height: `${height}px`,
-                  backgroundColor: (() => {
-                    if ((event as any).isSimplePractice) return '#E7E9EC';
-                    if ((event as any).isHoliday) return '#E9ECE9';
-                    if (event.category === 'Work') return '#EBEDEF';
-                    if (event.category === 'Meeting') return '#F4F0E9';
-                    if (event.title?.toLowerCase().includes('flight')) return '#F6EAEA';
-                    return '#E9ECE9';
-                  })(),
-                  color: event.color,
-                  border: `1.5px solid ${event.color}`,
-                  borderLeftWidth: '4px',
-                  borderLeftColor: event.color,
+                  backgroundColor: (event as any).isSimplePractice ? '#F5F5F0' : event.color,
+                  color: (event as any).isSimplePractice ? '#333' : 'white',
+                  border: (event as any).isSimplePractice ? '1.5px solid #6495ED' : '1px solid rgba(255,255,255,0.2)',
+                  borderLeftWidth: (event as any).isSimplePractice ? '4px' : '1.5px',
+                  borderLeftColor: (event as any).isSimplePractice ? '#6495ED' : undefined,
                   opacity: draggingEvent === event.id ? 0.7 : 1,
                   minHeight: '40px',
                 }}
