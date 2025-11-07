@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { type Event } from "@/lib/eventStore";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { deleteEvent } from "@/lib/googleCalendar";
 
 interface AppointmentDetailsModalProps {
   appointment: Event | null;
@@ -119,6 +120,17 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     if (!confirmed) return;
 
     try {
+      // Delete from Google Calendar first
+      const calendarId = (appointment as any).calendarId;
+      if (calendarId) {
+        const deleted = await deleteEvent(calendarId, appointment.id);
+        if (!deleted) {
+          toast.error("Failed to delete from Google Calendar");
+          return;
+        }
+      }
+      
+      // Then delete from database
       await deleteMutation.mutateAsync({
         googleEventId: appointment.id,
       });

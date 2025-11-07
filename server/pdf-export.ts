@@ -47,7 +47,7 @@ export async function generateWebViewPDF(
     
     await page.goto(url, {
       waitUntil: 'networkidle2',
-      timeout: 30000,
+      timeout: 60000, // Increased timeout
     });
     
     // Wait for the calendar grid to fully render
@@ -85,6 +85,7 @@ export async function generateWebViewPDF(
     
   } catch (error) {
     console.error('Error generating web view PDF:', error);
+    console.error('Error stack:', (error as Error).stack);
     throw new Error(`Failed to generate PDF: ${(error as Error).message}`);
   } finally {
     if (browser) {

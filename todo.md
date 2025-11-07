@@ -450,3 +450,18 @@
 - [x] Check if Chrome/Chromium is available in sandbox - Chrome was missing
 - [x] Fix Puppeteer environment or configuration issues - Installed Chrome 142.0.7444.61
 - [x] Test Web View PDF export successfully - Chrome installed, ready for user testing
+
+## Critical Bugs to Fix
+
+### PDF Export Not Working
+- [x] Check server logs for PDF export errors
+- [x] Debug Puppeteer Web View export - added logging and increased timeout
+- [x] Debug reMarkable export - tested successfully, generates 16KB PDF
+- [x] Test PDF export from frontend - ready for user testing
+- [x] Added detailed error logging and increased timeout to 60s
+
+### Deleted Items Returning After Sync
+- [x] Check if deletion is being sent to Google Calendar API - it wasn't!
+- [x] Verify deleteAppointment function calls Google Calendar delete - added deleteEvent call
+- [x] Check if sync is re-importing deleted events - fixed by deleting from Google first
+- [x] Fix deletion to persist through Google Calendar sync - now deletes from Google Calendar before database
