@@ -370,7 +370,7 @@ export default function WeeklyView() {
         </div>
 
         {/* Color Legend */}
-        <div className="absolute" style={{ left: "20px", top: "160px" }}>
+        <div className="absolute" style={{ right: "20px", top: "100px" }}>
           <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
             <div className="space-y-1">

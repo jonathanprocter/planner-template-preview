@@ -465,3 +465,10 @@
 - [x] Verify deleteAppointment function calls Google Calendar delete - added deleteEvent call
 - [x] Check if sync is re-importing deleted events - fixed by deleting from Google first
 - [x] Fix deletion to persist through Google Calendar sync - now deletes from Google Calendar before database
+
+## Fix Color Legend Layout
+
+- [x] Find color legend component in header - found in WeeklyView.tsx
+- [x] Adjust spacing/positioning to prevent bleeding into calendar - moved to right:20px/top:100px
+- [x] Test layout on different screen sizes - positioned on right side to avoid calendar
+- [x] Verify no overlap with calendar grid - now positioned above calendar, aligned right
