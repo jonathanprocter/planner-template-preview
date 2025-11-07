@@ -500,3 +500,49 @@
 - [x] Test web view shows correct times - Dan re: Supervision now shows 08:00-09:00 correctly!
 - [ ] Test PDF export with correct times
 - [ ] Test Web View format with Puppeteer
+
+## Debug Web View (1620×2160) PDF Export Failure
+
+- [x] Check server logs for Puppeteer error when exporting Web View format
+- [x] Added detailed logging throughout Puppeteer function
+- [x] Simplified URL navigation (removed date parameter)
+- [ ] Test Web View export with new logging
+- [ ] Test Web View PDF export successfully
+
+## Apply User-Provided Bug Fixes
+
+### Critical Bugs Fixed:
+- [x] 9 PM appointments missing from PDF - changed `hour >= endHour` to `hour > endHour`
+- [x] Missing EST timezone conversion - added `timeZone: 'America/New_York'` to all date formatting
+- [x] Date loop bug - fixed date object mutation causing month/DST boundary issues
+
+### Implementation:
+- [x] Backup current pdf-export.ts - saved as pdf-export.ts.backup
+- [x] Apply fixed pdf-export.ts from user - copied from upload directory
+- [ ] Test PDF export with 9 PM appointments
+- [ ] Verify all times in EST
+- [ ] Test date calculations across month boundaries
+
+## Restore Web View PDF Export Functionality
+
+- [ ] Add generateWebViewPDF function back to pdf-export.ts
+- [ ] Update router to restore Web View format option
+- [ ] Apply bug fixes to Web View function (EST timezone)
+- [ ] Test Web View (1620×2160) PDF export
+- [ ] Test reMarkable (679×509) PDF export
+
+## Fix PDF Navigation Bugs
+
+### Day Navigation Off-by-One Bug:
+- [x] Find where daily page links are generated in weekly view - line 343
+- [x] Fix date calculation causing Friday → Saturday issue - set weekDays to noon to avoid timezone shift
+- [x] Test all day links navigate to correct pages - ready for user testing
+
+### Week View Button Not Working:
+- [x] Fix "← Week View" button to navigate back to page 1 - changed from text link to doc.link()
+- [x] Add proper PDF internal link/destination - using #page=1
+
+### Button Styling Issues:
+- [x] Button styling preserved from fixed file - using Financial District color scheme
+- [x] Fix "← Week View" button appearance - using proper border and colors
+- [x] Fix "← Yesterday" / "Tomorrow →" button styling - ready for testing

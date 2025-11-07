@@ -392,7 +392,6 @@ export const appRouter = router({
 
             pdfBuffer = await generateWeeklyPlannerPDF(
               result,
-              notes,
               new Date(input.startDate),
               new Date(input.endDate)
             );
