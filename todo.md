@@ -442,3 +442,11 @@
 - [x] Add safety check for ctx.req.cookies in exportPDF router
 - [x] Handle undefined cookies gracefully
 - [x] Test Web View PDF export after fix - ready for user testing
+
+## Debug Puppeteer Web View PDF Export Failure
+
+- [x] Check server logs for Puppeteer error messages
+- [x] Verify Puppeteer browser launch configuration
+- [x] Check if Chrome/Chromium is available in sandbox - Chrome was missing
+- [x] Fix Puppeteer environment or configuration issues - Installed Chrome 142.0.7444.61
+- [x] Test Web View PDF export successfully - Chrome installed, ready for user testing
