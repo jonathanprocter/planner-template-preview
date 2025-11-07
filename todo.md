@@ -480,3 +480,23 @@
 - [x] Add proper error handling to PDF export to return JSON errors - added try-catch with logging
 - [x] Fix PDF generation crash/timeout issue - increased client timeout to 2 minutes
 - [x] Test PDF export with new timeout and error handling - ready for user testing
+
+## Debug PDF Generation Error
+
+- [x] Check server logs for specific error message - "Could not find Chrome (ver. 142.0.7444.61)"
+- [x] Identify root cause of PDF generation failure - Puppeteer can't find Chrome executable
+- [x] Configure Puppeteer to use correct Chrome path - added executablePath
+- [x] Test reMarkable format - working perfectly with 8 pages
+- [x] FIX TIMEZONE AGAIN - appointments still showing wrong times in PDF
+- [x] Determine if DB stores UTC or local time - stores UTC, 5 hour offset
+- [x] Add proper UTC to EST conversion - using toLocaleString with America/New_York
+- [x] Applied timezone fix to weekly view appointments
+- [x] Applied timezone fix to daily view appointments
+- [x] Fixed time display strings in daily view
+- [x] CRITICAL: Web view ALSO showing wrong times (5 hours off)
+- [x] Investigate how appointments are fetched and displayed in web view - toLocaleTimeString without timezone
+- [x] Fix timezone in WeeklyView component - added timeZone: 'America/New_York'
+- [x] Fix timezone in DailyView component - added timeZone: 'America/New_York'
+- [x] Test web view shows correct times - Dan re: Supervision now shows 08:00-09:00 correctly!
+- [ ] Test PDF export with correct times
+- [ ] Test Web View format with Puppeteer

@@ -16,6 +16,7 @@ export async function generateWebViewPDF(
   try {
     browser = await puppeteer.launch({
       headless: true,
+      executablePath: '/home/ubuntu/.cache/puppeteer/chrome/linux-142.0.7444.61/chrome-linux64/chrome',
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -333,14 +334,20 @@ function generateWeeklyGridPage(
     });
     
     dayAppointments.forEach(apt => {
-      // Use times directly from database (already in correct timezone)
+      // Convert UTC times to EST
       const aptStart = new Date(apt.startTime);
       const aptEnd = new Date(apt.endTime);
       
-      const startHourVal = aptStart.getHours();
-      const startMinute = aptStart.getMinutes();
-      const endHourVal = aptEnd.getHours();
-      const endMinute = aptEnd.getMinutes();
+      // Convert to EST using toLocaleString
+      const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+      const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+      
+      // Parse the EST time strings to get hours and minutes
+      const [estStartDate, estStartTime] = estStartStr.split(', ');
+      const [estEndDate, estEndTime] = estEndStr.split(', ');
+      
+      const [startHourVal, startMinute] = estStartTime.split(':').map(Number);
+      const [endHourVal, endMinute] = estEndTime.split(':').map(Number);
       
       // Skip if outside display range
       if (startHourVal < startHour || startHourVal >= 22) return;
@@ -511,14 +518,20 @@ function generateDailyGridPage(
   });
   
   dayAppointments.forEach(apt => {
-    // Use times directly from database (already in correct timezone)
+    // Convert UTC times to EST
     const aptStart = new Date(apt.startTime);
     const aptEnd = new Date(apt.endTime);
     
-    const startHourVal = aptStart.getHours();
-    const startMinute = aptStart.getMinutes();
-    const endHourVal = aptEnd.getHours();
-    const endMinute = aptEnd.getMinutes();
+    // Convert to EST using toLocaleString
+    const estStartStr = aptStart.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+    const estEndStr = aptEnd.toLocaleString('en-US', { timeZone: 'America/New_York', hour12: false });
+    
+    // Parse the EST time strings to get hours and minutes
+    const [estStartDate, estStartTime] = estStartStr.split(', ');
+    const [estEndDate, estEndTime] = estEndStr.split(', ');
+    
+    const [startHourVal, startMinute] = estStartTime.split(':').map(Number);
+    const [endHourVal, endMinute] = estEndTime.split(':').map(Number);
     
     // Skip if outside display range
     if (startHourVal < startHour || startHourVal >= 22) return;
@@ -552,8 +565,8 @@ function generateDailyGridPage(
     
     // Title and time
     const cleanTitle = removeEmojis(apt.title);
-    const startTimeStr = aptStart.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-    const endTimeStr = aptEnd.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    const startTimeStr = aptStart.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true });
+    const endTimeStr = aptEnd.toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: 'numeric', minute: '2-digit', hour12: true });
     
     doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold');
     doc.text(cleanTitle, boxX + 6, startY + 4, {

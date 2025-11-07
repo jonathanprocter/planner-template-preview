@@ -112,8 +112,8 @@ export default function DailyView() {
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
-          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
+          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
           color,
           source: 'google',
           date: apt.date,
