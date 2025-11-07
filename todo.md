@@ -436,3 +436,9 @@
 - [x] Test reMarkable format export - ready for user testing
 - [x] Verify auth cookies work for authenticated pages - implemented
 - [x] Verify both formats download correctly - implemented
+
+## Fix Cookie Access Error in PDF Export
+
+- [x] Add safety check for ctx.req.cookies in exportPDF router
+- [x] Handle undefined cookies gracefully
+- [x] Test Web View PDF export after fix - ready for user testing

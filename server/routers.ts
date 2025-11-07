@@ -353,7 +353,7 @@ export const appRouter = router({
         if (input.format === 'web') {
           // Use Puppeteer to capture web view
           const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-          const authCookie = ctx.req.cookies['manus_session'];
+          const authCookie = ctx.req.cookies?.['manus_session'];
           
           pdfBuffer = await generateWebViewPDF(
             input.startDate,
