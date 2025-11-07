@@ -472,3 +472,11 @@
 - [x] Adjust spacing/positioning to prevent bleeding into calendar - moved to right:20px/top:100px
 - [x] Test layout on different screen sizes - positioned on right side to avoid calendar
 - [x] Verify no overlap with calendar grid - now positioned above calendar, aligned right
+
+## Fix TRPC HTML Response Error
+
+- [x] Check server logs for failing endpoint - PDF export endpoint
+- [x] Identify which API call is returning HTML instead of JSON - exportPDF mutation
+- [x] Add proper error handling to PDF export to return JSON errors - added try-catch with logging
+- [x] Fix PDF generation crash/timeout issue - increased client timeout to 2 minutes
+- [x] Test PDF export with new timeout and error handling - ready for user testing

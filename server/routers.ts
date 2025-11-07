@@ -345,59 +345,71 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
-
-        let pdfBuffer: Buffer;
-        
-        if (input.format === 'web') {
-          // Use Puppeteer to capture web view
-          const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-          const authCookie = ctx.req.cookies?.['manus_session'];
+        try {
+          console.log(`[PDF Export] Starting ${input.format} format export for ${input.startDate} to ${input.endDate}`);
           
-          pdfBuffer = await generateWebViewPDF(
-            input.startDate,
-            input.endDate,
-            baseUrl,
-            authCookie
-          );
-        } else {
-          // Use reMarkable-optimized PDF
-          const result = await db
-            .select()
-            .from(appointments)
-            .where(
-              and(
-                eq(appointments.userId, ctx.user.id),
-                gte(appointments.date, input.startDate),
-                lte(appointments.date, input.endDate)
-              )
-            );
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
 
-          const notes = await db
-            .select()
-            .from(dailyNotes)
-            .where(
-              and(
-                eq(dailyNotes.userId, ctx.user.id),
-                gte(dailyNotes.date, input.startDate),
-                lte(dailyNotes.date, input.endDate)
-              )
+          let pdfBuffer: Buffer;
+          
+          if (input.format === 'web') {
+            // Use Puppeteer to capture web view
+            const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+            const authCookie = ctx.req.cookies?.['manus_session'];
+            
+            console.log('[PDF Export] Using Puppeteer web view capture');
+            pdfBuffer = await generateWebViewPDF(
+              input.startDate,
+              input.endDate,
+              baseUrl,
+              authCookie
             );
+          } else {
+            // Use reMarkable-optimized PDF
+            console.log('[PDF Export] Using reMarkable-optimized PDF');
+            const result = await db
+              .select()
+              .from(appointments)
+              .where(
+                and(
+                  eq(appointments.userId, ctx.user.id),
+                  gte(appointments.date, input.startDate),
+                  lte(appointments.date, input.endDate)
+                )
+              );
 
-          pdfBuffer = await generateWeeklyPlannerPDF(
-            result,
-            notes,
-            new Date(input.startDate),
-            new Date(input.endDate)
-          );
+            const notes = await db
+              .select()
+              .from(dailyNotes)
+              .where(
+                and(
+                  eq(dailyNotes.userId, ctx.user.id),
+                  gte(dailyNotes.date, input.startDate),
+                  lte(dailyNotes.date, input.endDate)
+                )
+              );
+
+            pdfBuffer = await generateWeeklyPlannerPDF(
+              result,
+              notes,
+              new Date(input.startDate),
+              new Date(input.endDate)
+            );
+          }
+
+          console.log(`[PDF Export] Success! Generated ${pdfBuffer.length} bytes`);
+          
+          // Return PDF as base64
+          return {
+            pdf: pdfBuffer.toString('base64'),
+            filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
+          };
+        } catch (error) {
+          console.error('[PDF Export] Error:', error);
+          console.error('[PDF Export] Stack:', (error as Error).stack);
+          throw new Error(`PDF export failed: ${(error as Error).message}`);
         }
-
-        // Return PDF as base64
-        return {
-          pdf: pdfBuffer.toString('base64'),
-          filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
-        };
       }),
   }),
 
