@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
@@ -18,7 +18,6 @@ export default function WeeklyView() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
   const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
@@ -28,7 +27,6 @@ export default function WeeklyView() {
   const createMutation = trpc.appointments.createAppointment.useMutation();
   const utils = trpc.useUtils();
 
-  // Fetch appointments from database for current week
   const getWeekDates = useCallback(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
@@ -44,7 +42,7 @@ export default function WeeklyView() {
     return dates;
   }, []);
 
-  const weekDates = getWeekDates();
+  const weekDates = useMemo(() => getWeekDates(), [getWeekDates]);
   
   const formatDateISO = useCallback((date: Date) => {
     const year = date.getFullYear();
@@ -58,7 +56,6 @@ export default function WeeklyView() {
     endDate: formatDateISO(weekDates[6]),
   });
 
-  // Fetch daily notes for the week
   const { data: dailyNotes } = trpc.dailyNotes.getByDateRange.useQuery({
     startDate: formatDateISO(weekDates[0]),
     endDate: formatDateISO(weekDates[6]),
@@ -68,7 +65,6 @@ export default function WeeklyView() {
   const [noteContent, setNoteContent] = useState<Record<string, string>>({});
   const upsertNoteMutation = trpc.dailyNotes.upsert.useMutation();
 
-  // Initialize note content from fetched data
   useEffect(() => {
     if (dailyNotes) {
       const notesMap: Record<string, string> = {};
@@ -79,23 +75,19 @@ export default function WeeklyView() {
     }
   }, [dailyNotes]);
 
-  // Merge database appointments with local events
   useEffect(() => {
     if (dbAppointments) {
-      // Convert DB appointments to Event format
       const dbEvents: Event[] = dbAppointments.map((apt: any) => {
-        // Check if this is a StimulusPractice calendar
         const isStimulusPractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
         const isFlight = apt.title?.toLowerCase().includes('flight');
         const isMeeting = apt.title?.toLowerCase().includes('meeting');
         
-        // Financial District color scheme
-        let color = '#4F5D67'; // Default: Work (Cool Slate)
-        if (isStimulusPractice) color = '#243447'; // Deep Indigo
-        else if (isFlight) color = '#A63D3D'; // Merlot Red
-        else if (isHoliday) color = '#3D5845'; // Forest Pine
-        else if (isMeeting) color = '#9A7547'; // Rich Caramel
+        let color = '#4F5D67';
+        if (isStimulusPractice) color = '#243447';
+        else if (isFlight) color = '#A63D3D';
+        else if (isHoliday) color = '#3D5845';
+        else if (isMeeting) color = '#9A7547';
         
         return {
           id: apt.googleEventId || `db-${apt.id}`,
@@ -115,7 +107,6 @@ export default function WeeklyView() {
         };
       });
       
-      // Merge with local events
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
       setEvents([...localEvents, ...dbEvents]);
     }
@@ -123,7 +114,6 @@ export default function WeeklyView() {
 
   useEffect(() => {
     const unsubscribe = eventStore.subscribe(() => {
-      // Only update local events, keep DB events
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
       const googleEvents = events.filter(e => e.source === 'google');
       setEvents([...localEvents, ...googleEvents]);
@@ -132,14 +122,16 @@ export default function WeeklyView() {
     return () => unsubscribe();
   }, [events]);
 
-  const weekLabel = `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`;
+  const weekLabel = useMemo(() => 
+    `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
+    [weekDates]
+  );
 
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm (21:00), appointments can extend to 22:00
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6);
 
   const getEventDayIndex = useCallback((event: Event) => {
     if (!event.date) return 0;
-    // Parse date as local date to avoid timezone issues
     const [year, month, day] = event.date.split('-').map(Number);
     const eventDate = new Date(year, month - 1, day);
     const dayOfWeek = eventDate.getDay();
@@ -147,7 +139,6 @@ export default function WeeklyView() {
   }, []);
 
   const handleDayHeaderClick = useCallback((date: Date) => {
-    // Navigate to daily view with the selected date
     setLocation(`/daily?date=${formatDateISO(date)}`);
   }, [setLocation, formatDateISO]);
 
@@ -165,14 +156,12 @@ export default function WeeklyView() {
   }, [weekDates, formatDateISO]);
 
   const handleSaveAppointment = useCallback(async (eventData: Omit<Event, "id">) => {
-    // Add to local store immediately for responsiveness
     const newEvent: Event = {
       ...eventData,
       id: Date.now().toString(),
     };
     eventStore.addEvent(newEvent);
 
-    // Save to database
     try {
       await createMutation.mutateAsync({
         title: eventData.title,
@@ -182,11 +171,9 @@ export default function WeeklyView() {
         category: eventData.category,
         description: eventData.description,
       });
-      // Refresh data from database
       utils.appointments.getByDateRange.invalidate();
     } catch (error) {
       console.error('Failed to create appointment:', error);
-      // Remove from local store on error
       eventStore.deleteEvent(newEvent.id);
     }
   }, [createMutation, utils, formatDateISO]);
@@ -239,14 +226,12 @@ export default function WeeklyView() {
         const newEndTime = `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`;
         const newDateISO = formatDateISO(newDate);
         
-        // Update local state immediately for responsiveness
         eventStore.updateEvent(draggingEvent, {
           startTime: newStartTime,
           endTime: newEndTime,
           date: newDateISO,
         });
         
-        // Save to database if it's a Google Calendar event
         if (event.source === 'google' && event.id) {
           try {
             await updateMutation.mutateAsync({
@@ -255,11 +240,9 @@ export default function WeeklyView() {
               endTime: newEndTime,
               date: newDateISO,
             });
-            // Refresh data from database
             utils.appointments.getByDateRange.invalidate();
           } catch (error) {
             console.error('Failed to update appointment:', error);
-            // Revert on error
             eventStore.updateEvent(draggingEvent, {
               startTime: event.startTime,
               endTime: event.endTime,
@@ -271,56 +254,16 @@ export default function WeeklyView() {
     }
     
     setDraggingEvent(null);
-  }, [draggingEvent, weekDates, events, formatDateISO, updateMutation, utils]);
+  }, [draggingEvent, events, weekDates, formatDateISO, updateMutation, utils]);
 
-  const syncGoogleCalendar = useCallback(async () => {
-    setIsSyncing(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const googleEvents: Event[] = [
-      {
-        id: "gcal-1",
-        title: "Morning Standup",
-        startTime: "08:00",
-        endTime: "08:30",
-        color: "#4285f4",
-        source: "google",
-        date: formatDateISO(weekDates[0]),
-        category: "Meeting",
-      },
-      {
-        id: "gcal-2",
-        title: "Lunch with Team",
-        startTime: "12:00",
-        endTime: "13:00",
-        color: "#4285f4",
-        source: "google",
-        date: formatDateISO(weekDates[2]),
-        category: "Social",
-      },
-      {
-        id: "gcal-3",
-        title: "Project Planning",
-        startTime: "15:00",
-        endTime: "16:30",
-        color: "#4285f4",
-        source: "google",
-        date: formatDateISO(weekDates[4]),
-        category: "Work",
-      },
-    ];
-    
-    const localEvents = events.filter(e => e.source !== "google");
-    eventStore.setEvents([...localEvents, ...googleEvents]);
-    setIsSyncing(false);
-  }, [events, weekDates, formatDateISO]);
-
-  const handleSearchResultClick = useCallback((event: Event) => {
-    if (event.date) {
-      setLocation(`/?date=${event.date}`);
-    }
-  }, [setLocation]);
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      if (filteredCategories.length > 0 && event.category) {
+        return filteredCategories.includes(event.category);
+      }
+      return filteredCategories.length === 0 || !event.category;
+    });
+  }, [events, filteredCategories]);
 
   return (
     <div 
@@ -330,7 +273,6 @@ export default function WeeklyView() {
     >
       <div className="relative mx-auto" style={{ width: "1620px", minHeight: "2160px", padding: "20px" }}>
         
-        {/* Weekly Overview Button - Top */}
         <div
           className="absolute inline-flex items-center gap-2 bg-[#f3f3f3] border border-[#d0d0d0] rounded-lg cursor-pointer hover:bg-[#ececec] hover:shadow-md transition-all duration-200 hover:-translate-y-px"
           style={{
@@ -350,27 +292,22 @@ export default function WeeklyView() {
           <span className="font-medium text-base text-[#2e2e2e]" style={{ fontFamily: "Georgia, serif" }}>Daily View</span>
         </div>
 
-        {/* Search Bar */}
         <div className="absolute" style={{ left: "350px", top: "30px" }}>
           <AdvancedSearch />
         </div>
 
-        {/* Category Filter */}
         <div className="absolute" style={{ right: "220px", top: "30px" }}>
           <CategoryFilter onFilterChange={setFilteredCategories} />
         </div>
 
-        {/* Google Calendar Sync Button */}
         <div className="absolute" style={{ right: "20px", top: "-60px" }}>
           <GoogleCalendarSync />
         </div>
 
-        {/* Export to PDF Button */}
         <div className="absolute" style={{ left: "20px", top: "100px" }}>
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
-        {/* Color Legend */}
         <div className="absolute" style={{ left: "20px", top: "160px" }}>
           <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
@@ -399,7 +336,6 @@ export default function WeeklyView() {
           </div>
         </div>
 
-        {/* Title */}
         <div
           className="absolute font-bold text-center"
           style={{
@@ -412,14 +348,12 @@ export default function WeeklyView() {
           {weekLabel}
         </div>
 
-        {/* Grid Container */}
         <div 
           id="weekly-grid"
           className="absolute" 
           style={{ top: "150px", left: "20px", right: "20px" }}
         >
           
-          {/* Time Column + Day Headers */}
           <div className="flex border-b-2 border-gray-300" style={{ height: "60px" }}>
             <div style={{ width: "100px" }} className="flex-shrink-0"></div>
             {dayNames.map((day, idx) => {
@@ -441,7 +375,6 @@ export default function WeeklyView() {
             })}
           </div>
 
-          {/* Daily Notes Section */}
           <div className="flex border-b border-gray-300" style={{ minHeight: "80px" }}>
             <div style={{ width: "100px" }} className="flex-shrink-0 pr-3 pt-2 text-right text-xs text-gray-500 font-semibold">
               Notes
@@ -490,15 +423,13 @@ export default function WeeklyView() {
             })}
           </div>
 
-          {/* Time Grid */}
           <div className="relative">
-            {hours.map((hour, idx) => {
+            {hours.map((hour) => {
               const time = `${hour.toString().padStart(2, "0")}:00`;
               const halfHourTime = `${hour.toString().padStart(2, "0")}:30`;
               
               return (
                 <div key={hour} className="flex border-b border-gray-200 relative" style={{ height: "100px" }}>
-                  {/* Top Time Label */}
                   <div 
                     style={{ width: "100px" }} 
                     className="flex-shrink-0 pr-3 pt-1 text-right font-semibold text-gray-700"
@@ -506,7 +437,6 @@ export default function WeeklyView() {
                     {time}
                   </div>
                   
-                  {/* Half-Hour Time Label - Positioned at middle line */}
                   <div 
                     style={{ width: "100px", position: "absolute", top: "50%", transform: "translateY(-50%)", left: "0" }} 
                     className="pr-3 text-right text-xs text-gray-500"
@@ -514,7 +444,6 @@ export default function WeeklyView() {
                     {halfHourTime}
                   </div>
                   
-                  {/* Day Columns */}
                   {dayNames.map((day, dayIdx) => {
                     const isToday = formatDateISO(weekDates[dayIdx]) === formatDateISO(new Date());
                     const now = new Date();
@@ -531,10 +460,8 @@ export default function WeeklyView() {
                         }`}
                         onClick={() => handleTimeSlotClick(dayIdx, hour)}
                       >
-                        {/* Half-hour line */}
                         <div className="absolute top-1/2 left-0 right-0 border-t border-gray-100"></div>
                         
-                        {/* Current time indicator */}
                         {showCurrentTimeIndicator && (
                           <div 
                             className="absolute left-0 right-0 border-t-2 border-red-500 z-10"
@@ -551,17 +478,7 @@ export default function WeeklyView() {
             })}
           </div>
 
-          {/* Events Overlay */}
-          {events
-            .filter(event => {
-              // Filter by category if categories are selected
-              if (filteredCategories.length > 0 && event.category) {
-                return filteredCategories.includes(event.category);
-              }
-              // Show events without category if no filter is active
-              return filteredCategories.length === 0 || !event.category;
-            })
-            .map((event) => {
+          {filteredEvents.map((event) => {
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
             
@@ -592,7 +509,7 @@ export default function WeeklyView() {
                       if ((event as any).isFlight) return '#F6EAEA';
                       if ((event as any).isHoliday) return '#E9ECE9';
                       if ((event as any).isMeeting) return '#F4F0E9';
-                      return '#EBEDEF'; // Work
+                      return '#EBEDEF';
                     })(),
                     color: '#333',
                     border: `1.5px solid ${event.color}`,
@@ -626,7 +543,6 @@ export default function WeeklyView() {
           })}
         </div>
 
-        {/* Daily View Button - Bottom */}
         <div
           className="absolute inline-flex items-center gap-2 bg-[#f3f3f3] border border-[#d0d0d0] rounded-lg cursor-pointer hover:bg-[#ececec] hover:shadow-md transition-all duration-200 hover:-translate-y-px"
           style={{

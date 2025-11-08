@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { eventStore, type Event } from "@/lib/eventStore";
@@ -11,6 +11,15 @@ export function SearchBar({ onResultClick }: SearchBarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Event[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSearch = (value: string) => {
     setQuery(value);
@@ -30,6 +39,13 @@ export function SearchBar({ onResultClick }: SearchBarProps) {
     onResultClick?.(event);
   };
 
+  const handleBlur = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => setShowResults(false), 200);
+  };
+
   return (
     <div className="relative w-full max-w-md">
       <div className="relative">
@@ -40,7 +56,7 @@ export function SearchBar({ onResultClick }: SearchBarProps) {
           value={query}
           onChange={(e) => handleSearch(e.target.value)}
           onFocus={() => query && setShowResults(true)}
-          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+          onBlur={handleBlur}
           className="pl-10"
         />
       </div>

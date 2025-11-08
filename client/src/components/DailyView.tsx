@@ -226,7 +226,7 @@ export default function DailyView() {
       endTime,
       color: "#8b5cf6",
       source: "local",
-      date: currentDateStr,
+      date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
     };
 
     eventStore.addEvent(newEvent);
