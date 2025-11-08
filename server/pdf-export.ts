@@ -94,66 +94,85 @@ export async function generateWeeklyPlannerPDF(
   });
 }
 
+// Pixel-perfect constants from specification
+const START_HOUR = 6;
+const END_HOUR = 21;
+const HOUR_HEIGHT = 48;
+const MARGIN = 18;
+const TIME_COL_WIDTH = 48;
+const PAGE_WEEKLY = { width: 679, height: 509, orientation: 'landscape' };
+const PAGE_DAILY = { width: 509, height: 679, orientation: 'portrait' };
+
+// Shared utility: Calculate Y position for a given time
+function getYForTime(hour: number, minute: number, gridTop: number): number {
+  return gridTop + ((hour + minute / 60) - START_HOUR) * HOUR_HEIGHT;
+}
+
 function generateWeeklyGridPage(
   doc: PDFKit.PDFDocument,
   weekDays: Date[],
   appointments: Appointment[]
 ) {
-  const pageWidth = 679; // Landscape orientation
-  const pageHeight = 509;
-  const margin = 20;
+  const pageWidth = PAGE_WEEKLY.width;
+  const pageHeight = PAGE_WEEKLY.height;
   const headerHeight = 60;
   
   // Title - dynamically generate from weekDays
   const firstDay = weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
   const lastDay = weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  doc.fontSize(16).font('Helvetica-Bold')
-    .text(`Week of ${firstDay} - ${lastDay}`, margin, 20, {
-      width: pageWidth - 2 * margin,
+  doc.fontSize(14).font('Helvetica-Bold')
+    .text(`Week of ${firstDay} - ${lastDay}`, MARGIN, 20, {
+      width: pageWidth - 2 * MARGIN,
       align: 'center'
     });
 
   // Grid setup
   const gridTop = headerHeight;
-  const gridHeight = pageHeight - headerHeight - 40;
-  const columnWidth = (pageWidth - 2 * margin - 40) / 7; // 40 for time column
-  const timeColumnWidth = 40;
-  
-  // Hours to display (6 AM to 9 PM, appointments can extend to 10 PM)
-  const startHour = 6;
-  const endHour = 21;
-  const totalHours = endHour - startHour + 1;
-  const hourHeight = gridHeight / totalHours;
+  const columnWidth = (pageWidth - 2 * MARGIN - TIME_COL_WIDTH) / 7;
+  const totalHours = END_HOUR - START_HOUR;
+  const gridHeight = totalHours * HOUR_HEIGHT;
 
   // Draw day headers
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   doc.fontSize(8).font('Helvetica-Bold');
   dayNames.forEach((day, i) => {
-    const x = margin + timeColumnWidth + i * columnWidth;
+    const x = MARGIN + TIME_COL_WIDTH + i * columnWidth;
     doc.text(day, x, gridTop, { width: columnWidth, align: 'center' });
     const date = weekDays[i].getDate();
     doc.fontSize(7).font('Helvetica').text(date.toString(), x, gridTop + 12, { width: columnWidth, align: 'center' });
   });
 
-  // Draw grid
-  doc.strokeColor('#CCCCCC').lineWidth(0.5);
+  // Draw grid with pixel-perfect alignment
+  const gridStartY = gridTop + 25;
   
   // Vertical lines
+  doc.strokeColor('#E5E7EB').lineWidth(0.5);
   for (let i = 0; i <= 8; i++) {
-    const x = margin + (i === 0 ? 0 : timeColumnWidth + (i - 1) * columnWidth);
-    doc.moveTo(x, gridTop + 25).lineTo(x, gridTop + gridHeight).stroke();
+    const x = MARGIN + (i === 0 ? 0 : TIME_COL_WIDTH + (i - 1) * columnWidth);
+    doc.moveTo(x, gridStartY).lineTo(x, gridStartY + gridHeight).stroke();
   }
 
-  // Horizontal lines and time labels
+  // Horizontal lines (hour and half-hour) and time labels
   doc.fontSize(6).font('Helvetica');
   for (let i = 0; i <= totalHours; i++) {
-    const y = gridTop + 25 + i * hourHeight;
-    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+    const y = gridStartY + i * HOUR_HEIGHT;
     
+    // Hour line (darker)
+    doc.strokeColor('#E5E7EB').lineWidth(0.5);
+    doc.moveTo(MARGIN, y).lineTo(pageWidth - MARGIN, y).stroke();
+    
+    // Half-hour line (lighter)
     if (i < totalHours) {
-      const hour = startHour + i;
+      const halfY = y + HOUR_HEIGHT / 2;
+      doc.strokeColor('#E5E7EB').lineWidth(0.25);
+      doc.moveTo(MARGIN, halfY).lineTo(pageWidth - MARGIN, halfY).stroke();
+    }
+    
+    // Time label
+    if (i < totalHours) {
+      const hour = START_HOUR + i;
       const timeLabel = hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`;
-      doc.text(timeLabel, margin + 2, y + 2, { width: timeColumnWidth - 4, align: 'left' });
+      doc.fillColor('#111827').text(timeLabel, MARGIN + 2, y + 2, { width: TIME_COL_WIDTH - 4, align: 'left' });
     }
   }
 
@@ -175,13 +194,14 @@ function generateWeeklyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < startHour || hour >= endHour) return;
+    if (hour < START_HOUR || hour > END_HOUR) return;
 
-    const startY = gridTop + 25 + (hour - startHour + minute / 60) * hourHeight;
+    // Use pixel-perfect Y-position calculation
+    const startY = getYForTime(hour, minute, gridStartY);
     const duration = (endHour - hour) + (endMinute - minute) / 60;
-    const height = Math.max(duration * hourHeight, 10);
+    const height = Math.max(duration * HOUR_HEIGHT, 10);
 
-    const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
+    const x = MARGIN + TIME_COL_WIDTH + dayIndex * columnWidth + 2;
     const width = columnWidth - 4;
 
     // Apply Financial District color scheme
@@ -216,39 +236,39 @@ function generateDailyGridPage(
   day: Date,
   appointments: Appointment[]
 ) {
-  const pageWidth = 509; // Portrait orientation
-  const pageHeight = 679;
-  const margin = 20;
+  const pageWidth = PAGE_DAILY.width;
+  const pageHeight = PAGE_DAILY.height;
   const headerHeight = 50;
+  const notesHeight = 100; // Daily notes section
   
   // Title
   const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
   const dateStr = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   doc.fontSize(14).font('Helvetica-Bold')
-    .text(`${dayName}, ${dateStr}`, margin, 20, {
-      width: pageWidth - 2 * margin,
+    .text(`${dayName}, ${dateStr}`, MARGIN, 20, {
+      width: pageWidth - 2 * MARGIN,
       align: 'center'
     });
 
   // Add "← Week View" button link back to page 1
-  const buttonX = margin;
+  const buttonX = MARGIN;
   const buttonY = 20;
   const buttonWidth = 70;
   const buttonHeight = 20;
   
   // Draw button background
-  doc.fillColor('#E7E9EC')
+  doc.fillColor('#F5F5F5')
     .rect(buttonX, buttonY, buttonWidth, buttonHeight)
     .fill();
   doc.strokeColor('#243447')
-    .lineWidth(1)
+    .lineWidth(1.5)
     .rect(buttonX, buttonY, buttonWidth, buttonHeight)
     .stroke();
   
   // Add button text with link
-  doc.fontSize(8).font('Helvetica')
+  doc.fontSize(8).font('Helvetica-Bold')
     .fillColor('#243447')
-    .text('← Week View', buttonX + 5, buttonY + 6, { 
+    .text('< Week View', buttonX + 5, buttonY + 6, { 
       link: '#page=1',
       width: buttonWidth - 10,
       align: 'left'
@@ -257,35 +277,41 @@ function generateDailyGridPage(
 
   // Grid setup
   const gridTop = headerHeight;
-  const gridHeight = pageHeight - headerHeight - 40;
-  const timeColumnWidth = 50;
-  const contentWidth = pageWidth - 2 * margin - timeColumnWidth;
-  
-  // Hours to display (6 AM to 9 PM, appointments can extend to 10 PM)
-  const startHour = 6;
-  const endHour = 21;
-  const totalHours = endHour - startHour + 1;
-  const hourHeight = gridHeight / totalHours;
+  const gridHeight = pageHeight - headerHeight - notesHeight - 40;
+  const contentWidth = pageWidth - 2 * MARGIN - TIME_COL_WIDTH;
+  const totalHours = END_HOUR - START_HOUR;
 
-  // Draw grid
-  doc.strokeColor('#CCCCCC').lineWidth(0.5);
+  // Draw grid with pixel-perfect alignment
+  const gridStartY = gridTop;
   
   // Vertical line separating time from content
-  doc.moveTo(margin + timeColumnWidth, gridTop).lineTo(margin + timeColumnWidth, gridTop + gridHeight).stroke();
+  doc.strokeColor('#E5E7EB').lineWidth(0.5);
+  doc.moveTo(MARGIN + TIME_COL_WIDTH, gridStartY).lineTo(MARGIN + TIME_COL_WIDTH, gridStartY + gridHeight).stroke();
   
   // Right border
-  doc.moveTo(pageWidth - margin, gridTop).lineTo(pageWidth - margin, gridTop + gridHeight).stroke();
+  doc.moveTo(pageWidth - MARGIN, gridStartY).lineTo(pageWidth - MARGIN, gridStartY + gridHeight).stroke();
 
-  // Horizontal lines and time labels
+  // Horizontal lines (hour and half-hour) and time labels
   doc.fontSize(8).font('Helvetica');
   for (let i = 0; i <= totalHours; i++) {
-    const y = gridTop + i * hourHeight;
-    doc.moveTo(margin, y).lineTo(pageWidth - margin, y).stroke();
+    const y = gridStartY + i * HOUR_HEIGHT;
     
+    // Hour line
+    doc.strokeColor('#E5E7EB').lineWidth(0.5);
+    doc.moveTo(MARGIN, y).lineTo(pageWidth - MARGIN, y).stroke();
+    
+    // Half-hour line (lighter)
     if (i < totalHours) {
-      const hour = startHour + i;
+      const halfY = y + HOUR_HEIGHT / 2;
+      doc.strokeColor('#E5E7EB').lineWidth(0.25);
+      doc.moveTo(MARGIN, halfY).lineTo(pageWidth - MARGIN, halfY).stroke();
+    }
+    
+    // Time label
+    if (i < totalHours) {
+      const hour = START_HOUR + i;
       const timeLabel = hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`;
-      doc.text(timeLabel, margin + 2, y + 5, { width: timeColumnWidth - 4, align: 'left' });
+      doc.fillColor('#111827').text(timeLabel, MARGIN + 2, y + 5, { width: TIME_COL_WIDTH - 4, align: 'left' });
     }
   }
 
@@ -307,13 +333,14 @@ function generateDailyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < startHour || hour >= endHour) return;
+    if (hour < START_HOUR || hour > END_HOUR) return;
 
-    const startY = gridTop + (hour - startHour + minute / 60) * hourHeight;
+    // Use pixel-perfect Y-position calculation
+    const startY = getYForTime(hour, minute, gridStartY);
     const duration = (endHour - hour) + (endMinute - minute) / 60;
-    const height = Math.max(duration * hourHeight, 15);
+    const height = Math.max(duration * HOUR_HEIGHT, 15);
 
-    const x = margin + timeColumnWidth + 5;
+    const x = MARGIN + TIME_COL_WIDTH + 5;
     const width = contentWidth - 10;
 
     // Apply Financial District color scheme
@@ -343,6 +370,24 @@ function generateDailyGridPage(
       });
     }
   });
+
+  // Add daily notes section
+  const notesY = gridStartY + gridHeight + 20;
+  doc.fontSize(10).font('Helvetica-Bold')
+    .fillColor('#111827')
+    .text('Daily Notes:', MARGIN, notesY);
+  
+  // Draw notes area border
+  doc.strokeColor('#E5E7EB').lineWidth(0.5);
+  doc.rect(MARGIN, notesY + 15, pageWidth - 2 * MARGIN, notesHeight - 20).stroke();
+  
+  // Add light horizontal lines for writing
+  doc.strokeColor('#E5E7EB').lineWidth(0.25);
+  const lineSpacing = 20;
+  for (let i = 1; i < (notesHeight - 20) / lineSpacing; i++) {
+    const lineY = notesY + 15 + i * lineSpacing;
+    doc.moveTo(MARGIN, lineY).lineTo(pageWidth - MARGIN, lineY).stroke();
+  }
 
   doc.fillColor('#000000').strokeColor('#000000');
 }

@@ -561,3 +561,15 @@
 - [x] Display detailed error messages with fix instructions
 - [ ] User to check OAuth app configuration (Internal vs External)
 - [ ] User to verify authorized users/domains in Google Cloud Console
+
+## Implement Pixel-Perfect PDF Export Specification
+- [x] Review manus_pdf_pixel_perfect_spec.md requirements
+- [x] Update PDF constants (START_HOUR=6, END_HOUR=21, HOUR_HEIGHT=48, MARGIN=18)
+- [x] Implement exact grid alignment with half-hour lines (#E5E7EB, 0.25pt)
+- [x] Apply Financial District color palette to PDF appointments
+- [x] Ensure Y-position formula matches web view exactly (getYForTime utility)
+- [x] Add daily notes section (100pt area below grid)
+- [ ] Add Inter font embedding for typography consistency (optional enhancement)
+- [ ] Implement current day highlight and current time line (optional enhancement)
+- [ ] Test grid alignment pixel-perfect match with web view
+- [ ] Verify all 8 pages render correctly with proper navigation links
