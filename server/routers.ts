@@ -330,33 +330,38 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const db = await getDb();
-        if (!db) throw new Error("Database not available");
+        try {
+          const db = await getDb();
+          if (!db) throw new Error("Database not available");
 
-        // Fetch appointments for the date range
-        const result = await db
-          .select()
-          .from(appointments)
-          .where(
-            and(
-              eq(appointments.userId, ctx.user.id),
-              gte(appointments.date, input.startDate),
-              lte(appointments.date, input.endDate)
-            )
+          // Fetch appointments for the date range
+          const result = await db
+            .select()
+            .from(appointments)
+            .where(
+              and(
+                eq(appointments.userId, ctx.user.id),
+                gte(appointments.date, input.startDate),
+                lte(appointments.date, input.endDate)
+              )
+            );
+
+          // Generate PDF
+          const pdfBuffer = await generateWeeklyPlannerPDF(
+            result,
+            new Date(input.startDate),
+            new Date(input.endDate)
           );
 
-        // Generate PDF
-        const pdfBuffer = await generateWeeklyPlannerPDF(
-          result,
-          new Date(input.startDate),
-          new Date(input.endDate)
-        );
-
-        // Return PDF as base64
-        return {
-          pdf: pdfBuffer.toString('base64'),
-          filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
-        };
+          // Return PDF as base64
+          return {
+            pdf: pdfBuffer.toString('base64'),
+            filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
+          };
+        } catch (error) {
+          console.error('PDF Export Error:', error);
+          throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       }),
   }),
 

@@ -573,3 +573,9 @@
 - [ ] Implement current day highlight and current time line (optional enhancement)
 - [ ] Test grid alignment pixel-perfect match with web view
 - [ ] Verify all 8 pages render correctly with proper navigation links
+
+## Fix TRPC Errors
+- [x] Investigate server logs for TRPC endpoint errors
+- [x] Add comprehensive error handling to PDF export endpoint
+- [x] Add error logging to identify future issues
+- [x] Test TRPC endpoints to verify responses are valid JSON
