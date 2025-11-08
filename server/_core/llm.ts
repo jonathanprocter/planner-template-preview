@@ -19,7 +19,7 @@ export type FileContent = {
   type: "file_url";
   file_url: {
     url: string;
-    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4" ;
+    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4";
   };
 };
 
@@ -110,10 +110,16 @@ export type ResponseFormat =
   | { type: "json_object" }
   | { type: "json_schema"; json_schema: JsonSchema };
 
+/**
+ * Ensures content is always an array for consistent processing
+ */
 const ensureArray = (
   value: MessageContent | MessageContent[]
 ): MessageContent[] => (Array.isArray(value) ? value : [value]);
 
+/**
+ * Normalizes message content parts to typed objects
+ */
 const normalizeContentPart = (
   part: MessageContent
 ): TextContent | ImageContent | FileContent => {
@@ -136,9 +142,13 @@ const normalizeContentPart = (
   throw new Error("Unsupported message content part");
 };
 
+/**
+ * Normalizes message format for API compatibility
+ */
 const normalizeMessage = (message: Message) => {
   const { role, name, tool_call_id } = message;
 
+  // Tool and function messages need string content
   if (role === "tool" || role === "function") {
     const content = ensureArray(message.content)
       .map(part => (typeof part === "string" ? part : JSON.stringify(part)))
@@ -170,6 +180,9 @@ const normalizeMessage = (message: Message) => {
   };
 };
 
+/**
+ * Normalizes tool choice parameter for API compatibility
+ */
 const normalizeToolChoice = (
   toolChoice: ToolChoice | undefined,
   tools: Tool[] | undefined
@@ -209,17 +222,26 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveApiUrl = () =>
+/**
+ * Resolves the API URL from environment or uses default
+ */
+const resolveApiUrl = (): string =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
     : "https://forge.manus.im/v1/chat/completions";
 
-const assertApiKey = () => {
+/**
+ * Validates that API key is configured
+ */
+const assertApiKey = (): void => {
   if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+    throw new Error("BUILT_IN_FORGE_API_KEY is not configured");
   }
 };
 
+/**
+ * Normalizes response format parameters
+ */
 const normalizeResponseFormat = ({
   responseFormat,
   response_format,
@@ -265,6 +287,12 @@ const normalizeResponseFormat = ({
   };
 };
 
+/**
+ * Invokes the LLM API with the given parameters
+ * @param params - LLM invocation parameters including messages, tools, and configuration
+ * @returns The LLM response with generated content
+ * @throws Error if API key is missing or request fails
+ */
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   assertApiKey();
 
@@ -296,10 +324,10 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.tool_choice = normalizedToolChoice;
   }
 
-  payload.max_tokens = 32768
+  payload.max_tokens = 32768;
   payload.thinking = {
-    "budget_tokens": 128
-  }
+    budget_tokens: 128,
+  };
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,

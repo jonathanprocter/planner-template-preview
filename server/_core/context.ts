@@ -8,6 +8,11 @@ export type TrpcContext = {
   user: User | null;
 };
 
+/**
+ * Creates tRPC context for each request
+ * Attempts to authenticate the user from session cookie
+ * Returns null user for unauthenticated requests (public procedures)
+ */
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
@@ -17,6 +22,7 @@ export async function createContext(
     user = await sdk.authenticateRequest(opts.req);
   } catch (error) {
     // Authentication is optional for public procedures.
+    // Errors are logged but don't fail the request
     user = null;
   }
 

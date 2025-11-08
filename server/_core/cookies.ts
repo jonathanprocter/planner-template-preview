@@ -2,13 +2,19 @@ import type { CookieOptions, Request } from "express";
 
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
 
-function isIpAddress(host: string) {
+/**
+ * Checks if a hostname is an IP address (IPv4 or IPv6)
+ */
+function isIpAddress(host: string): boolean {
   // Basic IPv4 check and IPv6 presence detection.
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return true;
   return host.includes(":");
 }
 
-function isSecureRequest(req: Request) {
+/**
+ * Determines if the request is over HTTPS by checking protocol and proxy headers
+ */
+function isSecureRequest(req: Request): boolean {
   if (req.protocol === "https") return true;
 
   const forwardedProto = req.headers["x-forwarded-proto"];
@@ -21,9 +27,16 @@ function isSecureRequest(req: Request) {
   return protoList.some(proto => proto.trim().toLowerCase() === "https");
 }
 
+/**
+ * Returns secure cookie options for session management
+ * Uses SameSite=None for cross-origin requests (required for OAuth flows)
+ * Automatically detects HTTPS from request headers
+ */
 export function getSessionCookieOptions(
   req: Request
 ): Pick<CookieOptions, "domain" | "httpOnly" | "path" | "sameSite" | "secure"> {
+  // Domain setting is commented out to allow cookies to work across subdomains
+  // Uncomment and adjust if you need specific domain restrictions
   // const hostname = req.hostname;
   // const shouldSetDomain =
   //   hostname &&
@@ -40,9 +53,9 @@ export function getSessionCookieOptions(
   //       : undefined;
 
   return {
-    httpOnly: true,
+    httpOnly: true, // Prevents XSS attacks by making cookie inaccessible to JavaScript
     path: "/",
-    sameSite: "none",
-    secure: isSecureRequest(req),
+    sameSite: "none", // Required for cross-origin OAuth flows
+    secure: isSecureRequest(req), // Only send over HTTPS in production
   };
 }

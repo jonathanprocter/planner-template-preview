@@ -1,0 +1,56 @@
+{
+  "header": {
+    "weeklyOverview": {
+      "x": 50,
+      "y": 50,
+      "width": 250,
+      "height": 60,
+      "textKey": "Weekly Overview"
+    },
+    "dateTitle": {
+      "x": 810,
+      "y": 70,
+      "fontSize": 40,
+      "textAlign": "center"
+    },
+    "legends": {
+      "x": 1100,
+      "y": 70,
+      "fontSize": 20,
+      "gap": 180
+    }
+  },
+  "statsBar": {
+    "y": 150,
+    "fontSize": 25,
+    "labelFontSize": 20,
+    "items": [
+      { "label": "Appointments", "x": 100, "width": 300 },
+      { "label": "Scheduled", "x": 450, "width": 300 },
+      { "label": "Available", "x": 800, "width": 300 },
+      { "label": "Free Time", "x": 1150, "width": 300 }
+    ]
+  },
+  "timeBlocks": {
+    "x": 100,
+    "y": 250,
+    "width": 1420,
+    "height": 1800,
+    "startTime": "06:00",
+    "endTime": "23:30",
+    "hourHeight": 100,
+    "fontSize": 22,
+    "labelWidth": 100,
+    "textPadding": 10,
+    "dividerColor": "#000000"
+  },
+  "footerNav": {
+    "y": 2100,
+    "fontSize": 25,
+    "items": [
+      { "textKey": "<- Prev Day", "x": 100, "width": 300, "textAlign": "left" },
+      { "textKey": "Weekly Overview", "x": 660, "width": 300, "textAlign": "center" },
+      { "textKey": "Next Day ->", "x": 1220, "width": 300, "textAlign": "right" }
+    ]
+  }
+}

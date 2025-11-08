@@ -1,4 +1,4 @@
-import { and, between, eq, gte, lte } from "drizzle-orm";
+import { and, eq, gte, lte } from "drizzle-orm";
 import { appointments, InsertAppointment } from "../drizzle/schema";
 import { getDb } from "./db";
 
@@ -150,9 +150,6 @@ export async function syncGoogleCalendarAppointments(
     .from(appointments)
     .where(eq(appointments.userId, userId));
 
-  const existingGoogleIds = new Set(
-    existing.map((a) => a.googleEventId).filter(Boolean)
-  );
   const incomingGoogleIds = new Set(googleEvents.map((e) => e.id));
 
   // Delete appointments that no longer exist in Google Calendar

@@ -22,37 +22,55 @@ interface Task {
 
 class EventStore {
   private events: Event[] = [];
-
   private tasks: Task[] = [];
-
   private listeners: Set<() => void> = new Set();
 
-  subscribe(listener: () => void) {
+  /**
+   * Subscribe to store changes
+   * @param listener Callback function to be called on store updates
+   * @returns Unsubscribe function
+   */
+  subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
     return () => {
       this.listeners.delete(listener);
     };
   }
 
-  private notify() {
+  /**
+   * Notify all subscribers of store changes
+   */
+  private notify(): void {
     this.listeners.forEach(listener => listener());
   }
 
+  /**
+   * Get all events (returns a copy to prevent external mutations)
+   */
   getEvents(): Event[] {
     return [...this.events];
   }
 
-  setEvents(events: Event[]) {
+  /**
+   * Replace all events with a new array
+   */
+  setEvents(events: Event[]): void {
     this.events = events;
     this.notify();
   }
 
-  addEvent(event: Event) {
+  /**
+   * Add a new event to the store
+   */
+  addEvent(event: Event): void {
     this.events.push(event);
     this.notify();
   }
 
-  updateEvent(id: string, updates: Partial<Event>) {
+  /**
+   * Update an existing event by ID
+   */
+  updateEvent(id: string, updates: Partial<Event>): void {
     const index = this.events.findIndex(e => e.id === id);
     if (index !== -1) {
       this.events[index] = { ...this.events[index], ...updates };
@@ -60,26 +78,41 @@ class EventStore {
     }
   }
 
-  deleteEvent(id: string) {
+  /**
+   * Delete an event by ID
+   */
+  deleteEvent(id: string): void {
     this.events = this.events.filter(e => e.id !== id);
     this.notify();
   }
 
+  /**
+   * Get all tasks (returns a copy to prevent external mutations)
+   */
   getTasks(): Task[] {
     return [...this.tasks];
   }
 
-  setTasks(tasks: Task[]) {
+  /**
+   * Replace all tasks with a new array
+   */
+  setTasks(tasks: Task[]): void {
     this.tasks = tasks;
     this.notify();
   }
 
-  addTask(task: Task) {
+  /**
+   * Add a new task to the store
+   */
+  addTask(task: Task): void {
     this.tasks.push(task);
     this.notify();
   }
 
-  updateTask(id: string, updates: Partial<Task>) {
+  /**
+   * Update an existing task by ID
+   */
+  updateTask(id: string, updates: Partial<Task>): void {
     const index = this.tasks.findIndex(t => t.id === id);
     if (index !== -1) {
       this.tasks[index] = { ...this.tasks[index], ...updates };
@@ -87,11 +120,27 @@ class EventStore {
     }
   }
 
+  /**
+   * Delete a task by ID
+   */
+  deleteTask(id: string): void {
+    this.tasks = this.tasks.filter(t => t.id !== id);
+    this.notify();
+  }
+
+  /**
+   * Search events by title or category
+   * @param query Search query string
+   * @returns Filtered array of events
+   */
   searchEvents(query: string): Event[] {
-    const lowerQuery = query.toLowerCase();
+    const lowerQuery = query.toLowerCase().trim();
+    if (!lowerQuery) return this.getEvents();
+    
     return this.events.filter(event => 
       event.title.toLowerCase().includes(lowerQuery) ||
-      event.category?.toLowerCase().includes(lowerQuery)
+      event.category?.toLowerCase().includes(lowerQuery) ||
+      event.description?.toLowerCase().includes(lowerQuery)
     );
   }
 }
@@ -102,7 +151,7 @@ export const CATEGORIES = [
   { name: "Meeting", color: "#f59e0b" },
   { name: "Health", color: "#ef4444" },
   { name: "Social", color: "#8b5cf6" },
-];
+] as const;
 
 export const eventStore = new EventStore();
 export type { Task };

@@ -173,11 +173,13 @@ import { useState } from "react";
 import { toast as sonnerToast } from "sonner";
 import { AIChatBox, type Message } from "@/components/AIChatBox";
 
+/**
+ * Component showcase page demonstrating all available UI components
+ */
 export default function ComponentsShowcase() {
   const { theme, toggleTheme } = useTheme();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [datePickerDate, setDatePickerDate] = useState<Date>();
-  const [selectedFruits, setSelectedFruits] = useState<string[]>([]);
   const [progress, setProgress] = useState(33);
   const [currentPage, setCurrentPage] = useState(2);
   const [openCombobox, setOpenCombobox] = useState(false);
@@ -194,6 +196,8 @@ export default function ComponentsShowcase() {
   const [isChatLoading, setIsChatLoading] = useState(false);
 
   const handleDialogSubmit = () => {
+    if (!dialogInput.trim()) return;
+    
     console.log("Dialog submitted with value:", dialogInput);
     sonnerToast.success("Submitted successfully", {
       description: `Input: ${dialogInput}`,
@@ -226,11 +230,21 @@ export default function ComponentsShowcase() {
     }, 1500);
   };
 
+  const frameworks = [
+    { value: "react", label: "React" },
+    { value: "vue", label: "Vue" },
+    { value: "angular", label: "Angular" },
+    { value: "svelte", label: "Svelte" },
+    { value: "nextjs", label: "Next.js" },
+    { value: "nuxt", label: "Nuxt" },
+    { value: "remix", label: "Remix" },
+  ];
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="container max-w-6xl mx-auto">
-        <div className="space-y-2 justify-between flex">
-          <h2 className="text-3xl font-bold tracking-tight mb-6">
+      <main className="container max-w-6xl mx-auto py-8">
+        <div className="space-y-2 justify-between flex mb-8">
+          <h2 className="text-3xl font-bold tracking-tight">
             Shadcn/ui Component Library
           </h2>
           <Button variant="outline" size="icon" onClick={toggleTheme}>
@@ -514,8 +528,8 @@ export default function ComponentsShowcase() {
                                 const newDate = datePickerDate
                                   ? new Date(datePickerDate)
                                   : new Date();
-                                newDate.setHours(parseInt(hours));
-                                newDate.setMinutes(parseInt(minutes));
+                                newDate.setHours(parseInt(hours, 10));
+                                newDate.setMinutes(parseInt(minutes, 10));
                                 setDatePickerDate(newDate);
                               }}
                             />
@@ -544,15 +558,7 @@ export default function ComponentsShowcase() {
                         className="w-full justify-between"
                       >
                         {selectedFramework
-                          ? [
-                              { value: "react", label: "React" },
-                              { value: "vue", label: "Vue" },
-                              { value: "angular", label: "Angular" },
-                              { value: "svelte", label: "Svelte" },
-                              { value: "nextjs", label: "Next.js" },
-                              { value: "nuxt", label: "Nuxt" },
-                              { value: "remix", label: "Remix" },
-                            ].find(fw => fw.value === selectedFramework)?.label
+                          ? frameworks.find(fw => fw.value === selectedFramework)?.label
                           : "Select framework..."}
                         <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -563,15 +569,7 @@ export default function ComponentsShowcase() {
                         <CommandList>
                           <CommandEmpty>No framework found</CommandEmpty>
                           <CommandGroup>
-                            {[
-                              { value: "react", label: "React" },
-                              { value: "vue", label: "Vue" },
-                              { value: "angular", label: "Angular" },
-                              { value: "svelte", label: "Svelte" },
-                              { value: "nextjs", label: "Next.js" },
-                              { value: "nuxt", label: "Nuxt" },
-                              { value: "remix", label: "Remix" },
-                            ].map(framework => (
+                            {frameworks.map(framework => (
                               <CommandItem
                                 key={framework.value}
                                 value={framework.value}
@@ -602,17 +600,7 @@ export default function ComponentsShowcase() {
                   {selectedFramework && (
                     <p className="text-sm text-muted-foreground">
                       Selected:{" "}
-                      {
-                        [
-                          { value: "react", label: "React" },
-                          { value: "vue", label: "Vue" },
-                          { value: "angular", label: "Angular" },
-                          { value: "svelte", label: "Svelte" },
-                          { value: "nextjs", label: "Next.js" },
-                          { value: "nuxt", label: "Nuxt" },
-                          { value: "remix", label: "Remix" },
-                        ].find(fw => fw.value === selectedFramework)?.label
-                      }
+                      {frameworks.find(fw => fw.value === selectedFramework)?.label}
                     </p>
                   )}
                 </div>
@@ -696,7 +684,7 @@ export default function ComponentsShowcase() {
                   <Label>Avatar</Label>
                   <div className="flex gap-4">
                     <Avatar>
-                      <AvatarImage src="https://github.com/shadcn.png" />
+                      <AvatarImage src="https://github.com/shadcn.png" alt="Avatar" />
                       <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     <Avatar>
@@ -1220,7 +1208,7 @@ export default function ComponentsShowcase() {
                 <div className="space-y-2">
                   <Label>Toggle</Label>
                   <div className="flex gap-2">
-                    <Toggle aria-label="Toggle italic">
+                    <Toggle aria-label="Toggle bold">
                       <span className="font-bold">B</span>
                     </Toggle>
                     <Toggle aria-label="Toggle italic">

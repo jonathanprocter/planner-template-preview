@@ -13,10 +13,10 @@ import {
 import { getDb } from "./db";
 import { appointments, dailyNotes } from "../drizzle/schema";
 import { and, eq, gte, lte, or, like } from "drizzle-orm";
-import { generateWeeklyPlannerPDF, generateWebViewPDF } from "./pdf-export";
+import { generateWeeklyPlannerPDF } from "./pdf-export";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -98,9 +98,6 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) return [];
 
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
-
         const conditions = [eq(appointments.userId, ctx.user.id)];
 
         // Search in title and description
@@ -174,9 +171,6 @@ export const appRouter = router({
         const db = await getDb();
         if (!db) throw new Error("Database not available");
 
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
-
         await db
           .update(appointments)
           .set({ description: input.notes })
@@ -201,9 +195,6 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
 
         await db
           .update(appointments)
@@ -233,8 +224,6 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-
-        // appointments already imported at top
 
         // Insert into database
         await db
@@ -267,9 +256,6 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
-
-        // appointments already imported at top
-        // drizzle-orm functions already imported at top
 
         // Update in database
         await db
@@ -341,74 +327,36 @@ export const appRouter = router({
         z.object({
           startDate: z.string(),
           endDate: z.string(),
-          format: z.enum(['web', 'remarkable']).default('remarkable'),
         })
       )
       .mutation(async ({ ctx, input }) => {
-        try {
-          console.log(`[PDF Export] Starting ${input.format} format export for ${input.startDate} to ${input.endDate}`);
-          
-          const db = await getDb();
-          if (!db) throw new Error("Database not available");
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
 
-          let pdfBuffer: Buffer;
-          
-          if (input.format === 'web') {
-            // Use Puppeteer to capture web view
-            const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-            const authCookie = ctx.req.cookies?.['manus_session'];
-            
-            console.log('[PDF Export] Using Puppeteer web view capture');
-            pdfBuffer = await generateWebViewPDF(
-              input.startDate,
-              input.endDate,
-              baseUrl,
-              authCookie
-            );
-          } else {
-            // Use reMarkable-optimized PDF
-            console.log('[PDF Export] Using reMarkable-optimized PDF');
-            const result = await db
-              .select()
-              .from(appointments)
-              .where(
-                and(
-                  eq(appointments.userId, ctx.user.id),
-                  gte(appointments.date, input.startDate),
-                  lte(appointments.date, input.endDate)
-                )
-              );
+        // Fetch appointments for the date range
+        const result = await db
+          .select()
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              gte(appointments.date, input.startDate),
+              lte(appointments.date, input.endDate)
+            )
+          );
 
-            const notes = await db
-              .select()
-              .from(dailyNotes)
-              .where(
-                and(
-                  eq(dailyNotes.userId, ctx.user.id),
-                  gte(dailyNotes.date, input.startDate),
-                  lte(dailyNotes.date, input.endDate)
-                )
-              );
+        // Generate PDF
+        const pdfBuffer = await generateWeeklyPlannerPDF(
+          result,
+          new Date(input.startDate),
+          new Date(input.endDate)
+        );
 
-            pdfBuffer = await generateWeeklyPlannerPDF(
-              result,
-              new Date(input.startDate),
-              new Date(input.endDate)
-            );
-          }
-
-          console.log(`[PDF Export] Success! Generated ${pdfBuffer.length} bytes`);
-          
-          // Return PDF as base64
-          return {
-            pdf: pdfBuffer.toString('base64'),
-            filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
-          };
-        } catch (error) {
-          console.error('[PDF Export] Error:', error);
-          console.error('[PDF Export] Stack:', (error as Error).stack);
-          throw new Error(`PDF export failed: ${(error as Error).message}`);
-        }
+        // Return PDF as base64
+        return {
+          pdf: pdfBuffer.toString('base64'),
+          filename: `planner-${input.startDate}-to-${input.endDate}.pdf`,
+        };
       }),
   }),
 

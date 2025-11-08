@@ -31,6 +31,12 @@ export type GenerateImageResponse = {
   url?: string;
 };
 
+/**
+ * Generates an image using AI and stores it in S3
+ * @param options - Image generation options including prompt and optional original images
+ * @returns Object containing the URL of the generated image
+ * @throws Error if API credentials are missing or generation fails
+ */
 export async function generateImage(
   options: GenerateImageOptions
 ): Promise<GenerateImageResponse> {
@@ -80,7 +86,7 @@ export async function generateImage(
   const base64Data = result.image.b64Json;
   const buffer = Buffer.from(base64Data, "base64");
 
-  // Save to S3
+  // Save to S3 with timestamp-based filename to avoid collisions
   const { url } = await storagePut(
     `generated/${Date.now()}.png`,
     buffer,

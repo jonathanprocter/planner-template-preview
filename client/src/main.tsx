@@ -8,9 +8,21 @@ import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
-const queryClient = new QueryClient();
+// Configure React Query with sensible defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
-const redirectToLoginIfUnauthorized = (error: unknown) => {
+/**
+ * Redirect to login page if user is unauthorized
+ */
+const redirectToLoginIfUnauthorized = (error: unknown): void => {
   if (!(error instanceof TRPCClientError)) return;
   if (typeof window === "undefined") return;
 
@@ -21,6 +33,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   window.location.href = getLoginUrl();
 };
 
+// Subscribe to query errors for automatic auth redirect
 queryClient.getQueryCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.query.state.error;
@@ -29,6 +42,7 @@ queryClient.getQueryCache().subscribe(event => {
   }
 });
 
+// Subscribe to mutation errors for automatic auth redirect
 queryClient.getMutationCache().subscribe(event => {
   if (event.type === "updated" && event.action.type === "error") {
     const error = event.mutation.state.error;
@@ -37,27 +51,30 @@ queryClient.getMutationCache().subscribe(event => {
   }
 });
 
+// Configure tRPC client with batching and credentials
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
       fetch(input, init) {
-        // Create custom abort controller with 2 minute timeout for PDF export
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minutes
-        
         return globalThis.fetch(input, {
           ...(init ?? {}),
           credentials: "include",
-          signal: controller.signal,
-        }).finally(() => clearTimeout(timeoutId));
+        });
       },
     }),
   ],
 });
 
-createRoot(document.getElementById("root")!).render(
+// Get root element and ensure it exists
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element not found. Ensure index.html has a div with id='root'");
+}
+
+// Render the application
+createRoot(rootElement).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <App />

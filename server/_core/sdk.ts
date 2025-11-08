@@ -14,7 +14,10 @@ import type {
   GetUserInfoWithJwtRequest,
   GetUserInfoWithJwtResponse,
 } from "./types/manusTypes";
-// Utility function
+
+/**
+ * Utility function to check if a value is a non-empty string
+ */
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
 
@@ -28,8 +31,11 @@ const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
 const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
 const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
 
+/**
+ * OAuth service for handling authentication flows
+ */
 class OAuthService {
-  constructor(private client: ReturnType<typeof axios.create>) {
+  constructor(private client: AxiosInstance) {
     console.log("[OAuth] Initialized with baseURL:", ENV.oAuthServerUrl);
     if (!ENV.oAuthServerUrl) {
       console.error(
@@ -38,11 +44,21 @@ class OAuthService {
     }
   }
 
+  /**
+   * Decodes the state parameter to get the redirect URI
+   */
   private decodeState(state: string): string {
-    const redirectUri = atob(state);
-    return redirectUri;
+    try {
+      return atob(state);
+    } catch (error) {
+      console.error("[OAuth] Failed to decode state:", error);
+      throw new Error("Invalid state parameter");
+    }
   }
 
+  /**
+   * Exchanges authorization code for access token
+   */
   async getTokenByCode(
     code: string,
     state: string
@@ -62,6 +78,9 @@ class OAuthService {
     return data;
   }
 
+  /**
+   * Retrieves user information using access token
+   */
   async getUserInfoByToken(
     token: ExchangeTokenResponse
   ): Promise<GetUserInfoResponse> {
@@ -76,12 +95,18 @@ class OAuthService {
   }
 }
 
+/**
+ * Creates an Axios HTTP client for OAuth requests
+ */
 const createOAuthHttpClient = (): AxiosInstance =>
   axios.create({
     baseURL: ENV.oAuthServerUrl,
     timeout: AXIOS_TIMEOUT_MS,
   });
 
+/**
+ * SDK Server class for handling authentication and session management
+ */
 class SDKServer {
   private readonly client: AxiosInstance;
   private readonly oauthService: OAuthService;
@@ -91,6 +116,9 @@ class SDKServer {
     this.oauthService = new OAuthService(this.client);
   }
 
+  /**
+   * Derives login method from platform information
+   */
   private deriveLoginMethod(
     platforms: unknown,
     fallback: string | null | undefined
@@ -145,7 +173,10 @@ class SDKServer {
     } as GetUserInfoResponse;
   }
 
-  private parseCookies(cookieHeader: string | undefined) {
+  /**
+   * Parses cookie header into a Map
+   */
+  private parseCookies(cookieHeader: string | undefined): Map<string, string> {
     if (!cookieHeader) {
       return new Map<string, string>();
     }
@@ -154,8 +185,14 @@ class SDKServer {
     return new Map(Object.entries(parsed));
   }
 
-  private getSessionSecret() {
+  /**
+   * Gets the session secret as a Uint8Array for JWT signing
+   */
+  private getSessionSecret(): Uint8Array {
     const secret = ENV.cookieSecret;
+    if (!secret) {
+      throw new Error("JWT_SECRET is not configured");
+    }
     return new TextEncoder().encode(secret);
   }
 
@@ -178,6 +215,9 @@ class SDKServer {
     );
   }
 
+  /**
+   * Signs a session payload into a JWT token
+   */
   async signSession(
     payload: SessionPayload,
     options: { expiresInMs?: number } = {}
@@ -197,6 +237,9 @@ class SDKServer {
       .sign(secretKey);
   }
 
+  /**
+   * Verifies and decodes a session JWT token
+   */
   async verifySession(
     cookieValue: string | undefined | null
   ): Promise<{ openId: string; appId: string; name: string } | null> {
@@ -232,6 +275,9 @@ class SDKServer {
     }
   }
 
+  /**
+   * Gets user information using a JWT token
+   */
   async getUserInfoWithJwt(
     jwtToken: string
   ): Promise<GetUserInfoWithJwtResponse> {
@@ -256,6 +302,11 @@ class SDKServer {
     } as GetUserInfoWithJwtResponse;
   }
 
+  /**
+   * Authenticates a request using session cookie
+   * Automatically syncs user from OAuth server if not in database
+   * @throws ForbiddenError if authentication fails
+   */
   async authenticateRequest(req: Request): Promise<User> {
     // Regular authentication flow
     const cookies = this.parseCookies(req.headers.cookie);
@@ -292,6 +343,7 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    // Update last signed in timestamp
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,

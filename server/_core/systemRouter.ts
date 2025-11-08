@@ -2,7 +2,14 @@ import { z } from "zod";
 import { notifyOwner } from "./notification";
 import { adminProcedure, publicProcedure, router } from "./trpc";
 
+/**
+ * System router for health checks and admin operations
+ */
 export const systemRouter = router({
+  /**
+   * Health check endpoint
+   * Returns ok status with timestamp validation
+   */
   health: publicProcedure
     .input(
       z.object({
@@ -13,6 +20,10 @@ export const systemRouter = router({
       ok: true,
     })),
 
+  /**
+   * Sends a notification to the project owner
+   * Admin-only endpoint
+   */
   notifyOwner: adminProcedure
     .input(
       z.object({

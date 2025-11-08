@@ -1,106 +1,4 @@
 import PDFDocument from 'pdfkit';
-import puppeteer from 'puppeteer';
-
-/**
- * Generate PDF by capturing the actual web view (matches screen exactly)
- * This ensures perfect visual parity with what users see in the browser
- */
-export async function generateWebViewPDF(
-  startDate: string,
-  endDate: string,
-  baseUrl: string,
-  authCookie?: string
-): Promise<Buffer> {
-  let browser;
-  
-  try {
-    console.log('[Puppeteer] Starting browser launch...');
-    browser = await puppeteer.launch({
-      headless: true,
-      executablePath: '/home/ubuntu/.cache/puppeteer/chrome/linux-142.0.7444.61/chrome-linux64/chrome',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-      ],
-    });
-    console.log('[Puppeteer] Browser launched successfully');
-    
-    const page = await browser.newPage();
-    console.log('[Puppeteer] New page created');
-    
-    // Set viewport to match your web view dimensions exactly
-    await page.setViewport({
-      width: 1620,
-      height: 2160,
-      deviceScaleFactor: 2, // High quality rendering
-    });
-    
-    // Set auth cookie if provided
-    if (authCookie) {
-      await page.setCookie({
-        name: 'manus_session',
-        value: authCookie,
-        domain: new URL(baseUrl).hostname,
-      });
-    }
-    
-    // Navigate to your weekly planner
-    const url = `${baseUrl}/`;
-    console.log(`[Puppeteer] Navigating to: ${url}`);
-    console.log(`[Puppeteer] Base URL: ${baseUrl}`);
-    console.log(`[Puppeteer] Auth cookie: ${authCookie ? 'present' : 'missing'}`);
-    
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 60000, // Increased timeout
-    });
-    console.log('[Puppeteer] Page loaded successfully');
-    
-    // Wait for the calendar grid to fully render
-    await page.waitForSelector('[class*="grid"]', { timeout: 10000 }).catch(() => {
-      console.log('Grid selector not found, continuing anyway');
-    });
-    
-    // Optional: Clean up UI for PDF export
-    await page.evaluate(() => {
-      // Remove animations for cleaner PDF
-      const style = document.createElement('style');
-      style.textContent = `
-        * {
-          animation: none !important;
-          transition: none !important;
-        }
-      `;
-      document.head.appendChild(style);
-    });
-    
-    // Small delay to ensure everything is rendered
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Generate PDF
-    console.log('[Puppeteer] Generating PDF...');
-    const pdf = await page.pdf({
-      width: '1620px',
-      height: '2160px',
-      printBackground: true,
-      preferCSSPageSize: false,
-      margin: { top: 0, right: 0, bottom: 0, left: 0 },
-    });
-    
-    console.log(`[Puppeteer] PDF generated successfully: ${pdf.length} bytes`);
-    return Buffer.from(pdf);
-    
-  } catch (error) {
-    console.error('Error generating web view PDF:', error);
-    console.error('Error stack:', (error as Error).stack);
-    throw new Error(`Failed to generate PDF: ${(error as Error).message}`);
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
-  }
-}
 
 // Remove emojis and special characters from text
 function removeEmojis(text: string): string {
@@ -113,36 +11,6 @@ function removeEmojis(text: string): string {
     .replace(/[\u200D]/g, '') // Zero-width joiner
     .replace(/[\u20E3]/g, '') // Combining enclosing keycap
     .trim();
-}
-
-// Convert date to EST timezone for consistent PDF output
-function toEST(date: Date): Date {
-  // Create a new date string in EST timezone
-  const estString = date.toLocaleString('en-US', { 
-    timeZone: 'America/New_York',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false
-  });
-  
-  // Parse the EST string back to a Date object
-  // Format: MM/DD/YYYY, HH:mm:ss
-  const [datePart, timePart] = estString.split(', ');
-  const [month, day, year] = datePart.split('/');
-  const [hour, minute, second] = timePart.split(':');
-  
-  return new Date(
-    parseInt(year),
-    parseInt(month) - 1,
-    parseInt(day),
-    parseInt(hour),
-    parseInt(minute),
-    parseInt(second)
-  );
 }
 
 // Financial District color scheme for reMarkable 2 Pro
@@ -202,21 +70,19 @@ export async function generateWeeklyPlannerPDF(
       doc.on('end', () => resolve(Buffer.concat(buffers)));
       doc.on('error', reject);
 
-      // Generate week dates - FIXED: avoid date mutation issues
-      // Create dates at noon EST to avoid timezone shift issues
-      const weekDays: Date[] = [];
+      // Generate week dates
+      const weekDays = [];
+      const currentDate = new Date(startDate);
       for (let i = 0; i < 7; i++) {
-        const date = new Date(startDate);
-        date.setDate(date.getDate() + i);
-        date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone boundary issues
-        weekDays.push(date);
+        weekDays.push(new Date(currentDate));
+        currentDate.setDate(currentDate.getDate() + 1);
       }
 
       // Page 1: Weekly Overview (Landscape - Grid Layout)
       generateWeeklyGridPage(doc, weekDays, appointments);
 
       // Pages 2-8: Daily Views (Portrait - Grid Layout)
-      weekDays.forEach((day, index) => {
+      weekDays.forEach((day) => {
         doc.addPage({ size: [509, 679] }); // Portrait orientation for daily views
         generateDailyGridPage(doc, day, appointments);
       });
@@ -238,18 +104,9 @@ function generateWeeklyGridPage(
   const margin = 20;
   const headerHeight = 60;
   
-  // Title - dynamically generate from weekDays with EST timezone
-  const firstDay = weekDays[0].toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric',
-    timeZone: 'America/New_York'
-  });
-  const lastDay = weekDays[6].toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric',
-    timeZone: 'America/New_York'
-  });
+  // Title - dynamically generate from weekDays
+  const firstDay = weekDays[0].toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+  const lastDay = weekDays[6].toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   doc.fontSize(16).font('Helvetica-Bold')
     .text(`Week of ${firstDay} - ${lastDay}`, margin, 20, {
       width: pageWidth - 2 * margin,
@@ -274,9 +131,8 @@ function generateWeeklyGridPage(
   dayNames.forEach((day, i) => {
     const x = margin + timeColumnWidth + i * columnWidth;
     doc.text(day, x, gridTop, { width: columnWidth, align: 'center' });
-    // Convert to EST for date display
-    const estDate = toEST(weekDays[i]);
-    doc.fontSize(7).font('Helvetica').text(estDate.getDate().toString(), x, gridTop + 12, { width: columnWidth, align: 'center' });
+    const date = weekDays[i].getDate();
+    doc.fontSize(7).font('Helvetica').text(date.toString(), x, gridTop + 12, { width: columnWidth, align: 'center' });
   });
 
   // Draw grid
@@ -303,11 +159,8 @@ function generateWeeklyGridPage(
 
   // Draw appointments
   appointments.forEach(apt => {
-    // Convert to EST for display
-    const aptDate = toEST(new Date(apt.startTime));
-    const estWeekDays = weekDays.map(d => toEST(d));
-    
-    const dayIndex = estWeekDays.findIndex(d => 
+    const aptDate = new Date(apt.startTime);
+    const dayIndex = weekDays.findIndex(d => 
       d.getFullYear() === aptDate.getFullYear() &&
       d.getMonth() === aptDate.getMonth() &&
       d.getDate() === aptDate.getDate()
@@ -318,12 +171,11 @@ function generateWeeklyGridPage(
     const hour = aptDate.getHours();
     const minute = aptDate.getMinutes();
     
-    const endDate = toEST(new Date(apt.endTime));
+    const endDate = new Date(apt.endTime);
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    // FIXED: Changed >= to > so appointments at 9 PM (21:00) are included
-    if (hour < startHour || hour > endHour) return;
+    if (hour < startHour || hour >= endHour) return;
 
     const startY = gridTop + 25 + (hour - startHour + minute / 60) * hourHeight;
     const duration = (endHour - hour) + (endMinute - minute) / 60;
@@ -369,17 +221,9 @@ function generateDailyGridPage(
   const margin = 20;
   const headerHeight = 50;
   
-  // Title with EST timezone
-  const dayName = day.toLocaleDateString('en-US', { 
-    weekday: 'long',
-    timeZone: 'America/New_York'
-  });
-  const dateStr = day.toLocaleDateString('en-US', { 
-    month: 'long', 
-    day: 'numeric', 
-    year: 'numeric',
-    timeZone: 'America/New_York'
-  });
+  // Title
+  const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
+  const dateStr = day.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   doc.fontSize(14).font('Helvetica-Bold')
     .text(`${dayName}, ${dateStr}`, margin, 20, {
       width: pageWidth - 2 * margin,
@@ -401,17 +245,15 @@ function generateDailyGridPage(
     .rect(buttonX, buttonY, buttonWidth, buttonHeight)
     .stroke();
   
-  // Add button text
+  // Add button text with link
   doc.fontSize(8).font('Helvetica')
     .fillColor('#243447')
     .text('← Week View', buttonX + 5, buttonY + 6, { 
+      link: '#page=1',
       width: buttonWidth - 10,
       align: 'left'
     })
     .fillColor('#000000');
-  
-  // Add clickable link overlay
-  doc.link(buttonX, buttonY, buttonWidth, buttonHeight, '#page=1');
 
   // Grid setup
   const gridTop = headerHeight;
@@ -447,27 +289,25 @@ function generateDailyGridPage(
     }
   }
 
-  // Filter appointments for this day (using EST)
-  const estDay = toEST(day);
+  // Filter appointments for this day
   const dayAppointments = appointments.filter(apt => {
-    const aptDate = toEST(new Date(apt.startTime));
-    return aptDate.getFullYear() === estDay.getFullYear() &&
-           aptDate.getMonth() === estDay.getMonth() &&
-           aptDate.getDate() === estDay.getDate();
+    const aptDate = new Date(apt.startTime);
+    return aptDate.getFullYear() === day.getFullYear() &&
+           aptDate.getMonth() === day.getMonth() &&
+           aptDate.getDate() === day.getDate();
   });
 
   // Draw appointments
   dayAppointments.forEach(apt => {
-    const aptDate = toEST(new Date(apt.startTime));
+    const aptDate = new Date(apt.startTime);
     const hour = aptDate.getHours();
     const minute = aptDate.getMinutes();
     
-    const endDate = toEST(new Date(apt.endTime));
+    const endDate = new Date(apt.endTime);
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    // FIXED: Changed >= to > so appointments at 9 PM (21:00) are included
-    if (hour < startHour || hour > endHour) return;
+    if (hour < startHour || hour >= endHour) return;
 
     const startY = gridTop + (hour - startHour + minute / 60) * hourHeight;
     const duration = (endHour - hour) + (endMinute - minute) / 60;

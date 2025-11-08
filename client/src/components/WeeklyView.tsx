@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
@@ -29,7 +29,7 @@ export default function WeeklyView() {
   const utils = trpc.useUtils();
 
   // Fetch appointments from database for current week
-  const getWeekDates = () => {
+  const getWeekDates = useCallback(() => {
     const today = new Date();
     const dayOfWeek = today.getDay();
     const monday = new Date(today);
@@ -42,15 +42,16 @@ export default function WeeklyView() {
       dates.push(date);
     }
     return dates;
-  };
+  }, []);
 
   const weekDates = getWeekDates();
-  const formatDateISO = (date: Date) => {
+  
+  const formatDateISO = useCallback((date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
-  };
+  }, []);
 
   const { data: dbAppointments, isLoading } = trpc.appointments.getByDateRange.useQuery({
     startDate: formatDateISO(weekDates[0]),
@@ -99,8 +100,8 @@ export default function WeeklyView() {
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
-          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
-          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
+          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           color,
           source: 'google',
           date: apt.date,
@@ -136,21 +137,21 @@ export default function WeeklyView() {
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
   const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6am to 9pm (21:00), appointments can extend to 22:00
 
-  const getEventDayIndex = (event: Event) => {
+  const getEventDayIndex = useCallback((event: Event) => {
     if (!event.date) return 0;
     // Parse date as local date to avoid timezone issues
     const [year, month, day] = event.date.split('-').map(Number);
     const eventDate = new Date(year, month - 1, day);
     const dayOfWeek = eventDate.getDay();
     return dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  };
+  }, []);
 
-  const handleDayHeaderClick = (date: Date) => {
+  const handleDayHeaderClick = useCallback((date: Date) => {
     // Navigate to daily view with the selected date
     setLocation(`/daily?date=${formatDateISO(date)}`);
-  };
+  }, [setLocation, formatDateISO]);
 
-  const handleTimeSlotClick = (dayIdx: number, hour: number) => {
+  const handleTimeSlotClick = useCallback((dayIdx: number, hour: number) => {
     const date = weekDates[dayIdx];
     const startTime = `${hour.toString().padStart(2, "0")}:00`;
     const endTime = `${(hour + 1).toString().padStart(2, "0")}:00`;
@@ -161,9 +162,9 @@ export default function WeeklyView() {
       date: formatDateISO(date),
     });
     setDialogOpen(true);
-  };
+  }, [weekDates, formatDateISO]);
 
-  const handleSaveAppointment = async (eventData: Omit<Event, "id">) => {
+  const handleSaveAppointment = useCallback(async (eventData: Omit<Event, "id">) => {
     // Add to local store immediately for responsiveness
     const newEvent: Event = {
       ...eventData,
@@ -188,9 +189,9 @@ export default function WeeklyView() {
       // Remove from local store on error
       eventStore.deleteEvent(newEvent.id);
     }
-  };
+  }, [createMutation, utils, formatDateISO]);
 
-  const handleDragStart = (e: React.MouseEvent, eventId: string) => {
+  const handleDragStart = useCallback((e: React.MouseEvent, eventId: string) => {
     const event = events.find(ev => ev.id === eventId);
     if (!event) return;
     
@@ -200,14 +201,14 @@ export default function WeeklyView() {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top,
     });
-  };
+  }, [events]);
 
-  const handleDragMove = (e: React.MouseEvent) => {
+  const handleDragMove = useCallback((e: React.MouseEvent) => {
     if (!draggingEvent) return;
     e.preventDefault();
-  };
+  }, [draggingEvent]);
 
-  const handleDragEnd = async (e: React.MouseEvent) => {
+  const handleDragEnd = useCallback(async (e: React.MouseEvent) => {
     if (!draggingEvent) return;
     
     const gridContainer = document.getElementById('weekly-grid');
@@ -270,9 +271,9 @@ export default function WeeklyView() {
     }
     
     setDraggingEvent(null);
-  };
+  }, [draggingEvent, weekDates, events, formatDateISO, updateMutation, utils]);
 
-  const syncGoogleCalendar = async () => {
+  const syncGoogleCalendar = useCallback(async () => {
     setIsSyncing(true);
     
     await new Promise(resolve => setTimeout(resolve, 1500));
@@ -313,13 +314,13 @@ export default function WeeklyView() {
     const localEvents = events.filter(e => e.source !== "google");
     eventStore.setEvents([...localEvents, ...googleEvents]);
     setIsSyncing(false);
-  };
+  }, [events, weekDates, formatDateISO]);
 
-  const handleSearchResultClick = (event: Event) => {
+  const handleSearchResultClick = useCallback((event: Event) => {
     if (event.date) {
       setLocation(`/?date=${event.date}`);
     }
-  };
+  }, [setLocation]);
 
   return (
     <div 
@@ -370,7 +371,7 @@ export default function WeeklyView() {
         </div>
 
         {/* Color Legend */}
-        <div className="absolute" style={{ right: "20px", top: "100px" }}>
+        <div className="absolute" style={{ left: "20px", top: "160px" }}>
           <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
             <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
             <div className="space-y-1">
@@ -564,16 +565,13 @@ export default function WeeklyView() {
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
             
-            // Only show appointments that start between 6am and 9pm (21:00)
-            // Appointments can extend to 10pm (22:00) but shouldn't start after 9pm
-            if (startH < 6 || startH >= 22) return null;
+            if (startH < 6 || startH >= 24) return null;
             
             const startMinutes = (startH - 6) * 60 + startM;
             const endMinutes = (endH - 6) * 60 + endM;
             const pixelsPerMinute = 100 / 60;
             
-            // Account for day headers (60px) + notes section (80px minimum)
-            const y = 140 + startMinutes * pixelsPerMinute;
+            const y = 60 + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
             
             const dayIdx = getEventDayIndex(event);

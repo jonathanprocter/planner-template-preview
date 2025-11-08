@@ -53,7 +53,6 @@ export default function DailyView() {
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
@@ -77,11 +76,13 @@ export default function DailyView() {
   useEffect(() => {
     fetch("/day-config.json")
       .then((res) => res.json())
-      .then((data) => setConfig(data));
+      .then((data) => setConfig(data))
+      .catch((error) => console.error("Failed to load day config:", error));
 
     fetch("/day-template.svg")
       .then((res) => res.text())
-      .then((svg) => setSvgContent(svg));
+      .then((svg) => setSvgContent(svg))
+      .catch((error) => console.error("Failed to load day template:", error));
 
     const unsubscribe = eventStore.subscribe(() => {
       setEvents(eventStore.getEvents());
@@ -112,8 +113,8 @@ export default function DailyView() {
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
-          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
-          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', hour12: false }),
+          startTime: new Date(apt.startTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          endTime: new Date(apt.endTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           color,
           source: 'google',
           date: apt.date,
@@ -225,7 +226,7 @@ export default function DailyView() {
       endTime,
       color: "#8b5cf6",
       source: "local",
-      date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
+      date: currentDateStr,
     };
 
     eventStore.addEvent(newEvent);
@@ -277,37 +278,6 @@ export default function DailyView() {
     setDraggingEvent(null);
   };
 
-  const syncGoogleCalendar = async () => {
-    setIsSyncing(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const googleEvents: Event[] = [
-      {
-        id: "gcal-1",
-        title: "Morning Standup",
-        startTime: "08:00",
-        endTime: "08:30",
-        color: "#4285f4",
-        source: "google",
-        date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
-      },
-      {
-        id: "gcal-2",
-        title: "Lunch with Team",
-        startTime: "12:00",
-        endTime: "13:00",
-        color: "#4285f4",
-        source: "google",
-        date: `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`,
-      },
-    ];
-    
-    const localEvents = events.filter(e => e.source !== "google");
-    eventStore.setEvents([...localEvents, ...googleEvents]);
-    setIsSyncing(false);
-  };
-
   const toggleTask = (id: string) => {
     const task = tasks.find(t => t.id === id);
     if (task) {
@@ -322,6 +292,16 @@ export default function DailyView() {
       completed: false,
     };
     eventStore.addTask(newTask);
+  };
+
+  const handleNavigateToPrevDay = () => {
+    const prevDateStr = `${previousDate.getFullYear()}-${String(previousDate.getMonth() + 1).padStart(2, '0')}-${String(previousDate.getDate()).padStart(2, '0')}`;
+    setLocation(`/daily?date=${prevDateStr}`);
+  };
+
+  const handleNavigateToNextDay = () => {
+    const nextDateStr = `${nextDate.getFullYear()}-${String(nextDate.getMonth() + 1).padStart(2, '0')}-${String(nextDate.getDate()).padStart(2, '0')}`;
+    setLocation(`/daily?date=${nextDateStr}`);
   };
 
   return (
@@ -573,6 +553,7 @@ export default function DailyView() {
                 fontSize: `${config.footerNav.fontSize}px`,
                 textAlign: "left",
               }}
+              onClick={handleNavigateToPrevDay}
             >
               ← {formatNavDate(previousDate)}
             </div>
@@ -605,6 +586,7 @@ export default function DailyView() {
                 fontSize: `${config.footerNav.fontSize}px`,
                 textAlign: "right",
               }}
+              onClick={handleNavigateToNextDay}
             >
               {formatNavDate(nextDate)} →
             </div>
@@ -615,7 +597,7 @@ export default function DailyView() {
           <div className="mb-4">
             <SearchBar onResultClick={(event) => {
               if (event.date) {
-                setLocation(`/?date=${event.date}`);
+                setLocation(`/daily?date=${event.date}`);
               }
             }} />
           </div>

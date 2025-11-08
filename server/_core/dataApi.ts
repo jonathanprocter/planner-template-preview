@@ -1,4 +1,6 @@
 /**
+ * Data API client for calling external APIs through Manus Forge proxy
+ * 
  * Quick example (matches curl usage):
  *   await callDataApi("Youtube/search", {
  *     query: { gl: "US", hl: "en", q: "manus" },
@@ -13,6 +15,13 @@ export type DataApiCallOptions = {
   formData?: Record<string, unknown>;
 };
 
+/**
+ * Calls an external API through the Manus Forge proxy
+ * @param apiId - The API identifier (e.g., "Youtube/search")
+ * @param options - Query parameters, body, path params, or form data
+ * @returns The API response as parsed JSON
+ * @throws Error if API credentials are missing or request fails
+ */
 export async function callDataApi(
   apiId: string,
   options: DataApiCallOptions = {}
