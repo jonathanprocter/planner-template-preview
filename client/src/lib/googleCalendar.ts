@@ -115,12 +115,36 @@ export const signIn = (): Promise<string> => {
 
     tokenClient.callback = async (response: any) => {
       if (response.error) {
-        reject(new Error(response.error));
+        // Provide detailed error information
+        let errorMessage = `Google OAuth Error: ${response.error}`;
+        
+        if (response.error === 'access_denied') {
+          errorMessage += '\n\nThis usually means:\n' +
+            '1. The OAuth app is set to "Internal" - Change to "External" in Google Cloud Console\n' +
+            '2. The app is in "Testing" mode and your email is not added as a test user\n' +
+            '3. You clicked "Cancel" on the consent screen\n\n' +
+            'To fix:\n' +
+            '• Go to Google Cloud Console → APIs & Services → OAuth consent screen\n' +
+            '• Change User Type to "External" OR add your email under "Test users"';
+        }
+        
+        if (response.error_description) {
+          errorMessage += `\n\nDetails: ${response.error_description}`;
+        }
+        
+        console.error('OAuth Error Details:', response);
+        reject(new Error(errorMessage));
         return;
       }
       accessToken = response.access_token;
       gapi.client.setToken({ access_token: accessToken });
       resolve(accessToken!);
+    };
+
+    // Add error handler for popup blocked or other issues
+    tokenClient.error_callback = (error: any) => {
+      console.error('OAuth Error Callback:', error);
+      reject(new Error(`OAuth failed: ${error.type || 'unknown error'}`));
     };
 
     if (accessToken) {

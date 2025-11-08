@@ -193,8 +193,22 @@ export default function GoogleCalendarSync() {
             await signIn();
             setIsSignedIn(true);
             await loadCalendars();
-          } catch (error) {
+            toast.success("Successfully signed in to Google Calendar");
+          } catch (error: any) {
             console.error('Sign in error:', error);
+            
+            // Show detailed error message
+            const errorMsg = error?.message || "Failed to sign in to Google Calendar";
+            
+            // For access_denied errors, show a more helpful message
+            if (errorMsg.includes('access_denied') || errorMsg.includes('OAuth Error')) {
+              toast.error(errorMsg, {
+                duration: 15000, // Show for 15 seconds
+                style: { whiteSpace: 'pre-line', maxWidth: '500px' } // Preserve line breaks
+              });
+            } else {
+              toast.error(errorMsg);
+            }
           }
         }} className="w-full">
           Sign in to Google Calendar
