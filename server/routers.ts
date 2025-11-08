@@ -346,11 +346,16 @@ export const appRouter = router({
               )
             );
 
-          // Generate PDF
+          // Generate PDF - parse dates in local timezone to avoid UTC shift
+          const parseLocalDate = (dateStr: string) => {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+          };
+          
           const pdfBuffer = await generateWeeklyPlannerPDF(
             result,
-            new Date(input.startDate),
-            new Date(input.endDate)
+            parseLocalDate(input.startDate),
+            parseLocalDate(input.endDate)
           );
 
           // Return PDF as base64

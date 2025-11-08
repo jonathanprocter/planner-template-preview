@@ -62,7 +62,9 @@ export async function generateWeeklyPlannerPDF(
       // Daily views: Portrait 509×679 points
       const doc = new PDFDocument({
         size: [679, 509], // Start with landscape for weekly view
-        margins: { top: 20, bottom: 20, left: 20, right: 20 },
+        margins: { top: 0, bottom: 0, left: 0, right: 0 }, // No auto-margins
+        bufferPages: true, // Enable manual page management
+        autoFirstPage: true,
       });
 
       const buffers: Buffer[] = [];
@@ -83,7 +85,6 @@ export async function generateWeeklyPlannerPDF(
 
       // Pages 2-8: Daily Views (Portrait - Grid Layout)
       weekDays.forEach((day) => {
-        doc.addPage({ size: [509, 679] }); // Portrait orientation for daily views
         generateDailyGridPage(doc, day, appointments);
       });
 
@@ -194,11 +195,15 @@ function generateWeeklyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < START_HOUR || hour > END_HOUR) return;
+    if (hour < START_HOUR || hour >= END_HOUR) return; // Skip appointments outside grid
 
     // Use pixel-perfect Y-position calculation
     const startY = getYForTime(hour, minute, gridStartY);
-    const duration = (endHour - hour) + (endMinute - minute) / 60;
+    
+    // Clamp end time to grid bounds to prevent overflow
+    const clampedEndHour = Math.min(endHour + endMinute / 60, END_HOUR);
+    const clampedStartHour = hour + minute / 60;
+    const duration = clampedEndHour - clampedStartHour;
     const height = Math.max(duration * HOUR_HEIGHT, 10);
 
     const x = MARGIN + TIME_COL_WIDTH + dayIndex * columnWidth + 2;
@@ -236,10 +241,19 @@ function generateDailyGridPage(
   day: Date,
   appointments: Appointment[]
 ) {
+  // Add new page with portrait orientation
+  doc.addPage({ size: [PAGE_DAILY.width, PAGE_DAILY.height], margin: 0 });
+  
   const pageWidth = PAGE_DAILY.width;
   const pageHeight = PAGE_DAILY.height;
   const headerHeight = 50;
-  const notesHeight = 100; // Daily notes section
+  
+  // Clip all drawing to page bounds to prevent overflow
+  doc.save();
+  doc.rect(0, 0, pageWidth, pageHeight).clip();
+  
+  // Calculate hour height to fit page (679pt total - 50 header - 36 margins = 593pt / 15 hours = 39.53pt)
+  const dailyHourHeight = Math.floor((pageHeight - headerHeight - 2 * MARGIN) / (END_HOUR - START_HOUR));
   
   // Title
   const dayName = day.toLocaleDateString('en-US', { weekday: 'long' });
@@ -247,7 +261,8 @@ function generateDailyGridPage(
   doc.fontSize(14).font('Helvetica-Bold')
     .text(`${dayName}, ${dateStr}`, MARGIN, 20, {
       width: pageWidth - 2 * MARGIN,
-      align: 'center'
+      align: 'center',
+      continued: false
     });
 
   // Add "← Week View" button link back to page 1
@@ -277,9 +292,9 @@ function generateDailyGridPage(
 
   // Grid setup
   const gridTop = headerHeight;
-  const gridHeight = pageHeight - headerHeight - notesHeight - 40;
-  const contentWidth = pageWidth - 2 * MARGIN - TIME_COL_WIDTH;
   const totalHours = END_HOUR - START_HOUR;
+  const gridHeight = totalHours * dailyHourHeight; // Calculated to fit page
+  const contentWidth = pageWidth - 2 * MARGIN - TIME_COL_WIDTH;
 
   // Draw grid with pixel-perfect alignment
   const gridStartY = gridTop;
@@ -294,7 +309,7 @@ function generateDailyGridPage(
   // Horizontal lines (hour and half-hour) and time labels
   doc.fontSize(8).font('Helvetica');
   for (let i = 0; i <= totalHours; i++) {
-    const y = gridStartY + i * HOUR_HEIGHT;
+    const y = gridStartY + i * dailyHourHeight;
     
     // Hour line
     doc.strokeColor('#E5E7EB').lineWidth(0.5);
@@ -302,7 +317,7 @@ function generateDailyGridPage(
     
     // Half-hour line (lighter)
     if (i < totalHours) {
-      const halfY = y + HOUR_HEIGHT / 2;
+      const halfY = y + dailyHourHeight / 2;
       doc.strokeColor('#E5E7EB').lineWidth(0.25);
       doc.moveTo(MARGIN, halfY).lineTo(pageWidth - MARGIN, halfY).stroke();
     }
@@ -311,7 +326,7 @@ function generateDailyGridPage(
     if (i < totalHours) {
       const hour = START_HOUR + i;
       const timeLabel = hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`;
-      doc.fillColor('#111827').text(timeLabel, MARGIN + 2, y + 5, { width: TIME_COL_WIDTH - 4, align: 'left' });
+      doc.fillColor('#111827').text(timeLabel, MARGIN + 2, y + 5, { width: TIME_COL_WIDTH - 4, height: dailyHourHeight - 10, align: 'left', lineBreak: false });
     }
   }
 
@@ -333,12 +348,16 @@ function generateDailyGridPage(
     const endHour = endDate.getHours();
     const endMinute = endDate.getMinutes();
     
-    if (hour < START_HOUR || hour > END_HOUR) return;
+    if (hour < START_HOUR || hour >= END_HOUR) return; // Skip appointments outside grid
 
-    // Use pixel-perfect Y-position calculation
-    const startY = getYForTime(hour, minute, gridStartY);
-    const duration = (endHour - hour) + (endMinute - minute) / 60;
-    const height = Math.max(duration * HOUR_HEIGHT, 15);
+    // Calculate Y-position for daily view
+    const startY = gridStartY + ((hour + minute / 60) - START_HOUR) * dailyHourHeight;
+    
+    // Clamp end time to grid bounds to prevent overflow
+    const clampedEndHour = Math.min(endHour + endMinute / 60, END_HOUR);
+    const clampedStartHour = hour + minute / 60;
+    const duration = clampedEndHour - clampedStartHour;
+    const height = Math.max(duration * dailyHourHeight, 15);
 
     const x = MARGIN + TIME_COL_WIDTH + 5;
     const width = contentWidth - 10;
@@ -358,7 +377,9 @@ function generateDailyGridPage(
     const cleanTitle = removeEmojis(apt.title);
     doc.text(`${timeStr} - ${cleanTitle}`, x + 6, startY + 3, {
       width: width - 12,
-      ellipsis: true
+      height: Math.max(height - 6, 10),
+      ellipsis: true,
+      lineBreak: false
     });
 
     if (apt.description && height > 25) {
@@ -369,25 +390,9 @@ function generateDailyGridPage(
         ellipsis: true
       });
     }
-  });
-
-  // Add daily notes section
-  const notesY = gridStartY + gridHeight + 20;
-  doc.fontSize(10).font('Helvetica-Bold')
-    .fillColor('#111827')
-    .text('Daily Notes:', MARGIN, notesY);
+   });
   
-  // Draw notes area border
-  doc.strokeColor('#E5E7EB').lineWidth(0.5);
-  doc.rect(MARGIN, notesY + 15, pageWidth - 2 * MARGIN, notesHeight - 20).stroke();
-  
-  // Add light horizontal lines for writing
-  doc.strokeColor('#E5E7EB').lineWidth(0.25);
-  const lineSpacing = 20;
-  for (let i = 1; i < (notesHeight - 20) / lineSpacing; i++) {
-    const lineY = notesY + 15 + i * lineSpacing;
-    doc.moveTo(MARGIN, lineY).lineTo(pageWidth - MARGIN, lineY).stroke();
-  }
-
+  // Reset colors and restore graphics state
   doc.fillColor('#000000').strokeColor('#000000');
+  doc.restore();
 }

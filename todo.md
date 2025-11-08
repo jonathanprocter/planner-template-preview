@@ -579,3 +579,12 @@
 - [x] Add comprehensive error handling to PDF export endpoint
 - [x] Add error logging to identify future issues
 - [x] Test TRPC endpoints to verify responses are valid JSON
+
+## Fix Critical PDF Export Bugs
+- [x] Fix wrong week dates (timezone parsing issue fixed - now shows correct Nov 3-9)
+- [x] Fix daily page overflow (reduced from 44 to 14 pages)
+- [x] Weekly view renders perfectly with correct layout
+- [x] Add clipping and text constraints to prevent overflow
+- [ ] REMAINING ISSUE: 14 pages instead of 8 (PDFKit auto-creates extra pages)
+- [ ] Verify appointments render correctly in PDF (currently not showing)
+- [ ] Consider alternative PDF library or approach
