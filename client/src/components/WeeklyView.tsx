@@ -406,6 +406,40 @@ export default function WeeklyView() {
             })}
           </div>
 
+          <div className="flex border-b border-gray-300" style={{ minHeight: "40px" }}>
+            <div style={{ width: "100px" }} className="flex-shrink-0 pr-3 pt-2 text-right text-xs text-gray-500 font-semibold">
+              All-Day
+            </div>
+            {dayNames.map((day, idx) => {
+              const dateStr = formatDateISO(weekDates[idx]);
+              const dayHolidays = filteredEvents.filter(event => {
+                const isHoliday = event.category === 'Holidays/Notes' || event.color === '#3D5845';
+                return isHoliday && event.date === dateStr;
+              });
+              
+              return (
+                <div 
+                  key={`holiday-${day}`}
+                  className="flex-1 border-l border-gray-300 p-1 flex flex-col gap-1"
+                >
+                  {dayHolidays.map(holiday => (
+                    <div
+                      key={holiday.id}
+                      className="text-xs px-2 py-1 rounded text-white cursor-pointer hover:opacity-80"
+                      style={{ backgroundColor: holiday.color }}
+                      onClick={() => {
+                        setSelectedAppointment(holiday);
+                        setModalOpen(true);
+                      }}
+                    >
+                      {holiday.title}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+
           <div className="flex border-b border-gray-300" style={{ minHeight: "80px" }}>
             <div style={{ width: "100px" }} className="flex-shrink-0 pr-3 pt-2 text-right text-xs text-gray-500 font-semibold">
               Notes
@@ -510,6 +544,10 @@ export default function WeeklyView() {
           </div>
 
           {filteredEvents.map((event) => {
+            // Skip holidays - they're shown in the all-day section
+            const isHoliday = event.category === 'Holidays/Notes' || event.color === '#3D5845';
+            if (isHoliday) return null;
+            
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
             

@@ -644,3 +644,13 @@
 - [x] Implement navigation logic to change current week
 - [x] Add "Today" button to return to current week
 - [x] Test navigation updates appointments correctly ✅ Working
+
+## Display Holidays as All-Day Events
+- [x] Modify WeeklyView to show holidays at top of day columns
+- [x] Remove holidays from time-based grid in WeeklyView
+- [x] Modify DailyView to show holidays at top of page
+- [x] Remove holidays from time-based grid in DailyView
+- [x] Update PDF export weekly page to include all-day holidays
+- [x] Remove holidays from time grid in PDF weekly page
+- [ ] Update PDF export daily pages to include all-day holidays
+- [ ] Test holiday display in all views

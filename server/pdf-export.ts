@@ -185,9 +185,68 @@ async function generateWeeklyGridPage(
     });
   });
 
+  // All-Day Holidays Section
+  const allDayHeight = 20;
+  const allDayY = gridTop - allDayHeight;
+  
+  // Draw all-day section background
+  page.drawRectangle({
+    x: margin + timeColumnWidth,
+    y: allDayY,
+    width: pageWidth - margin - timeColumnWidth - margin,
+    height: allDayHeight,
+    color: rgb(0.98, 0.98, 0.98),
+    borderColor: rgb(0.7, 0.7, 0.7),
+    borderWidth: 0.5
+  });
+  
+  // Draw holidays for each day
+  weekDays.forEach((day, dayIndex) => {
+    const dayStr = day.toISOString().split('T')[0];
+    const holidays = appointments.filter(apt => {
+      if (apt.date !== dayStr) return false;
+      const isHoliday = apt.title?.toLowerCase().includes('holiday') || 
+                       apt.title?.toLowerCase().includes('note') ||
+                       apt.category === 'Holidays/Notes';
+      return isHoliday;
+    });
+    
+    if (holidays.length > 0) {
+      const x = margin + timeColumnWidth + dayIndex * columnWidth;
+      const holiday = holidays[0]; // Show first holiday if multiple
+      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
+      const rgb_color = hexToRgb(colors.leftFlag);
+      
+      // Draw small holiday indicator
+      page.drawRectangle({
+        x: x + 2,
+        y: allDayY + 2,
+        width: columnWidth - 4,
+        height: allDayHeight - 4,
+        color: rgb(rgb_color.r, rgb_color.g, rgb_color.b)
+      });
+      
+      // Draw holiday text
+      const cleanTitle = removeEmojis(holiday.title);
+      const truncated = cleanTitle.length > 10 ? cleanTitle.substring(0, 10) + '...' : cleanTitle;
+      page.drawText(truncated, {
+        x: x + 4,
+        y: allDayY + 6,
+        size: 6,
+        font: font,
+        color: rgb(1, 1, 1)
+      });
+    }
+  });
+
+  // Adjust grid top to account for all-day section
+  const adjustedGridTop = allDayY;
+  const adjustedGridHeight = availableHeight - allDayHeight;
+  const adjustedHourHeight = adjustedGridHeight / totalHours;
+
   // Draw grid lines
   for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
-    const y = gridTop - (hour - START_HOUR) * hourHeight;
+    const y = adjustedGridTop - (hour - START_HOUR) * adjustedHourHeight;
     
     // Hour line
     page.drawLine({
@@ -199,7 +258,7 @@ async function generateWeeklyGridPage(
     
     // Half-hour line
     if (hour < END_HOUR) {
-      const halfY = y - hourHeight / 2;
+      const halfY = y - adjustedHourHeight / 2;
       page.drawLine({
         start: { x: margin + timeColumnWidth, y: halfY },
         end: { x: pageWidth - margin, y: halfY },
@@ -223,7 +282,7 @@ async function generateWeeklyGridPage(
   for (let i = 0; i <= 7; i++) {
     const x = margin + timeColumnWidth + i * columnWidth;
     page.drawLine({
-      start: { x, y: gridTop },
+      start: { x, y: adjustedGridTop },
       end: { x, y: margin },
       thickness: 0.5,
       color: rgb(0.7, 0.7, 0.7)
@@ -236,6 +295,12 @@ async function generateWeeklyGridPage(
     const dayAppointments = appointments.filter(apt => apt.date === dayStr);
     
     dayAppointments.forEach(apt => {
+      // Skip holidays - they're in the all-day section
+      const isHoliday = apt.title?.toLowerCase().includes('holiday') || 
+                       apt.title?.toLowerCase().includes('note') ||
+                       apt.category === 'Holidays/Notes';
+      if (isHoliday) return;
+      
       const estStart = toEST(apt.startTime);
       const estEnd = toEST(apt.endTime);
       const startHour = estStart.getHours() + estStart.getMinutes() / 60;
@@ -248,8 +313,8 @@ async function generateWeeklyGridPage(
       const clampedStart = Math.max(startHour, START_HOUR);
       const clampedEnd = Math.min(endHour, END_HOUR);
       
-      const y = gridTop - (clampedStart - START_HOUR) * hourHeight;
-      const height = (clampedEnd - clampedStart) * hourHeight - 2;
+      const y = adjustedGridTop - (clampedStart - START_HOUR) * adjustedHourHeight;
+      const height = (clampedEnd - clampedStart) * adjustedHourHeight - 2;
       const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
       const width = columnWidth - 4;
       

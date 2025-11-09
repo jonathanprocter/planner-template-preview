@@ -410,6 +410,41 @@ export default function DailyView() {
             </div>
           </div>
 
+          {/* All-Day Holidays Section */}
+          {todayEvents.filter((event: Event) => event.category === 'Holidays/Notes' || event.color === '#3D5845').length > 0 && (
+            <div 
+              className="absolute border-b border-gray-300" 
+              style={{ 
+                top: "150px", 
+                left: "20px", 
+                right: "20px", 
+                minHeight: "40px",
+                backgroundColor: "#fefefe",
+                padding: "8px 12px"
+              }}
+            >
+              <div className="text-xs font-semibold text-gray-600 mb-2">All-Day Events</div>
+              <div className="flex flex-col gap-2">
+                {todayEvents
+                  .filter((event: Event) => event.category === 'Holidays/Notes' || event.color === '#3D5845')
+                  .map((holiday: Event) => (
+                    <div
+                      key={holiday.id}
+                      className="text-sm px-3 py-2 rounded text-white cursor-pointer hover:opacity-80 inline-block"
+                      style={{ backgroundColor: holiday.color }}
+                      onClick={() => {
+                        setSelectedAppointment(holiday);
+                        setModalOpen(true);
+                      }}
+                    >
+                      {holiday.title}
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          )}
+
           {timeLabels.map((time, idx) => {
             const y = config.timeBlocks.y + idx * 50;
             const isHour = time.endsWith(":00");
@@ -480,7 +515,13 @@ export default function DailyView() {
             );
           })}
 
-          {todayEvents.map((event) => {
+          {todayEvents
+            .filter((event) => {
+              // Skip holidays - they're shown in the all-day section
+              const isHoliday = event.category === 'Holidays/Notes' || event.color === '#3D5845';
+              return !isHoliday;
+            })
+            .map((event) => {
             const startY = timeToY(event.startTime);
             const endY = timeToY(event.endTime);
             const height = endY - startY;
