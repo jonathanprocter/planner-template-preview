@@ -654,3 +654,14 @@
 - [x] Remove holidays from time grid in PDF weekly page
 - [ ] Update PDF export daily pages to include all-day holidays
 - [ ] Test holiday display in all views
+
+## Fix PDF Export Alignment Issues
+- [x] Fix appointment box overflow beyond grid boundaries in weekly page
+- [x] Ensure Y-position calculated correctly with adjustedGridTop
+- [x] Clip appointment height to not exceed grid bounds in weekly page
+- [x] Half-hour grid lines already exist in weekly PDF page
+- [x] Add half-hour time labels to weekly page (6:30a, 7:30a, etc.)
+- [x] Add half-hour time labels to daily PDF pages (6:30 AM, 7:30 AM, etc.)
+- [x] Fix appointment overflow in daily PDF pages
+- [x] Test appointments starting/ending on half-hours ✅ Working correctly
+- [x] Verify visual alignment matches web view exactly ✅ Perfect alignment

@@ -267,7 +267,7 @@ async function generateWeeklyGridPage(
       });
     }
     
-    // Time label
+    // Hour label
     const timeLabel = hour > 12 ? `${hour - 12}p` : `${hour}a`;
     page.drawText(timeLabel, {
       x: margin + 2,
@@ -276,6 +276,19 @@ async function generateWeeklyGridPage(
       font: font,
       color: rgb(0.4, 0.4, 0.4)
     });
+    
+    // Half-hour label
+    if (hour < END_HOUR) {
+      const halfY = y - adjustedHourHeight / 2;
+      const halfLabel = hour > 11 ? `${hour > 12 ? hour - 12 : hour}:30p` : `${hour}:30a`;
+      page.drawText(halfLabel, {
+        x: margin + 2,
+        y: halfY - 5,
+        size: 6,
+        font: font,
+        color: rgb(0.5, 0.5, 0.5)
+      });
+    }
   }
 
   // Vertical day dividers
@@ -314,7 +327,12 @@ async function generateWeeklyGridPage(
       const clampedEnd = Math.min(endHour, END_HOUR);
       
       const y = adjustedGridTop - (clampedStart - START_HOUR) * adjustedHourHeight;
-      const height = (clampedEnd - clampedStart) * adjustedHourHeight - 2;
+      const calculatedHeight = (clampedEnd - clampedStart) * adjustedHourHeight - 2;
+      
+      // Ensure appointment doesn't overflow grid bottom
+      const gridBottom = margin;
+      const appointmentBottom = y - calculatedHeight;
+      const height = appointmentBottom < gridBottom ? calculatedHeight - (gridBottom - appointmentBottom) : calculatedHeight;
       const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
       const width = columnWidth - 4;
       
@@ -431,7 +449,7 @@ async function generateDailyGridPage(
       });
     }
     
-    // Time label
+    // Hour label
     const timeLabel = hour > 12 ? `${hour - 12}:00 PM` : `${hour}:00 AM`;
     page.drawText(timeLabel, {
       x: margin,
@@ -440,6 +458,19 @@ async function generateDailyGridPage(
       font: font,
       color: rgb(0.4, 0.4, 0.4)
     });
+    
+    // Half-hour label
+    if (hour < END_HOUR) {
+      const halfY = y - hourHeight / 2;
+      const halfLabel = hour > 11 ? `${hour > 12 ? hour - 12 : hour}:30 PM` : `${hour}:30 AM`;
+      page.drawText(halfLabel, {
+        x: margin,
+        y: halfY - 5,
+        size: 6,
+        font: font,
+        color: rgb(0.5, 0.5, 0.5)
+      });
+    }
   }
 
   // Vertical grid line
@@ -468,7 +499,12 @@ async function generateDailyGridPage(
     const clampedEnd = Math.min(endHour, END_HOUR);
     
     const y = gridTop - (clampedStart - START_HOUR) * hourHeight;
-    const height = (clampedEnd - clampedStart) * hourHeight - 2;
+    const calculatedHeight = (clampedEnd - clampedStart) * hourHeight - 2;
+    
+    // Ensure appointment doesn't overflow grid bottom
+    const gridBottom = gridTop - gridHeight;
+    const appointmentBottom = y - calculatedHeight;
+    const height = appointmentBottom < gridBottom ? calculatedHeight - (gridBottom - appointmentBottom) : calculatedHeight;
     const x = margin + timeColumnWidth + 2;
     const width = gridWidth - 4;
     
