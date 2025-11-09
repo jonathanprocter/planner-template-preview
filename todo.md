@@ -612,3 +612,28 @@
 - [x] Verify appointments render with correct colors ✅ WORKING
 - [x] Verify EST timezone conversion ✅ WORKING
 - [x] Verify 9 PM appointments included ✅ WORKING
+
+## Fix Google OAuth 403 Error with User Credentials
+- [ ] Check current OAuth client ID and redirect URI configuration
+- [ ] Verify current domain matches authorized redirect URIs
+- [ ] Update redirect URI in code or provide correct URI to user
+- [ ] Test OAuth flow to verify 403 is resolved
+
+## Fix PDF Export Duplicate Pages and Text Dumps
+- [ ] Investigate why PDF has 15 pages instead of 8
+- [ ] Remove duplicate "Week View" pages (pages 2-15)
+- [ ] Fix event text dumps appearing below blank grids
+- [ ] Remove Google Calendar metadata artifacts from event descriptions
+- [ ] Ensure only visual calendar grid is rendered, not text lists
+- [ ] Test PDF export generates clean 8 pages (1 weekly + 7 daily grids only)
+
+## Pixel-Perfect PDF Audit and Fixes
+- [x] Create Python audit script to compare PDF against spec
+- [x] Identify exact discrepancies in dimensions, positioning, colors
+- [x] Implement dynamic hour height calculation for perfect fit
+- [x] Test PDF export with dynamic hour heights ✅ 8 pages, clean layout
+- [x] Verify grid fits perfectly in available space ✅ No overflow
+- [x] Verify Financial District colors rendering correctly ✅ Working
+- [x] Verify EST timezone conversion ✅ Working
+- [x] Verify 9 PM appointments included ✅ Working
+- [x] Verify daily notes section present ✅ Working

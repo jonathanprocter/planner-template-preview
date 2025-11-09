@@ -132,6 +132,11 @@ async function generateWeeklyGridPage(
   const headerHeight = 60;
   const timeColumnWidth = TIME_COL_WIDTH;
   
+  // Calculate dynamic hour height to fit available space perfectly
+  const totalHours = END_HOUR - START_HOUR;
+  const availableHeight = pageHeight - headerHeight - margin * 2;
+  const hourHeight = availableHeight / totalHours;
+  
   // Title
   const firstDay = weekDays[0].toLocaleDateString('en-US', { 
     month: 'long', 
@@ -154,9 +159,8 @@ async function generateWeeklyGridPage(
   });
 
   const gridTop = pageHeight - headerHeight;
-  const gridHeight = gridTop - margin;
+  const gridHeight = availableHeight;
   const columnWidth = (pageWidth - margin - timeColumnWidth) / 7;
-  const hourHeight = gridHeight / (END_HOUR - START_HOUR);
 
   // Day headers
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -306,7 +310,13 @@ async function generateDailyGridPage(
   const { width: pageWidth, height: pageHeight } = page.getSize();
   const margin = MARGIN;
   const headerHeight = 50;
+  const notesHeight = 100;
   const timeColumnWidth = TIME_COL_WIDTH;
+  
+  // Calculate dynamic hour height to fit available space perfectly
+  const totalHours = END_HOUR - START_HOUR;
+  const availableHeight = pageHeight - headerHeight - notesHeight - margin * 2;
+  const hourHeight = availableHeight / totalHours;
   
   // Title
   const estDay = toEST(day);
@@ -330,8 +340,7 @@ async function generateDailyGridPage(
   });
 
   const gridTop = pageHeight - headerHeight;
-  const gridHeight = gridTop - margin - 100; // Leave space for notes
-  const hourHeight = gridHeight / (END_HOUR - START_HOUR);
+  const gridHeight = availableHeight;
   const gridWidth = pageWidth - margin - timeColumnWidth;
 
   // Draw grid lines
