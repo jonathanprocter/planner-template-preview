@@ -637,3 +637,10 @@
 - [x] Verify EST timezone conversion ✅ Working
 - [x] Verify 9 PM appointments included ✅ Working
 - [x] Verify daily notes section present ✅ Working
+
+## Add Week Navigation Buttons
+- [x] Add previous week button to WeeklyView header
+- [x] Add next week button to WeeklyView header
+- [x] Implement navigation logic to change current week
+- [x] Add "Today" button to return to current week
+- [x] Test navigation updates appointments correctly ✅ Working

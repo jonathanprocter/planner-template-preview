@@ -21,17 +21,18 @@ export default function WeeklyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
   const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
+  const [weekOffset, setWeekOffset] = useState(0);
   
   const updateMutation = trpc.appointments.updateAppointment.useMutation();
   const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
   const createMutation = trpc.appointments.createAppointment.useMutation();
   const utils = trpc.useUtils();
 
-  const getWeekDates = useCallback(() => {
+  const getWeekDates = useCallback((offset: number = 0) => {
     const today = new Date();
     const dayOfWeek = today.getDay();
     const monday = new Date(today);
-    monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1));
+    monday.setDate(today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + (offset * 7));
     
     const dates = [];
     for (let i = 0; i < 7; i++) {
@@ -42,7 +43,11 @@ export default function WeeklyView() {
     return dates;
   }, []);
 
-  const weekDates = useMemo(() => getWeekDates(), [getWeekDates]);
+  const goToPreviousWeek = () => setWeekOffset(prev => prev - 1);
+  const goToNextWeek = () => setWeekOffset(prev => prev + 1);
+  const goToCurrentWeek = () => setWeekOffset(0);
+
+  const weekDates = useMemo(() => getWeekDates(weekOffset), [getWeekDates, weekOffset]);
   
   const formatDateISO = useCallback((date: Date) => {
     const year = date.getFullYear();
@@ -337,7 +342,7 @@ export default function WeeklyView() {
         </div>
 
         <div
-          className="absolute font-bold text-center"
+          className="absolute font-bold text-center flex items-center gap-4"
           style={{
             left: "50%",
             top: "100px",
@@ -345,7 +350,33 @@ export default function WeeklyView() {
             transform: "translateX(-50%)",
           }}
         >
-          {weekLabel}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToPreviousWeek}
+            className="text-lg px-3 py-1"
+          >
+            ←
+          </Button>
+          <span>{weekLabel}</span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={goToNextWeek}
+            className="text-lg px-3 py-1"
+          >
+            →
+          </Button>
+          {weekOffset !== 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goToCurrentWeek}
+              className="text-sm px-2 py-1"
+            >
+              Today
+            </Button>
+          )}
         </div>
 
         <div 
