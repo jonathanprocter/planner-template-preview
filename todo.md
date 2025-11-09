@@ -679,3 +679,11 @@
 - [x] Fix timezone conversion using toLocaleString directly
 - [x] Ensure appointments align with time labels on left side ✅ Perfect
 - [x] Test with various appointment times to verify alignment ✅ Working
+
+## Fix Appointment Positioning - 1 Hour Early Bug
+- [ ] Diagnose why Dan re: Supervision (13:00) appears at 12:00 line
+- [ ] Check if issue is in web view CSS/positioning
+- [ ] Check if issue is in PDF Y-coordinate calculation
+- [ ] Fix web view to position appointments at correct time
+- [ ] Fix PDF to position appointments at correct time
+- [ ] Verify all appointments align with their actual start times

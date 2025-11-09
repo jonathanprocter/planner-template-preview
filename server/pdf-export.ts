@@ -315,14 +315,14 @@ async function generateWeeklyGridPage(
                        apt.category === 'Holidays/Notes';
       if (isHoliday) return;
       
-      // Get EST hours directly from toLocaleString
-      const startEST = apt.startTime.toLocaleString('en-US', { 
+      // Get EST hours directly from toLocaleTimeString
+      const startEST = apt.startTime.toLocaleTimeString('en-US', { 
         timeZone: 'America/New_York', 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: false 
       });
-      const endEST = apt.endTime.toLocaleString('en-US', { 
+      const endEST = apt.endTime.toLocaleTimeString('en-US', { 
         timeZone: 'America/New_York', 
         hour: '2-digit', 
         minute: '2-digit',
@@ -500,10 +500,23 @@ async function generateDailyGridPage(
   const dayAppointments = appointments.filter(apt => apt.date === dayStr);
   
   dayAppointments.forEach(apt => {
-    const estStart = toEST(apt.startTime);
-    const estEnd = toEST(apt.endTime);
-    const startHour = estStart.getHours() + estStart.getMinutes() / 60;
-    const endHour = estEnd.getHours() + estEnd.getMinutes() / 60;
+    // Get EST hours directly from toLocaleTimeString
+    const startEST = apt.startTime.toLocaleTimeString('en-US', { 
+      timeZone: 'America/New_York', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+    const endEST = apt.endTime.toLocaleTimeString('en-US', { 
+      timeZone: 'America/New_York', 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: false 
+    });
+    const [startH, startM] = startEST.split(':').map(Number);
+    const [endH, endM] = endEST.split(':').map(Number);
+    const startHour = startH + startM / 60;
+    const endHour = endH + endM / 60;
     
     // Skip if outside visible range
     if (endHour <= START_HOUR || startHour >= END_HOUR) return;
@@ -556,7 +569,7 @@ async function generateDailyGridPage(
     
     // Title text
     const cleanTitle = removeEmojis(apt.title);
-    const timeText = `${estStart.getHours()}:${estStart.getMinutes().toString().padStart(2, '0')} - ${cleanTitle}`;
+    const timeText = `${startH}:${startM.toString().padStart(2, '0')} - ${cleanTitle}`;
     page.drawText(timeText, {
       x: x + 6,
       y: y - 12,
