@@ -665,3 +665,17 @@
 - [x] Fix appointment overflow in daily PDF pages
 - [x] Test appointments starting/ending on half-hours ✅ Working correctly
 - [x] Verify visual alignment matches web view exactly ✅ Perfect alignment
+
+## Fix Appointment Alignment with Time Labels in PDF
+- [ ] Diagnose Y-coordinate calculation issue causing misalignment
+- [ ] Ensure appointments align exactly with hour/half-hour grid lines
+- [ ] Fix weekly page appointment positioning
+- [ ] Fix daily page appointment positioning
+- [ ] Test with appointments at various times (7:00, 7:30, 8:15, etc.)
+- [ ] Verify alignment matches time labels on left side
+
+## Fix Appointment Alignment with Time Labels
+- [x] Diagnose Y-coordinate misalignment in PDF (timezone issue)
+- [x] Fix timezone conversion using toLocaleString directly
+- [x] Ensure appointments align with time labels on left side ✅ Perfect
+- [x] Test with various appointment times to verify alignment ✅ Working

@@ -240,8 +240,9 @@ async function generateWeeklyGridPage(
   });
 
   // Adjust grid top to account for all-day section
-  const adjustedGridTop = allDayY;
-  const adjustedGridHeight = availableHeight - allDayHeight;
+  // The grid should start BELOW the all-day section
+  const adjustedGridTop = allDayY - 2; // 2px spacing below all-day section
+  const adjustedGridHeight = availableHeight - allDayHeight - 2;
   const adjustedHourHeight = adjustedGridHeight / totalHours;
 
   // Draw grid lines
@@ -314,10 +315,23 @@ async function generateWeeklyGridPage(
                        apt.category === 'Holidays/Notes';
       if (isHoliday) return;
       
-      const estStart = toEST(apt.startTime);
-      const estEnd = toEST(apt.endTime);
-      const startHour = estStart.getHours() + estStart.getMinutes() / 60;
-      const endHour = estEnd.getHours() + estEnd.getMinutes() / 60;
+      // Get EST hours directly from toLocaleString
+      const startEST = apt.startTime.toLocaleString('en-US', { 
+        timeZone: 'America/New_York', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      const endEST = apt.endTime.toLocaleString('en-US', { 
+        timeZone: 'America/New_York', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
+      const [startH, startM] = startEST.split(':').map(Number);
+      const [endH, endM] = endEST.split(':').map(Number);
+      const startHour = startH + startM / 60;
+      const endHour = endH + endM / 60;
       
       // Skip if outside visible range
       if (endHour <= START_HOUR || startHour >= END_HOUR) return;
