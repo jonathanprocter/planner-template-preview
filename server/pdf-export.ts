@@ -11,6 +11,31 @@ function removeEmojis(text: string): string {
     .trim();
 }
 
+// Wrap text to fit within a given width
+function wrapText(text: string, font: any, fontSize: number, maxWidth: number): string[] {
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const testWidth = font.widthOfTextAtSize(testLine, fontSize);
+    
+    if (testWidth > maxWidth && currentLine) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = testLine;
+    }
+  }
+  
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
 // Convert date to EST timezone for consistent PDF output
 function toEST(date: Date): Date {
   const estString = date.toLocaleString('en-US', { 
@@ -162,26 +187,32 @@ async function generateWeeklyGridPage(
   const gridHeight = availableHeight;
   const columnWidth = (pageWidth - margin - timeColumnWidth) / 7;
 
-  // Day headers
-  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  dayNames.forEach((day, i) => {
+  // Day headers with full date
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  dayNames.forEach((dayName, i) => {
     const x = margin + timeColumnWidth + i * columnWidth;
-    const estDate = toEST(weekDays[i]);
+    const currentDay = weekDays[i];
     
-    page.drawText(day, {
-      x: x + columnWidth / 2 - 10,
+    // Format: "Monday, Nov 10"
+    const monthShort = currentDay.toLocaleDateString('en-US', { 
+      month: 'short',
+      timeZone: 'America/New_York'
+    });
+    const dayNum = currentDay.toLocaleDateString('en-US', { 
+      day: 'numeric',
+      timeZone: 'America/New_York'
+    });
+    const dateStr = `${dayName}, ${monthShort} ${dayNum}`;
+    
+    // Measure text width to center it
+    const textWidth = font.widthOfTextAtSize(dateStr, 8);
+    
+    page.drawText(dateStr, {
+      x: x + (columnWidth - textWidth) / 2,
       y: gridTop + 5,
-      size: 10,
+      size: 8,
       font: fontBold,
       color: rgb(0, 0, 0)
-    });
-    
-    page.drawText(estDate.getDate().toString(), {
-      x: x + columnWidth / 2 - 5,
-      y: gridTop - 7,
-      size: 7,
-      font: font,
-      color: rgb(0.3, 0.3, 0.3)
     });
   });
 
@@ -382,16 +413,25 @@ async function generateWeeklyGridPage(
         color: rgb(borderColor.r, borderColor.g, borderColor.b)
       });
       
-      // Title text
+      // Title text with wrapping
       const cleanTitle = removeEmojis(apt.title);
-      const titleLines = cleanTitle.substring(0, 50);
-      page.drawText(titleLines, {
-        x: x + 6,
-        y: y - 12,
-        size: 7,
-        font: font,
-        color: rgb(0.1, 0.1, 0.1),
-        maxWidth: width - 12
+      const fontSize = 7;
+      const lineHeight = fontSize + 2;
+      const textLines = wrapText(cleanTitle, font, fontSize, width - 12);
+      
+      // Draw each line of text
+      textLines.forEach((line, lineIndex) => {
+        const textY = y - 12 - (lineIndex * lineHeight);
+        // Only draw if text is within the appointment box
+        if (textY > (y - height + 4)) {
+          page.drawText(line, {
+            x: x + 6,
+            y: textY,
+            size: fontSize,
+            font: font,
+            color: rgb(0.1, 0.1, 0.1)
+          });
+        }
       });
     });
   });
@@ -567,16 +607,26 @@ async function generateDailyGridPage(
       color: rgb(borderColor.r, borderColor.g, borderColor.b)
     });
     
-    // Title text
+    // Title text with wrapping
     const cleanTitle = removeEmojis(apt.title);
     const timeText = `${startH}:${startM.toString().padStart(2, '0')} - ${cleanTitle}`;
-    page.drawText(timeText, {
-      x: x + 6,
-      y: y - 12,
-      size: 8,
-      font: font,
-      color: rgb(0.1, 0.1, 0.1),
-      maxWidth: width - 12
+    const fontSize = 8;
+    const lineHeight = fontSize + 2;
+    const textLines = wrapText(timeText, font, fontSize, width - 12);
+    
+    // Draw each line of text
+    textLines.forEach((line, lineIndex) => {
+      const textY = y - 12 - (lineIndex * lineHeight);
+      // Only draw if text is within the appointment box
+      if (textY > (y - height + 4)) {
+        page.drawText(line, {
+          x: x + 6,
+          y: textY,
+          size: fontSize,
+          font: font,
+          color: rgb(0.1, 0.1, 0.1)
+        });
+      }
     });
   });
 

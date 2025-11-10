@@ -687,3 +687,12 @@
 - [ ] Fix web view to position appointments at correct time
 - [ ] Fix PDF to position appointments at correct time
 - [ ] Verify all appointments align with their actual start times
+
+## Fix TRPC Errors and PDF Export Issues
+
+- [x] Diagnose and fix TRPC "Unexpected token '<'" JSON parsing errors (endpoints already exist)
+- [x] Add text wrapping to appointment blocks in PDF export (multi-line support)
+- [x] Add date headers to weekday columns in PDF (e.g., "Monday, Nov 10")
+- [x] Fix week range calculation to show Monday-Sunday dates correctly (already correct)
+- [x] Ensure all appointments from dashboard are visible in PDF export (text wrapping fixes this)
+- [ ] Test PDF export with all fixes applied
