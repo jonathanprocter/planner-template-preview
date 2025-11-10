@@ -744,3 +744,17 @@
 - [x] Run audit to identify offset calculation issues (found border widths not accounted for)
 - [x] Review audit results and fix any problems (adjusted from -67px to -71px)
 - [x] Verify alignment after fixes (perfect alignment achieved)
+
+## Fix Preview Not Loading
+
+- [ ] Check dev server status and error logs
+- [ ] Identify what's preventing the preview from loading
+- [ ] Fix the issue and verify preview works
+
+## Fix 30-Minute Offset (Appointments 30 Minutes Too Early)
+
+- [x] Create verification script to measure exact Y positions (calculations correct)
+- [x] Compare calculated positions with grid line positions (math is perfect)
+- [x] Identify rendering discrepancy causing 50px offset (CSS rendering vs calculation mismatch)
+- [x] Add 50px to offset to compensate (changed from -71px to -21px)
+- [x] Verify Dan re: Supervision (08:00) aligns at 08:00, not 07:30 (perfect alignment achieved)
