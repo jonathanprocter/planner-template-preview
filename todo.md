@@ -731,3 +731,9 @@
 - [x] Verify Dan re: Supervision (08:00) aligns exactly with 08:00 line
 - [x] Test all appointments align with their correct time labels (Richie at 07:00, Ruben at 07:30, etc.)
 - [x] Identified issue: header sections have internal spacing that was being double-counted
+
+## Fine-Tune Appointment Positioning (10 Minutes Early)
+
+- [x] Adjust offset from -50px to -67px (subtract 17px for 10 minutes)
+- [x] Verify Dan's 08:00 appointment aligns exactly at 08:00, not 07:50
+- [x] Test all appointments for perfect alignment (Richie at 07:00, Ruben at 07:30, Dan at 08:00)
