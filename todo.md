@@ -696,3 +696,9 @@
 - [x] Fix week range calculation to show Monday-Sunday dates correctly (already correct)
 - [x] Ensure all appointments from dashboard are visible in PDF export (text wrapping fixes this)
 - [ ] Test PDF export with all fixes applied
+
+## Fix Appointment Boxes Extending Beyond Right Margin in Daily PDF
+
+- [x] Diagnose why appointment boxes exceed page margins in daily PDF view
+- [x] Fix appointment width calculation to stay within grid boundaries (subtract margin from gridWidth)
+- [x] Test PDF export to verify appointments stay within margins

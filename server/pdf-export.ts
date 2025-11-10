@@ -573,7 +573,8 @@ async function generateDailyGridPage(
     const appointmentBottom = y - calculatedHeight;
     const height = appointmentBottom < gridBottom ? calculatedHeight - (gridBottom - appointmentBottom) : calculatedHeight;
     const x = margin + timeColumnWidth + 2;
-    const width = gridWidth - 4;
+    // Fix: subtract margin from gridWidth to keep appointment within right margin
+    const width = gridWidth - margin - 4;
     
     const colors = getFinancialDistrictColors(apt.calendarId, apt.title);
     const bgColor = hexToRgb(colors.background);
