@@ -10,6 +10,22 @@ import { ExportPDFButton } from "./ExportPDFButton";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
+import { isSignedIn } from "@/lib/googleCalendar";
+
+// Get access token from gapi if available
+function getAccessToken(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const gapi = (window as any).gapi;
+    if (gapi && gapi.client) {
+      const token = gapi.client.getToken();
+      return token?.access_token;
+    }
+  } catch (error) {
+    console.warn('Could not get access token:', error);
+  }
+  return undefined;
+}
 
 export default function WeeklyView() {
   const [, setLocation] = useLocation();
@@ -168,6 +184,7 @@ export default function WeeklyView() {
     eventStore.addEvent(newEvent);
 
     try {
+      const accessToken = getAccessToken();
       await createMutation.mutateAsync({
         title: eventData.title,
         startTime: eventData.startTime,
@@ -175,6 +192,8 @@ export default function WeeklyView() {
         date: eventData.date || formatDateISO(new Date()),
         category: eventData.category,
         description: eventData.description,
+        accessToken,
+        calendarId: 'primary',
       });
       utils.appointments.getByDateRange.invalidate();
     } catch (error) {
@@ -239,11 +258,13 @@ export default function WeeklyView() {
         
         if (event.source === 'google' && event.id) {
           try {
+            const accessToken = getAccessToken();
             await updateMutation.mutateAsync({
               googleEventId: event.id,
               startTime: newStartTime,
               endTime: newEndTime,
               date: newDateISO,
+              accessToken,
             });
             utils.appointments.getByDateRange.invalidate();
           } catch (error) {

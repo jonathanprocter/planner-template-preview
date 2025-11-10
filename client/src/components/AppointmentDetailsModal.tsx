@@ -3,7 +3,22 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { type Event } from "@/lib/eventStore";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { deleteEvent } from "@/lib/googleCalendar";
+import { deleteEvent, isSignedIn } from "@/lib/googleCalendar";
+
+// Get access token from gapi if available
+function getAccessToken(): string | undefined {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    const gapi = (window as any).gapi;
+    if (gapi && gapi.client) {
+      const token = gapi.client.getToken();
+      return token?.access_token;
+    }
+  } catch (error) {
+    console.warn('Could not get access token:', error);
+  }
+  return undefined;
+}
 
 interface AppointmentDetailsModalProps {
   appointment: Event | null;
@@ -120,19 +135,12 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     if (!confirmed) return;
 
     try {
-      // Delete from Google Calendar first
-      const calendarId = (appointment as any).calendarId;
-      if (calendarId) {
-        const deleted = await deleteEvent(calendarId, appointment.id);
-        if (!deleted) {
-          toast.error("Failed to delete from Google Calendar");
-          return;
-        }
-      }
+      const accessToken = getAccessToken();
       
-      // Then delete from database
+      // Delete from database and Google Calendar (backend handles both)
       await deleteMutation.mutateAsync({
         googleEventId: appointment.id,
+        accessToken,
       });
       toast.success("Appointment deleted successfully!");
       utils.appointments.getByDateRange.invalidate();

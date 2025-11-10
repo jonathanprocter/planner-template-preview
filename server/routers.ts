@@ -219,11 +219,42 @@ export const appRouter = router({
           date: z.string(),
           category: z.string().optional(),
           description: z.string().optional(),
+          accessToken: z.string().optional(),
+          calendarId: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
+
+        let googleEventId = `local-${Date.now()}`;
+        let finalCalendarId = input.calendarId || 'primary';
+
+        // If access token provided, create in Google Calendar
+        if (input.accessToken) {
+          const { createGoogleCalendarEvent } = await import('./googleCalendarApi');
+          const result = await createGoogleCalendarEvent(
+            input.accessToken,
+            finalCalendarId,
+            {
+              summary: input.title,
+              description: input.description,
+              start: {
+                dateTime: `${input.date}T${input.startTime}:00`,
+                timeZone: 'America/New_York',
+              },
+              end: {
+                dateTime: `${input.date}T${input.endTime}:00`,
+                timeZone: 'America/New_York',
+              },
+            }
+          );
+
+          if (result) {
+            googleEventId = result.id;
+            finalCalendarId = result.calendarId;
+          }
+        }
 
         // Insert into database
         await db
@@ -236,11 +267,11 @@ export const appRouter = router({
             date: input.date,
             category: input.category || 'Other',
             description: input.description || '',
-            googleEventId: `local-${Date.now()}`,
-            calendarId: 'local',
+            googleEventId,
+            calendarId: finalCalendarId,
           });
 
-        return { success: true };
+        return { success: true, googleEventId };
       }),
 
     // Update appointment time/date
@@ -251,11 +282,44 @@ export const appRouter = router({
           startTime: z.string(),
           endTime: z.string(),
           date: z.string(),
+          accessToken: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const db = await getDb();
         if (!db) throw new Error("Database not available");
+
+        // Get appointment details to find calendarId
+        const appointment = await db
+          .select()
+          .from(appointments)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          )
+          .limit(1);
+
+        // If access token provided and event is from Google Calendar, update in Google
+        if (input.accessToken && appointment.length > 0 && !input.googleEventId.startsWith('local-')) {
+          const { updateGoogleCalendarEvent } = await import('./googleCalendarApi');
+          await updateGoogleCalendarEvent(
+            input.accessToken,
+            appointment[0].calendarId || 'primary',
+            input.googleEventId,
+            {
+              start: {
+                dateTime: `${input.date}T${input.startTime}:00`,
+                timeZone: 'America/New_York',
+              },
+              end: {
+                dateTime: `${input.date}T${input.endTime}:00`,
+                timeZone: 'America/New_York',
+              },
+            }
+          );
+        }
 
         // Update in database
         await db
@@ -275,11 +339,12 @@ export const appRouter = router({
         return { success: true };
       }),
 
-    // Delete appointment
+     // Delete appointment
     deleteAppointment: protectedProcedure
       .input(
         z.object({
           googleEventId: z.string(),
+          accessToken: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -298,6 +363,16 @@ export const appRouter = router({
           )
           .limit(1);
 
+        // If access token provided and event is from Google Calendar, delete from Google
+        if (input.accessToken && appointment.length > 0 && !input.googleEventId.startsWith('local-')) {
+          const { deleteGoogleCalendarEvent } = await import('./googleCalendarApi');
+          await deleteGoogleCalendarEvent(
+            input.accessToken,
+            appointment[0].calendarId || 'primary',
+            input.googleEventId
+          );
+        }
+
         // Delete from database
         await db
           .delete(appointments)
@@ -307,7 +382,6 @@ export const appRouter = router({
               eq(appointments.googleEventId, input.googleEventId)
             )
           );
-
         // Track this deletion to prevent re-import during sync
         if (appointment.length > 0) {
           const { deletedAppointments } = await import("../drizzle/schema");

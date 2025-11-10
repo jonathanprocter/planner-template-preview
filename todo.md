@@ -787,3 +787,10 @@
 - [x] Remove puppeteer and @types/puppeteer from package.json
 - [x] Test production build without puppeteer
 - [x] Ready for deployment
+
+## Fix Bidirectional Google Calendar Sync
+- [x] Investigate current create/update/delete implementation
+- [x] Fix createEvent to add events to Google Calendar (not just database)
+- [x] Fix updateEvent to update events in Google Calendar (not just database)
+- [x] Fix deleteEvent to delete from Google Calendar (not just database)
+- [x] Test all CRUD operations sync properly with Google Calendar
