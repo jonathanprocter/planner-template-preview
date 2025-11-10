@@ -773,3 +773,17 @@
 - [x] Include appointment times inside appointment boxes in weekly PDF (e.g., "08:00 - Title")
 - [x] Shrink font and wrap text to fit times + titles (reduced to 6pt with text wrapping)
 - [x] Test PDF export with all improvements (server compiled successfully)
+
+## Fix Deployment Failure
+
+- [x] Check deployment logs to identify the error (Docker image build failed - exit status 1)
+- [ ] Run production build test to identify specific build errors
+- [ ] Fix the build errors
+- [ ] Verify deployment succeeds
+
+## Fix Docker Deployment Failure
+- [x] Investigate puppeteer dependency causing Docker build failures
+- [x] Verify puppeteer is not used in current codebase (only in old backup files)
+- [x] Remove puppeteer and @types/puppeteer from package.json
+- [x] Test production build without puppeteer
+- [x] Ready for deployment
