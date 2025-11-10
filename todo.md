@@ -758,3 +758,18 @@
 - [x] Identify rendering discrepancy causing 50px offset (CSS rendering vs calculation mismatch)
 - [x] Add 50px to offset to compensate (changed from -71px to -21px)
 - [x] Verify Dan re: Supervision (08:00) aligns at 08:00, not 07:30 (perfect alignment achieved)
+
+## Fix Viewing and Publishing Issues
+
+- [ ] Check project status and server health
+- [ ] Identify what's preventing viewing or publishing
+- [ ] Fix any configuration or access issues
+- [ ] Verify preview loads and publish button works
+
+## PDF Export Improvements
+
+- [x] Fix daily pages to start on Monday (removed toEST() conversion causing day shift)
+- [x] Add hyperlinks from weekly view appointments to corresponding daily pages (clickable links)
+- [x] Include appointment times inside appointment boxes in weekly PDF (e.g., "08:00 - Title")
+- [x] Shrink font and wrap text to fit times + titles (reduced to 6pt with text wrapping)
+- [x] Test PDF export with all improvements (server compiled successfully)

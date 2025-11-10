@@ -1,4 +1,4 @@
-import { PDFDocument, rgb, StandardFonts, PDFPage } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFPage, PDFName } from 'pdf-lib';
 
 // Remove emojis and special characters from text
 function removeEmojis(text: string): string {
@@ -130,15 +130,22 @@ export async function generateWeeklyPlannerPDF(
     weekDays.push(date);
   }
 
-  // Page 1: Weekly Overview (Landscape)
-  const weeklyPage = pdfDoc.addPage([679, 509]);
-  await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold);
-
-  // Pages 2-8: Daily Views (Portrait)
+  // Pages 2-8: Daily Views (Portrait) - create first so we can link to them
+  const dailyPages: PDFPage[] = [];
   for (const day of weekDays) {
     const dailyPage = pdfDoc.addPage([509, 679]);
+    dailyPages.push(dailyPage);
     await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold);
   }
+
+  // Page 1: Weekly Overview (Landscape) - create last but will be first in final PDF
+  const weeklyPage = pdfDoc.addPage([679, 509]);
+  await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc);
+  
+  // Move weekly page to the beginning
+  const pages = pdfDoc.getPages();
+  pdfDoc.removePage(pages.length - 1); // Remove from end
+  pdfDoc.insertPage(0, weeklyPage); // Insert at beginning
 
   // Save and return PDF
   const pdfBytes = await pdfDoc.save();
@@ -150,7 +157,9 @@ async function generateWeeklyGridPage(
   weekDays: Date[],
   appointments: Appointment[],
   font: any,
-  fontBold: any
+  fontBold: any,
+  dailyPages?: PDFPage[],
+  pdfDoc?: PDFDocument
 ) {
   const { width: pageWidth, height: pageHeight } = page.getSize();
   const margin = MARGIN;
@@ -413,11 +422,32 @@ async function generateWeeklyGridPage(
         color: rgb(borderColor.r, borderColor.g, borderColor.b)
       });
       
-      // Title text with wrapping
+      // Add hyperlink to corresponding daily page
+      if (dailyPages && pdfDoc && dayIndex < dailyPages.length) {
+        const targetPage = dailyPages[dayIndex];
+        const pageIndex = pdfDoc.getPages().indexOf(targetPage);
+        
+        page.node.set(
+          PDFName.of('Annots'),
+          pdfDoc.context.obj([
+            pdfDoc.context.obj({
+              Type: 'Annot',
+              Subtype: 'Link',
+              Rect: [x, y - height, x + width, y],
+              Border: [0, 0, 0],
+              Dest: [targetPage.ref, 'XYZ', null, null, null]
+            })
+          ])
+        );
+      }
+      
+      // Title text with wrapping (include time)
       const cleanTitle = removeEmojis(apt.title);
-      const fontSize = 7;
+      const timeText = `${startEST.substring(0, 5)}`; // e.g., "08:00"
+      const fullText = `${timeText} - ${cleanTitle}`;
+      const fontSize = 6; // Smaller font to fit time + title
       const lineHeight = fontSize + 2;
-      const textLines = wrapText(cleanTitle, font, fontSize, width - 12);
+      const textLines = wrapText(fullText, font, fontSize, width - 12);
       
       // Draw each line of text
       textLines.forEach((line, lineIndex) => {
@@ -455,13 +485,12 @@ async function generateDailyGridPage(
   const availableHeight = pageHeight - headerHeight - notesHeight - margin * 2;
   const hourHeight = availableHeight / totalHours;
   
-  // Title
-  const estDay = toEST(day);
-  const dayName = estDay.toLocaleDateString('en-US', { 
+  // Title - use direct timezone conversion to avoid day shift
+  const dayName = day.toLocaleDateString('en-US', { 
     weekday: 'long',
     timeZone: 'America/New_York'
   });
-  const dateStr = estDay.toLocaleDateString('en-US', { 
+  const dateStr = day.toLocaleDateString('en-US', { 
     month: 'long', 
     day: 'numeric', 
     year: 'numeric',
