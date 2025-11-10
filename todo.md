@@ -724,3 +724,10 @@
 - [x] Check grid start time and hour row positioning (correct: starts at 06:00, 100px per hour)
 - [x] Fix the time-to-pixel calculation or header offset (added Notes section 80px to offset)
 - [x] Verify Dan re: Supervision (08:00) aligns exactly at 08:00 line (perfect alignment now)
+
+## Fix Appointments Appearing 30 Minutes Ahead (Too Early)
+
+- [x] Subtract 50px from header offset to compensate for internal padding/spacing
+- [x] Verify Dan re: Supervision (08:00) aligns exactly with 08:00 line
+- [x] Test all appointments align with their correct time labels (Richie at 07:00, Ruben at 07:30, etc.)
+- [x] Identified issue: header sections have internal spacing that was being double-counted

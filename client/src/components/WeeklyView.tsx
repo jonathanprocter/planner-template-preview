@@ -570,7 +570,8 @@ export default function WeeklyView() {
             const dayNamesHeight = 60;
             const allDayHeight = maxHolidaysInAnyDay > 0 ? 40 + (maxHolidaysInAnyDay * 28) : 40;
             const notesHeight = 80; // Notes section has minHeight: 80px
-            const headerOffset = dayNamesHeight + allDayHeight + notesHeight;
+            // Subtract 50px to move appointments down (later) by 30 minutes
+            const headerOffset = dayNamesHeight + allDayHeight + notesHeight - 50;
             
             const y = headerOffset + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
