@@ -710,3 +710,10 @@
 - [x] Verify Dan re: Supervision appointment aligns at 08:00 line (fixed with dynamic header offset)
 - [x] Ensure all appointments align with their actual start times in weekly view (accounts for all-day section height)
 - [ ] User needs to re-sync Google Calendar to update existing Veterans Day entry
+
+## Fix Appointment Alignment Still Not Working
+
+- [x] Debug why dynamic header offset calculation is not aligning appointments correctly (missing Notes section height)
+- [x] Verify the all-day section height calculation (40px + holidays)
+- [x] Fix the offset to properly align appointments with time labels (added 80px Notes section)
+- [x] Test that all appointments align correctly after fix (Dan now at 08:00 line)

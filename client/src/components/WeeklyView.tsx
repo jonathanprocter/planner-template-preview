@@ -557,7 +557,7 @@ export default function WeeklyView() {
             const endMinutes = (endH - 6) * 60 + endM;
             const pixelsPerMinute = 100 / 60;
             
-            // Calculate header height: 60px (day names) + all-day section height
+            // Calculate header height: 60px (day names) + all-day section + notes section
             // All-day section: 40px base + 28px per holiday row (approximate)
             const maxHolidaysInAnyDay = Math.max(...weekDates.map((_, idx) => {
               const dateStr = formatDateISO(weekDates[idx]);
@@ -567,7 +567,8 @@ export default function WeeklyView() {
               }).length;
             }), 0);
             const allDayHeight = maxHolidaysInAnyDay > 0 ? 40 + (maxHolidaysInAnyDay * 28) : 40;
-            const headerOffset = 60 + allDayHeight;
+            const notesHeight = 80; // Notes section has minHeight: 80px
+            const headerOffset = 60 + allDayHeight + notesHeight;
             
             const y = headerOffset + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
