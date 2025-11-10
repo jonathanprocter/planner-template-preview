@@ -182,7 +182,10 @@ export const isSignedIn = (): boolean => {
  */
 export const getCalendarList = async (): Promise<any[]> => {
   try {
-    if (!isSignedIn()) {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized. Call initGoogleCalendar() first.');
+    }
+    if (!accessToken) {
       throw new Error('User not signed in');
     }
     const response = await gapi.client.calendar.calendarList.list();
@@ -205,7 +208,10 @@ export const getEvents = async (
   timeMax?: Date
 ): Promise<GoogleCalendarEvent[]> => {
   try {
-    if (!isSignedIn()) {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized. Call initGoogleCalendar() first.');
+    }
+    if (!accessToken) {
       throw new Error('User not signed in');
     }
 
@@ -281,7 +287,10 @@ export const createEvent = async (
   }
 ): Promise<GoogleCalendarEvent | null> => {
   try {
-    if (!isSignedIn()) {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized');
+    }
+    if (!accessToken) {
       throw new Error('User not signed in');
     }
     const response = await gapi.client.calendar.events.insert({
@@ -311,7 +320,10 @@ export const updateEvent = async (
   }
 ): Promise<GoogleCalendarEvent | null> => {
   try {
-    if (!isSignedIn()) {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized');
+    }
+    if (!accessToken) {
       throw new Error('User not signed in');
     }
     const response = await gapi.client.calendar.events.patch({
@@ -334,7 +346,10 @@ export const deleteEvent = async (
   eventId: string
 ): Promise<boolean> => {
   try {
-    if (!isSignedIn()) {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized');
+    }
+    if (!accessToken) {
       throw new Error('User not signed in');
     }
     await gapi.client.calendar.events.delete({

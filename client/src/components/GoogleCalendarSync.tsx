@@ -204,6 +204,8 @@ export default function GoogleCalendarSync() {
           try {
             await signIn();
             setIsSignedIn(true);
+            // Small delay to ensure token is fully set
+            await new Promise(resolve => setTimeout(resolve, 500));
             await loadCalendars();
             toast.success("Successfully signed in to Google Calendar");
           } catch (error: any) {
