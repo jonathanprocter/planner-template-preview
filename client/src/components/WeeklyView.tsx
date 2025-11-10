@@ -570,8 +570,8 @@ export default function WeeklyView() {
             const dayNamesHeight = 60;
             const allDayHeight = maxHolidaysInAnyDay > 0 ? 40 + (maxHolidaysInAnyDay * 28) : 40;
             const notesHeight = 80; // Notes section has minHeight: 80px
-            // Subtract 67px to compensate for internal padding/spacing in header sections
-            const headerOffset = dayNamesHeight + allDayHeight + notesHeight - 67;
+            // Subtract 71px: 67px for padding/spacing + 4px for borders (2px + 1px + 1px)
+            const headerOffset = dayNamesHeight + allDayHeight + notesHeight - 71;
             
             const y = headerOffset + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;

@@ -737,3 +737,10 @@
 - [x] Adjust offset from -50px to -67px (subtract 17px for 10 minutes)
 - [x] Verify Dan's 08:00 appointment aligns exactly at 08:00, not 07:50
 - [x] Test all appointments for perfect alignment (Richie at 07:00, Ruben at 07:30, Dan at 08:00)
+
+## Audit Appointment Positioning Logic
+
+- [x] Create Python script to analyze WeeklyView positioning calculations
+- [x] Run audit to identify offset calculation issues (found border widths not accounted for)
+- [x] Review audit results and fix any problems (adjusted from -67px to -71px)
+- [x] Verify alignment after fixes (perfect alignment achieved)
