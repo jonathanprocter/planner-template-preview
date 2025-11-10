@@ -717,3 +717,10 @@
 - [x] Verify the all-day section height calculation (40px + holidays)
 - [x] Fix the offset to properly align appointments with time labels (added 80px Notes section)
 - [x] Test that all appointments align correctly after fix (Dan now at 08:00 line)
+
+## Fix 30-Minute Offset in Appointment Positioning
+
+- [x] Debug why appointments appear 30 minutes ahead of their actual time (missing Notes section height)
+- [x] Check grid start time and hour row positioning (correct: starts at 06:00, 100px per hour)
+- [x] Fix the time-to-pixel calculation or header offset (added Notes section 80px to offset)
+- [x] Verify Dan re: Supervision (08:00) aligns exactly at 08:00 line (perfect alignment now)

@@ -557,7 +557,8 @@ export default function WeeklyView() {
             const endMinutes = (endH - 6) * 60 + endM;
             const pixelsPerMinute = 100 / 60;
             
-            // Calculate header height: 60px (day names) + all-day section + notes section
+            // Calculate header offset within grid: day names + all-day section + notes section
+            // Note: Appointments are positioned relative to #weekly-grid container (not outer container)
             // All-day section: 40px base + 28px per holiday row (approximate)
             const maxHolidaysInAnyDay = Math.max(...weekDates.map((_, idx) => {
               const dateStr = formatDateISO(weekDates[idx]);
@@ -566,9 +567,10 @@ export default function WeeklyView() {
                 return isHol && e.date === dateStr;
               }).length;
             }), 0);
+            const dayNamesHeight = 60;
             const allDayHeight = maxHolidaysInAnyDay > 0 ? 40 + (maxHolidaysInAnyDay * 28) : 40;
             const notesHeight = 80; // Notes section has minHeight: 80px
-            const headerOffset = 60 + allDayHeight + notesHeight;
+            const headerOffset = dayNamesHeight + allDayHeight + notesHeight;
             
             const y = headerOffset + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
