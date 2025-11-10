@@ -82,11 +82,23 @@ export default function GoogleCalendarSync() {
               
               if (!startDateTime || !endDateTime) return;
 
-              const startDate = new Date(startDateTime);
-              const endDate = new Date(endDateTime);
+              // For all-day events (date-only strings), parse in local timezone
+              // to avoid UTC midnight being converted to previous day in EST
+              let startDate: Date;
+              let endDate: Date;
+              let dateStr: string;
               
-              // Format date as YYYY-MM-DD in local timezone
-              const dateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+              if (googleEvent.start.date && !googleEvent.start.dateTime) {
+                // All-day event: use date string directly
+                dateStr = googleEvent.start.date;
+                startDate = new Date(dateStr + 'T00:00:00');
+                endDate = new Date((googleEvent.end.date || dateStr) + 'T00:00:00');
+              } else {
+                // Timed event: parse normally
+                startDate = new Date(startDateTime);
+                endDate = new Date(endDateTime);
+                dateStr = `${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`;
+              }
               
               const startHour = startDate.getHours();
               const startMinute = startDate.getMinutes();

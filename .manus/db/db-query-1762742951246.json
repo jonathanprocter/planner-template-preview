@@ -1,0 +1,55 @@
+{
+  "query": "SELECT id, title, date, startTime, endTime, category, calendarId FROM appointments WHERE title LIKE '%Veterans%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PprtSQ4Zk9Y5ny.cc7ab35ef048 --database HtghuQEwPJTyb8ieP26aWj --execute SELECT id, title, date, startTime, endTime, category, calendarId FROM appointments WHERE title LIKE '%Veterans%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "180025",
+      "title": "Veterans Day",
+      "date": "2020-11-10",
+      "startTime": "2020-11-11 00:00:00",
+      "endTime": "2020-11-12 00:00:00",
+      "category": "other",
+      "calendarId": "en.usa#holiday@group.v.calendar.google.com"
+    },
+    {
+      "id": "180055",
+      "title": "Veterans Day",
+      "date": "2021-11-10",
+      "startTime": "2021-11-11 00:00:00",
+      "endTime": "2021-11-12 00:00:00",
+      "category": "other",
+      "calendarId": "en.usa#holiday@group.v.calendar.google.com"
+    },
+    {
+      "id": "180085",
+      "title": "Veterans Day",
+      "date": "2022-11-10",
+      "startTime": "2022-11-11 00:00:00",
+      "endTime": "2022-11-12 00:00:00",
+      "category": "other",
+      "calendarId": "en.usa#holiday@group.v.calendar.google.com"
+    },
+    {
+      "id": "180114",
+      "title": "Veterans Day (substitute)",
+      "date": "2023-11-09",
+      "startTime": "2023-11-10 00:00:00",
+      "endTime": "2023-11-11 00:00:00",
+      "category": "other",
+      "calendarId": "en.usa#holiday@group.v.calendar.google.com"
+    },
+    {
+      "id": "180115",
+      "title": "Veterans Day",
+      "date": "2023-11-10",
+      "startTime": "2023-11-11 00:00:00",
+      "endTime": "2023-11-12 00:00:00",
+      "category": "other",
+      "calendarId": "en.usa#holiday@group.v.calendar.google.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tdate\tstartTime\tendTime\tcategory\tcalendarId\n180025\tVeterans Day\t2020-11-10\t2020-11-11 00:00:00\t2020-11-12 00:00:00\tother\ten.usa#holiday@group.v.calendar.google.com\n180055\tVeterans Day\t2021-11-10\t2021-11-11 00:00:00\t2021-11-12 00:00:00\tother\ten.usa#holiday@group.v.calendar.google.com\n180085\tVeterans Day\t2022-11-10\t2022-11-11 00:00:00\t2022-11-12 00:00:00\tother\ten.usa#holiday@group.v.calendar.google.com\n180114\tVeterans Day (substitute)\t2023-11-09\t2023-11-10 00:00:00\t2023-11-11 00:00:00\tother\ten.usa#holiday@group.v.calendar.google.com\n180115\tVeterans Day\t2023-11-10\t2023-11-11 00:00:00\t2023-11-12 00:00:00\tother\ten.usa#holiday@group.v.calendar.google.com\n",
+  "stderr": "",
+  "execution_time_ms": 678
+}

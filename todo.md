@@ -702,3 +702,11 @@
 - [x] Diagnose why appointment boxes exceed page margins in daily PDF view
 - [x] Fix appointment width calculation to stay within grid boundaries (subtract margin from gridWidth)
 - [x] Test PDF export to verify appointments stay within margins
+
+## Fix Veterans Day Wrong Day and Appointment Alignment
+
+- [x] Diagnose why Veterans Day shows on Monday instead of Tuesday (UTC midnight -> EST previous day)
+- [x] Fix all-day holiday date calculation to use correct timezone (parse with T00:00:00)
+- [x] Verify Dan re: Supervision appointment aligns at 08:00 line (fixed with dynamic header offset)
+- [x] Ensure all appointments align with their actual start times in weekly view (accounts for all-day section height)
+- [ ] User needs to re-sync Google Calendar to update existing Veterans Day entry
