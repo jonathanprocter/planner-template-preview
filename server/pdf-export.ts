@@ -7,19 +7,18 @@ function addInternalLink(
   y: number,
   width: number,
   height: number,
-  targetPageIndex: number,
+  targetPage: PDFPage,
   pdfDoc: PDFDocument
 ) {
-  const pageRef = pdfDoc.getPage(targetPageIndex).ref;
   const context = pdfDoc.context;
   
-  // Create link annotation
+  // Create link annotation using target page reference directly
   const linkAnnotation = context.obj({
     Type: 'Annot',
     Subtype: 'Link',
     Rect: [x, y, x + width, y + height],
     Border: [0, 0, 0],
-    Dest: [pageRef, 'XYZ', null, null, null],
+    Dest: [targetPage.ref, 'XYZ', null, null, null],
   });
   
   // Add annotation to page
@@ -173,6 +172,24 @@ export async function generateWeeklyPlannerPDF(
   const weeklyPage = pdfDoc.addPage([679, 509]);
   await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc);
   
+  // Add "← Weekly Overview" links to daily pages now that weekly page exists
+  dailyPages.forEach((dailyPage) => {
+    const { width: pageWidth } = dailyPage.getSize();
+    const linkText = '← Weekly Overview';
+    const linkX = pageWidth / 2 - helvetica.widthOfTextAtSize(linkText, 9) / 2;
+    const linkY = MARGIN + 5;
+    
+    addInternalLink(
+      dailyPage,
+      linkX - 5,
+      linkY - 2,
+      helvetica.widthOfTextAtSize(linkText, 9) + 10,
+      12,
+      weeklyPage,
+      pdfDoc
+    );
+  });
+  
   // Move weekly page to the beginning
   const pages = pdfDoc.getPages();
   pdfDoc.removePage(pages.length - 1); // Remove from end
@@ -258,15 +275,15 @@ async function generateWeeklyGridPage(
       color: rgb(0, 0, 0)
     });
     
-    // Add clickable link to daily page (pages are: 0=weekly, 1-7=daily)
-    if (pdfDoc && dailyPages) {
+    // Add clickable link to daily page
+    if (pdfDoc && dailyPages && dailyPages[i]) {
       addInternalLink(
         page,
         x,
         textY - 2,
         columnWidth,
         12,
-        i + 1, // Daily pages start at index 1
+        dailyPages[i], // Pass the actual daily page object
         pdfDoc
       );
     }
@@ -470,14 +487,14 @@ async function generateWeeklyGridPage(
       });
       
       // Add clickable link to corresponding daily page
-      if (dailyPages && pdfDoc) {
+      if (dailyPages && pdfDoc && dailyPages[dayIndex]) {
         addInternalLink(
           page,
           x,
           y - height,
           width,
           height,
-          dayIndex + 1, // Daily pages start at index 1
+          dailyPages[dayIndex], // Pass the actual daily page object
           pdfDoc
         );
       }
@@ -736,16 +753,7 @@ async function generateDailyGridPage(
     color: rgb(0.2, 0.4, 0.8) // Blue color to indicate it's a link
   });
   
-  // Add clickable link to weekly overview page (page 0)
-  if (pdfDoc) {
-    addInternalLink(
-      page,
-      linkX - 5,
-      linkY - 2,
-      font.widthOfTextAtSize(linkText, 9) + 10,
-      12,
-      0, // Weekly page is at index 0
-      pdfDoc
-    );
-  }
+  // Add clickable link to weekly overview page
+  // Note: We need to pass the weekly page, but it's not created yet when daily pages are generated
+  // So we'll need to add these links after the weekly page is created
 }
