@@ -805,3 +805,10 @@
 - [x] Fix day header clicks to navigate to daily view with correct date
 - [x] Fix appointment clicks to navigate to daily view with correct date
 - [x] Test navigation from weekly to daily view
+
+## Add Bidirectional Hyperlinks in PDF Export
+- [x] Investigate PDF generation code (PDFDocument library)
+- [x] Add internal links from weekly page day headers to daily pages
+- [x] Add internal links from weekly page appointments to daily pages
+- [x] Add internal links from daily pages "Weekly Overview" to weekly page
+- [x] Test PDF navigation in downloaded file

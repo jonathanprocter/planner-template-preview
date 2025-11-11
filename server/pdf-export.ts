@@ -1,4 +1,35 @@
-import { PDFDocument, rgb, StandardFonts, PDFPage, PDFName } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFPage, PDFName, PDFDict, PDFArray, PDFNumber } from 'pdf-lib';
+
+// Add clickable link annotation to a PDF page
+function addInternalLink(
+  page: PDFPage,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  targetPageIndex: number,
+  pdfDoc: PDFDocument
+) {
+  const pageRef = pdfDoc.getPage(targetPageIndex).ref;
+  const context = pdfDoc.context;
+  
+  // Create link annotation
+  const linkAnnotation = context.obj({
+    Type: 'Annot',
+    Subtype: 'Link',
+    Rect: [x, y, x + width, y + height],
+    Border: [0, 0, 0],
+    Dest: [pageRef, 'XYZ', null, null, null],
+  });
+  
+  // Add annotation to page
+  const annots = page.node.get(PDFName.of('Annots'));
+  if (annots instanceof PDFArray) {
+    annots.push(linkAnnotation);
+  } else {
+    page.node.set(PDFName.of('Annots'), context.obj([linkAnnotation]));
+  }
+}
 
 // Remove emojis and special characters from text
 function removeEmojis(text: string): string {
@@ -135,7 +166,7 @@ export async function generateWeeklyPlannerPDF(
   for (const day of weekDays) {
     const dailyPage = pdfDoc.addPage([509, 679]);
     dailyPages.push(dailyPage);
-    await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold);
+    await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold, pdfDoc);
   }
 
   // Page 1: Weekly Overview (Landscape) - create last but will be first in final PDF
@@ -216,13 +247,29 @@ async function generateWeeklyGridPage(
     // Measure text width to center it
     const textWidth = font.widthOfTextAtSize(dateStr, 8);
     
+    const textX = x + (columnWidth - textWidth) / 2;
+    const textY = gridTop + 5;
+    
     page.drawText(dateStr, {
-      x: x + (columnWidth - textWidth) / 2,
-      y: gridTop + 5,
+      x: textX,
+      y: textY,
       size: 8,
       font: fontBold,
       color: rgb(0, 0, 0)
     });
+    
+    // Add clickable link to daily page (pages are: 0=weekly, 1-7=daily)
+    if (pdfDoc && dailyPages) {
+      addInternalLink(
+        page,
+        x,
+        textY - 2,
+        columnWidth,
+        12,
+        i + 1, // Daily pages start at index 1
+        pdfDoc
+      );
+    }
   });
 
   // All-Day Holidays Section
@@ -422,22 +469,16 @@ async function generateWeeklyGridPage(
         color: rgb(borderColor.r, borderColor.g, borderColor.b)
       });
       
-      // Add hyperlink to corresponding daily page
-      if (dailyPages && pdfDoc && dayIndex < dailyPages.length) {
-        const targetPage = dailyPages[dayIndex];
-        const pageIndex = pdfDoc.getPages().indexOf(targetPage);
-        
-        page.node.set(
-          PDFName.of('Annots'),
-          pdfDoc.context.obj([
-            pdfDoc.context.obj({
-              Type: 'Annot',
-              Subtype: 'Link',
-              Rect: [x, y - height, x + width, y],
-              Border: [0, 0, 0],
-              Dest: [targetPage.ref, 'XYZ', null, null, null]
-            })
-          ])
+      // Add clickable link to corresponding daily page
+      if (dailyPages && pdfDoc) {
+        addInternalLink(
+          page,
+          x,
+          y - height,
+          width,
+          height,
+          dayIndex + 1, // Daily pages start at index 1
+          pdfDoc
         );
       }
       
@@ -472,7 +513,8 @@ async function generateDailyGridPage(
   day: Date,
   appointments: Appointment[],
   font: any,
-  fontBold: any
+  fontBold: any,
+  pdfDoc?: PDFDocument
 ) {
   const { width: pageWidth, height: pageHeight } = page.getSize();
   const margin = MARGIN;
@@ -679,5 +721,31 @@ async function generateDailyGridPage(
       thickness: 0.25,
       color: rgb(0.8, 0.8, 0.8)
     });
+  }
+  
+  // Add "← Weekly Overview" link at bottom
+  const linkText = '← Weekly Overview';
+  const linkX = pageWidth / 2 - font.widthOfTextAtSize(linkText, 9) / 2;
+  const linkY = margin + 5;
+  
+  page.drawText(linkText, {
+    x: linkX,
+    y: linkY,
+    size: 9,
+    font: fontBold,
+    color: rgb(0.2, 0.4, 0.8) // Blue color to indicate it's a link
+  });
+  
+  // Add clickable link to weekly overview page (page 0)
+  if (pdfDoc) {
+    addInternalLink(
+      page,
+      linkX - 5,
+      linkY - 2,
+      font.widthOfTextAtSize(linkText, 9) + 10,
+      12,
+      0, // Weekly page is at index 0
+      pdfDoc
+    );
   }
 }
