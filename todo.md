@@ -826,3 +826,9 @@
 - [x] Implement ISO week number calculation function
 - [x] Display week number in weekly view header
 - [x] Test week number display across different weeks
+
+## Fix Missing Holidays Display
+- [x] Investigate why holidays are not showing in weekly view
+- [x] Investigate why holidays are not showing in daily view
+- [x] Fix holiday display logic
+- [x] Test holiday display in both views

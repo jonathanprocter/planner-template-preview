@@ -449,7 +449,8 @@ export default function WeeklyView() {
             {dayNames.map((day, idx) => {
               const dateStr = formatDateISO(weekDates[idx]);
               const dayHolidays = filteredEvents.filter(event => {
-                const isHoliday = event.category === 'Holidays/Notes' || event.color === '#3D5845';
+                // Use the isHoliday flag set when loading from database
+                const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
                 return isHoliday && event.date === dateStr;
               });
               
@@ -582,7 +583,7 @@ export default function WeeklyView() {
 
           {filteredEvents.map((event) => {
             // Skip holidays - they're shown in the all-day section
-            const isHoliday = event.category === 'Holidays/Notes' || event.color === '#3D5845';
+            const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
             if (isHoliday) return null;
             
             const [startH, startM] = event.startTime.split(":").map(Number);
