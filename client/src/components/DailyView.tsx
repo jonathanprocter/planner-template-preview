@@ -97,15 +97,15 @@ export default function DailyView() {
     if (dbAppointments) {
       // Convert DB appointments to Event format
       const dbEvents: Event[] = dbAppointments.map((apt: any) => {
-        // Check if this is a StimulusPractice calendar
-        const isStimulusPractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+        // Check if this is a SimplePractice calendar
+        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
         const isFlight = apt.title?.toLowerCase().includes('flight');
         const isMeeting = apt.title?.toLowerCase().includes('meeting');
         
         // Financial District color scheme
         let color = '#4F5D67'; // Default: Work (Cool Slate)
-        if (isStimulusPractice) color = '#243447'; // Deep Indigo
+        if (isSimplePractice) color = '#243447'; // Deep Indigo
         else if (isFlight) color = '#A63D3D'; // Merlot Red
         else if (isHoliday) color = '#3D5845'; // Forest Pine
         else if (isMeeting) color = '#9A7547'; // Rich Caramel
@@ -121,7 +121,7 @@ export default function DailyView() {
           category: apt.category || 'Other',
           description: apt.description,
           calendarId: apt.calendarId,
-          isStimulusPractice,
+          isSimplePractice,
           isHoliday,
           isFlight,
           isMeeting,
@@ -373,7 +373,7 @@ export default function DailyView() {
               <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
               </svg>
-              <span className="text-gray-700">StimulusPractice</span>
+              <span className="text-gray-700">SimplePractice</span>
             </div>
             <div className="flex items-center gap-1.5">
               <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
@@ -536,7 +536,7 @@ export default function DailyView() {
                   width: `${config.timeBlocks.width - config.timeBlocks.labelWidth - 20}px`,
                   height: `${height}px`,
                   backgroundColor: (() => {
-                    if ((event as any).isStimulusPractice) return '#E7E9EC';
+                    if ((event as any).isSimplePractice) return '#E7E9EC';
                     if ((event as any).isFlight) return '#F6EAEA';
                     if ((event as any).isHoliday) return '#E9ECE9';
                     if ((event as any).isMeeting) return '#F4F0E9';

@@ -48,7 +48,7 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const utils = trpc.useUtils();
 
   const appointmentId = appointment ? appointment.id : null;
-  const isStimulusPractice = appointment ? (appointment as any).isStimulusPractice : false;
+  const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
   const isHoliday = appointment ? (appointment as any).isHoliday : false;
   const hasCalendarId = appointment ? !!(appointment as any).calendarId : false;
 
@@ -239,7 +239,7 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
             <div className="bg-green-50 p-4 rounded-lg">
               <h3 className="font-semibold text-sm text-green-600 mb-1">Source</h3>
               <p className="text-lg">
-                {isStimulusPractice ? '🔒 StimulusPractice' : isHoliday ? '🎉 Holiday' : appointment.source === 'google' ? '📅 Google Calendar' : 'Local'}
+                {isSimplePractice ? '🔒 SimplePractice' : isHoliday ? '🎉 Holiday' : appointment.source === 'google' ? '📅 Google Calendar' : 'Local'}
               </p>
             </div>
           </div>

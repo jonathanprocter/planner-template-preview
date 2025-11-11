@@ -842,3 +842,8 @@
 - [x] Reduce holiday font size in PDF to show full text
 - [x] Fix day of week in daily PDF pages to start with Monday
 - [x] Test PDF export with fixes
+
+## Change Calendar Name
+- [x] Find all occurrences of "StimulusPractice"
+- [x] Replace with "SimplePractice"
+- [x] Test application

@@ -99,13 +99,13 @@ export default function WeeklyView() {
   useEffect(() => {
     if (dbAppointments) {
       const dbEvents: Event[] = dbAppointments.map((apt: any) => {
-        const isStimulusPractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
+        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
         const isFlight = apt.title?.toLowerCase().includes('flight');
         const isMeeting = apt.title?.toLowerCase().includes('meeting');
         
         let color = '#4F5D67';
-        if (isStimulusPractice) color = '#243447';
+        if (isSimplePractice) color = '#243447';
         else if (isFlight) color = '#A63D3D';
         else if (isHoliday) color = '#3D5845';
         else if (isMeeting) color = '#9A7547';
@@ -121,7 +121,7 @@ export default function WeeklyView() {
           category: apt.category || 'Other',
           description: apt.description,
           calendarId: apt.calendarId,
-          isStimulusPractice,
+          isSimplePractice,
           isHoliday,
           isFlight,
           isMeeting,
@@ -355,7 +355,7 @@ export default function WeeklyView() {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded" style={{ backgroundColor: '#243447' }}></div>
-                <span className="text-xs text-gray-600">StimulusPractice</span>
+                <span className="text-xs text-gray-600">SimplePractice</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3D5845' }}></div>
@@ -628,7 +628,7 @@ export default function WeeklyView() {
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
                     backgroundColor: (() => {
-                      if ((event as any).isStimulusPractice) return '#E7E9EC';
+                      if ((event as any).isSimplePractice) return '#E7E9EC';
                       if ((event as any).isFlight) return '#F6EAEA';
                       if ((event as any).isHoliday) return '#E9ECE9';
                       if ((event as any).isMeeting) return '#F4F0E9';
