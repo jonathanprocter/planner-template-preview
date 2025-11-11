@@ -152,11 +152,12 @@ export async function generateWeeklyPlannerPDF(
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Generate week dates
+  // Generate week dates - set time to noon to avoid timezone shifts
   const weekDays: Date[] = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + i);
+    date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone edge cases
     weekDays.push(date);
   }
 
@@ -332,13 +333,12 @@ async function generateWeeklyGridPage(
         color: rgb(rgb_color.r, rgb_color.g, rgb_color.b)
       });
       
-      // Draw holiday text
+      // Draw holiday text with smaller font to fit full text
       const cleanTitle = removeEmojis(holiday.title);
-      const truncated = cleanTitle.length > 10 ? cleanTitle.substring(0, 10) + '...' : cleanTitle;
-      page.drawText(truncated, {
+      page.drawText(cleanTitle, {
         x: x + 4,
         y: allDayY + 6,
-        size: 6,
+        size: 5,
         font: font,
         color: rgb(1, 1, 1)
       });
@@ -670,7 +670,7 @@ async function generateDailyGridPage(
       page.drawText(cleanTitle, {
         x: margin + timeColumnWidth + 8,
         y: holidayY - 10,
-        size: 8,
+        size: 7,
         font,
         color: rgb(1, 1, 1)
       });

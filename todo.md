@@ -837,3 +837,8 @@
 - [x] Fix daily page order to start with Monday (page 2) instead of Sunday
 - [x] Add holidays to PDF export all-day section
 - [x] Test PDF export with holidays and correct page order
+
+## Fix PDF Holiday Display and Day Order
+- [x] Reduce holiday font size in PDF to show full text
+- [x] Fix day of week in daily PDF pages to start with Monday
+- [x] Test PDF export with fixes
