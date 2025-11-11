@@ -449,8 +449,9 @@ export default function WeeklyView() {
                       className="text-xs px-2 py-1 rounded text-white cursor-pointer hover:opacity-80"
                       style={{ backgroundColor: holiday.color }}
                       onClick={() => {
-                        setSelectedAppointment(holiday);
-                        setModalOpen(true);
+                        // Navigate to daily view for this holiday's date
+                        const holidayDate = holiday.date || formatDateISO(weekDates[idx]);
+                        setLocation(`/daily?date=${holidayDate}`);
                       }}
                     >
                       {holiday.title}
@@ -626,8 +627,9 @@ export default function WeeklyView() {
                   onMouseDown={(e) => handleDragStart(e, event.id)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedAppointment(event);
-                    setModalOpen(true);
+                    // Navigate to daily view for this appointment's date
+                    const appointmentDate = event.date || formatDateISO(weekDates[dayIdx]);
+                    setLocation(`/daily?date=${appointmentDate}`);
                   }}
                 >
                   <div className="font-semibold truncate">{event.title}</div>

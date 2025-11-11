@@ -799,3 +799,9 @@
 - [x] Investigate getCalendarList error in googleCalendar.ts
 - [x] Fix loadCalendars error in GoogleCalendarSync.tsx
 - [x] Test calendar sync button functionality
+
+## Fix Navigation Between Weekly and Daily Views
+- [x] Investigate current navigation implementation
+- [x] Fix day header clicks to navigate to daily view with correct date
+- [x] Fix appointment clicks to navigate to daily view with correct date
+- [x] Test navigation from weekly to daily view
