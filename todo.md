@@ -817,3 +817,7 @@
 - [x] Investigate PDF export error in server logs
 - [x] Fix PDF generation code causing download failure
 - [x] Test PDF export functionality
+
+## Fix PDF Unicode Encoding Error
+- [x] Replace left arrow Unicode character with ASCII-compatible character
+- [x] Test PDF export functionality

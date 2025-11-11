@@ -172,10 +172,10 @@ export async function generateWeeklyPlannerPDF(
   const weeklyPage = pdfDoc.addPage([679, 509]);
   await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc);
   
-  // Add "← Weekly Overview" links to daily pages now that weekly page exists
+  // Add "< Weekly Overview" links to daily pages now that weekly page exists
   dailyPages.forEach((dailyPage) => {
     const { width: pageWidth } = dailyPage.getSize();
-    const linkText = '← Weekly Overview';
+    const linkText = '< Weekly Overview';
     const linkX = pageWidth / 2 - helvetica.widthOfTextAtSize(linkText, 9) / 2;
     const linkY = MARGIN + 5;
     
@@ -740,8 +740,8 @@ async function generateDailyGridPage(
     });
   }
   
-  // Add "← Weekly Overview" link at bottom
-  const linkText = '← Weekly Overview';
+  // Add "< Weekly Overview" link at bottom
+  const linkText = '< Weekly Overview';
   const linkX = pageWidth / 2 - font.widthOfTextAtSize(linkText, 9) / 2;
   const linkY = margin + 5;
   
