@@ -306,10 +306,12 @@ async function generateWeeklyGridPage(
   
   // Draw holidays for each day
   weekDays.forEach((day, dayIndex) => {
-    const dayStr = day.toISOString().split('T')[0];
+    // Use local date string to avoid UTC shift
+    const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const holidays = appointments.filter(apt => {
       if (apt.date !== dayStr) return false;
-      const isHoliday = apt.title?.toLowerCase().includes('holiday') || 
+      const isHoliday = apt.calendarId?.includes('holiday') ||
+                       apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
       return isHoliday;
@@ -409,12 +411,14 @@ async function generateWeeklyGridPage(
 
   // Draw appointments
   weekDays.forEach((day, dayIndex) => {
-    const dayStr = day.toISOString().split('T')[0];
+    // Use local date string to avoid UTC shift
+    const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const dayAppointments = appointments.filter(apt => apt.date === dayStr);
     
     dayAppointments.forEach(apt => {
       // Skip holidays - they're in the all-day section
-      const isHoliday = apt.title?.toLowerCase().includes('holiday') || 
+      const isHoliday = apt.calendarId?.includes('holiday') ||
+                       apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
       if (isHoliday) return;
@@ -623,11 +627,66 @@ async function generateDailyGridPage(
     color: rgb(0.7, 0.7, 0.7)
   });
 
-  // Draw appointments
-  const dayStr = day.toISOString().split('T')[0];
+  // Draw all-day holidays section
+  // Use local date string to avoid UTC shift
+  const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
   const dayAppointments = appointments.filter(apt => apt.date === dayStr);
+  const holidays = dayAppointments.filter(apt => {
+    const isHoliday = apt.calendarId?.includes('holiday') ||
+                     apt.title?.toLowerCase().includes('holiday') || 
+                     apt.title?.toLowerCase().includes('note') ||
+                     apt.category === 'Holidays/Notes';
+    return isHoliday;
+  });
+  
+  if (holidays.length > 0) {
+    const allDayY = gridTop + 10;
+    const allDayHeight = 24;
+    
+    // Draw "All-Day Events" label
+    page.drawText('All-Day Events:', {
+      x: margin + timeColumnWidth + 5,
+      y: allDayY + allDayHeight - 8,
+      size: 8,
+      font: fontBold,
+      color: rgb(0.4, 0.4, 0.4)
+    });
+    
+    // Draw holidays
+    holidays.forEach((holiday, idx) => {
+      const holidayY = allDayY - (idx * 20) - 5;
+      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
+      const rgb_color = hexToRgb(colors.leftFlag);
+      
+      page.drawRectangle({
+        x: margin + timeColumnWidth + 5,
+        y: holidayY - 14,
+        width: gridWidth - 10,
+        height: 16,
+        color: rgb(rgb_color.r, rgb_color.g, rgb_color.b)
+      });
+      
+      const cleanTitle = removeEmojis(holiday.title);
+      page.drawText(cleanTitle, {
+        x: margin + timeColumnWidth + 8,
+        y: holidayY - 10,
+        size: 8,
+        font,
+        color: rgb(1, 1, 1)
+      });
+    });
+  }
+  
+  // Draw appointments
   
   dayAppointments.forEach(apt => {
+    // Skip holidays - they're shown in the all-day section
+    const isHoliday = apt.calendarId?.includes('holiday') ||
+                     apt.title?.toLowerCase().includes('holiday') || 
+                     apt.title?.toLowerCase().includes('note') ||
+                     apt.category === 'Holidays/Notes';
+    if (isHoliday) return;
+    
     // Get EST hours directly from toLocaleTimeString
     const startEST = apt.startTime.toLocaleTimeString('en-US', { 
       timeZone: 'America/New_York', 

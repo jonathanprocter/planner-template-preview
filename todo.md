@@ -832,3 +832,8 @@
 - [x] Investigate why holidays are not showing in daily view
 - [x] Fix holiday display logic
 - [x] Test holiday display in both views
+
+## Fix PDF Export Issues
+- [x] Fix daily page order to start with Monday (page 2) instead of Sunday
+- [x] Add holidays to PDF export all-day section
+- [x] Test PDF export with holidays and correct page order
