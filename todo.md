@@ -821,3 +821,8 @@
 ## Fix PDF Unicode Encoding Error
 - [x] Replace left arrow Unicode character with ASCII-compatible character
 - [x] Test PDF export functionality
+
+## Add ISO Week Number to Weekly View
+- [x] Implement ISO week number calculation function
+- [x] Display week number in weekly view header
+- [x] Test week number display across different weeks

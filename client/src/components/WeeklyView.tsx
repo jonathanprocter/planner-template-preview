@@ -143,9 +143,24 @@ export default function WeeklyView() {
     return () => unsubscribe();
   }, [events]);
 
+  // Calculate ISO week number
+  const getISOWeek = useCallback((date: Date) => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    return 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+  }, []);
+
+  const isoWeek = useMemo(() => getISOWeek(weekDates[0]), [weekDates, getISOWeek]);
+
   const weekLabel = useMemo(() => 
-    `Week of ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
-    [weekDates]
+    `Week ${isoWeek}: ${weekDates[0].toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${weekDates[6].toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
+    [weekDates, isoWeek]
   );
 
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
