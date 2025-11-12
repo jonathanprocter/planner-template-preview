@@ -897,3 +897,9 @@
 - [x] Implement keyboard shortcut: → for next week
 - [x] Implement keyboard shortcut: N for new appointment
 - [x] Test all statistics and shortcuts
+
+## Reorganize Weekly View Layout
+- [x] Move Export to PDF and Save to Drive buttons near Daily View button
+- [x] Position statistics panel below export buttons
+- [x] Adjust spacing to avoid calendar grid interference
+- [x] Test layout on different screen sizes

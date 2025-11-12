@@ -389,6 +389,16 @@ export default function WeeklyView() {
           <span className="font-medium text-base text-[#2e2e2e]" style={{ fontFamily: "Georgia, serif" }}>Daily View</span>
         </div>
 
+        {/* Export buttons next to Daily View */}
+        <div className="absolute" style={{ left: "20px", top: "60px" }}>
+          <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
+        </div>
+
+        {/* Weekly Statistics Panel below export buttons */}
+        <div className="absolute" style={{ left: "20px", top: "100px" }}>
+          <WeeklyStats appointments={events} weekDates={weekDates} />
+        </div>
+
         <div className="absolute" style={{ left: "350px", top: "30px", width: "300px" }}>
           <AdvancedSearch />
         </div>
@@ -399,10 +409,6 @@ export default function WeeklyView() {
 
         <div className="absolute" style={{ right: "20px", top: "-60px" }}>
           <GoogleCalendarSync />
-        </div>
-
-        <div className="absolute" style={{ left: "20px", top: "100px" }}>
-          <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
         <div
@@ -443,15 +449,10 @@ export default function WeeklyView() {
           )}
         </div>
 
-        {/* Weekly Statistics Panel */}
-        <div className="absolute" style={{ left: "50%", top: "150px", transform: "translateX(-50%)" }}>
-          <WeeklyStats appointments={events} weekDates={weekDates} />
-        </div>
-
         <div 
           id="weekly-grid"
           className="absolute" 
-          style={{ top: "200px", left: "20px", right: "20px" }}
+          style={{ top: "150px", left: "20px", right: "20px" }}
         >
           
           <div className="flex border-b-2 border-gray-300" style={{ height: "60px" }}>
