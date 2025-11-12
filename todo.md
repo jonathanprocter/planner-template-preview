@@ -876,3 +876,13 @@
 - [x] Create backend endpoint to upload PDF to Google Drive
 - [x] Add "Save to Google Drive" button in ExportPDFButton component
 - [x] Test Google Drive upload functionality
+
+## Improve Header Layout
+- [ ] Move color legend from left sidebar to top right header
+- [ ] Extend search appointments box width
+- [ ] Test layout on different screen sizes
+
+## Improve Header Layout
+- [x] Remove color legend (not needed)
+- [x] Extend search appointments box width
+- [x] Test layout on different screen sizes

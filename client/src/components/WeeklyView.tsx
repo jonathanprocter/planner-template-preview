@@ -325,7 +325,7 @@ export default function WeeklyView() {
       onMouseMove={handleDragMove}
       onMouseUp={handleDragEnd}
     >
-      <div className="relative mx-auto" style={{ width: "1620px", minHeight: "2160px", padding: "20px" }}>
+      <div className="relative mx-auto" style={{ width: "1780px", minHeight: "2160px", padding: "20px" }}>
         
         <div
           className="absolute inline-flex items-center gap-2 bg-[#f3f3f3] border border-[#d0d0d0] rounded-lg cursor-pointer hover:bg-[#ececec] hover:shadow-md transition-all duration-200 hover:-translate-y-px"
@@ -346,11 +346,11 @@ export default function WeeklyView() {
           <span className="font-medium text-base text-[#2e2e2e]" style={{ fontFamily: "Georgia, serif" }}>Daily View</span>
         </div>
 
-        <div className="absolute" style={{ left: "350px", top: "30px" }}>
+        <div className="absolute" style={{ left: "350px", top: "30px", width: "300px" }}>
           <AdvancedSearch />
         </div>
 
-        <div className="absolute" style={{ right: "220px", top: "30px" }}>
+        <div className="absolute" style={{ right: "20px", top: "30px" }}>
           <CategoryFilter onFilterChange={setFilteredCategories} />
         </div>
 
@@ -362,33 +362,7 @@ export default function WeeklyView() {
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
-        <div className="absolute" style={{ left: "20px", top: "160px" }}>
-          <div className="bg-white border border-gray-300 rounded-lg p-3 shadow-sm">
-            <div className="text-xs font-semibold text-gray-700 mb-2">Color Legend</div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#243447' }}></div>
-                <span className="text-xs text-gray-600">SimplePractice</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#3D5845' }}></div>
-                <span className="text-xs text-gray-600">Holidays/Notes</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#4F5D67' }}></div>
-                <span className="text-xs text-gray-600">Work</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#9A7547' }}></div>
-                <span className="text-xs text-gray-600">Meetings</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded" style={{ backgroundColor: '#A63D3D' }}></div>
-                <span className="text-xs text-gray-600">Flight Events</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Color Legend removed from here - now at top right */}
 
         <div
           className="absolute font-bold text-center flex items-center gap-4"
