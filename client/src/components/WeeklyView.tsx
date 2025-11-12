@@ -649,7 +649,7 @@ export default function WeeklyView() {
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
             
             const dayIdx = getEventDayIndex(event);
-            const columnWidth = (1620 - 40 - 100) / 7;
+            const columnWidth = (1780 - 40 - 100) / 7;
             const x = 100 + dayIdx * columnWidth;
             
             return (

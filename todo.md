@@ -909,3 +909,9 @@
 - [x] Ensure no interference with week header
 - [x] Ensure no interference with calendar grid
 - [x] Test layout arrangement
+
+## Fix Appointment Column Alignment
+- [x] Investigate why appointments are shifted one day left
+- [x] Fix appointment-to-column mapping logic
+- [x] Test alignment across all days
+- [x] Verify holidays also align correctly
