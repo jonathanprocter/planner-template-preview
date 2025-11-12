@@ -394,13 +394,13 @@ export default function WeeklyView() {
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
-        {/* Weekly Statistics Panel below export buttons */}
-        <div className="absolute" style={{ left: "20px", top: "100px" }}>
-          <WeeklyStats appointments={events} weekDates={weekDates} />
-        </div>
-
         <div className="absolute" style={{ left: "350px", top: "30px", width: "300px" }}>
           <AdvancedSearch />
+        </div>
+
+        {/* Weekly Statistics Panel to the right of search */}
+        <div className="absolute" style={{ left: "670px", top: "30px" }}>
+          <WeeklyStats appointments={events} weekDates={weekDates} />
         </div>
 
         <div className="absolute" style={{ right: "20px", top: "30px" }}>
