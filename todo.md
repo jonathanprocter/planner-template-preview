@@ -886,3 +886,14 @@
 - [x] Remove color legend (not needed)
 - [x] Extend search appointments box width
 - [x] Test layout on different screen sizes
+
+## Add Weekly Statistics Panel and Keyboard Shortcuts
+- [x] Create weekly statistics panel component
+- [x] Calculate total scheduled hours for the week
+- [x] Identify and display busiest day
+- [x] Show total appointment count
+- [x] Implement keyboard shortcut: T for Today
+- [x] Implement keyboard shortcut: ← for previous week
+- [x] Implement keyboard shortcut: → for next week
+- [x] Implement keyboard shortcut: N for new appointment
+- [x] Test all statistics and shortcuts

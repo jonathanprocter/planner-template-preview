@@ -7,6 +7,7 @@ import { AdvancedSearch } from "./AdvancedSearch";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { ExportPDFButton } from "./ExportPDFButton";
+import { WeeklyStats } from "./WeeklyStats";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
@@ -144,6 +145,48 @@ export default function WeeklyView() {
 
     return () => unsubscribe();
   }, [events]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if user is typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 't':
+          // T for Today
+          goToCurrentWeek();
+          break;
+        case 'arrowleft':
+          // ← for previous week
+          goToPreviousWeek();
+          break;
+        case 'arrowright':
+          // → for next week
+          goToNextWeek();
+          break;
+        case 'n':
+          // N for new appointment (open dialog with current time)
+          const now = new Date();
+          const currentHour = now.getHours();
+          const currentMinute = now.getMinutes();
+          const roundedMinute = Math.round(currentMinute / 30) * 30;
+          const startTime = `${currentHour.toString().padStart(2, '0')}:${roundedMinute.toString().padStart(2, '0')}`;
+          const endHour = roundedMinute === 30 ? currentHour + 1 : currentHour;
+          const endMinute = roundedMinute === 30 ? 0 : 30;
+          const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`;
+          const todayStr = formatDateISO(now);
+          setDialogData({ startTime, endTime, date: todayStr });
+          setDialogOpen(true);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [weekOffset]);
 
   // Calculate ISO week number
   const getISOWeek = useCallback((date: Date) => {
@@ -362,8 +405,6 @@ export default function WeeklyView() {
           <ExportPDFButton weekStart={weekDates[0]} weekEnd={weekDates[6]} />
         </div>
 
-        {/* Color Legend removed from here - now at top right */}
-
         <div
           className="absolute font-bold text-center flex items-center gap-4"
           style={{
@@ -402,10 +443,15 @@ export default function WeeklyView() {
           )}
         </div>
 
+        {/* Weekly Statistics Panel */}
+        <div className="absolute" style={{ left: "50%", top: "150px", transform: "translateX(-50%)" }}>
+          <WeeklyStats appointments={events} weekDates={weekDates} />
+        </div>
+
         <div 
           id="weekly-grid"
           className="absolute" 
-          style={{ top: "150px", left: "20px", right: "20px" }}
+          style={{ top: "200px", left: "20px", right: "20px" }}
         >
           
           <div className="flex border-b-2 border-gray-300" style={{ height: "60px" }}>
