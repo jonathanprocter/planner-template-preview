@@ -847,3 +847,8 @@
 - [x] Find all occurrences of "StimulusPractice"
 - [x] Replace with "SimplePractice"
 - [x] Test application
+
+## Verify Drag-and-Drop Functionality
+- [x] Check current drag-and-drop implementation in WeeklyView
+- [x] Ensure appointments can be dragged to different times
+- [x] Test drag-and-drop functionality

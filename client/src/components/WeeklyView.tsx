@@ -32,6 +32,8 @@ export default function WeeklyView() {
   const [events, setEvents] = useState<Event[]>(eventStore.getEvents());
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragStartPos, setDragStartPos] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -222,6 +224,8 @@ export default function WeeklyView() {
     if (!event) return;
     
     setDraggingEvent(eventId);
+    setDragStartPos({ x: e.clientX, y: e.clientY });
+    setIsDragging(false);
     const rect = (e.target as HTMLElement).getBoundingClientRect();
     setDragOffset({
       x: e.clientX - rect.left,
@@ -232,7 +236,14 @@ export default function WeeklyView() {
   const handleDragMove = useCallback((e: React.MouseEvent) => {
     if (!draggingEvent) return;
     e.preventDefault();
-  }, [draggingEvent]);
+    
+    // Detect if user has moved more than 5 pixels - then it's a drag, not a click
+    const dx = Math.abs(e.clientX - dragStartPos.x);
+    const dy = Math.abs(e.clientY - dragStartPos.y);
+    if (dx > 5 || dy > 5) {
+      setIsDragging(true);
+    }
+  }, [draggingEvent, dragStartPos]);
 
   const handleDragEnd = useCallback(async (e: React.MouseEvent) => {
     if (!draggingEvent) return;
@@ -295,6 +306,8 @@ export default function WeeklyView() {
     }
     
     setDraggingEvent(null);
+    // Reset isDragging after a short delay to prevent click from firing
+    setTimeout(() => setIsDragging(false), 100);
   }, [draggingEvent, events, weekDates, formatDateISO, updateMutation, utils]);
 
   const filteredEvents = useMemo(() => {
@@ -643,9 +656,11 @@ export default function WeeklyView() {
                   onMouseDown={(e) => handleDragStart(e, event.id)}
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Navigate to daily view for this appointment's date
-                    const appointmentDate = event.date || formatDateISO(weekDates[dayIdx]);
-                    setLocation(`/daily?date=${appointmentDate}`);
+                    // Only navigate if this was a click, not a drag
+                    if (!isDragging) {
+                      const appointmentDate = event.date || formatDateISO(weekDates[dayIdx]);
+                      setLocation(`/daily?date=${appointmentDate}`);
+                    }
                   }}
                 >
                   <div className="font-semibold truncate">{event.title}</div>
