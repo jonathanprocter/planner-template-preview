@@ -10,12 +10,19 @@ declare const google: any;
 // For production, move to server-side or use proper OAuth flow
 const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '839967078225-1ljq2t2nhgh2h2io55cgkmvul4sn8r4v.apps.googleusercontent.com';
 const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || 'AIzaSyAUXmnozR1UJuaV2TLwyLcJY9XDoYrcDhA';
-const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events';
+const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file';
 
 let tokenClient: any | null = null;
 let accessToken: string | null = null;
 let gapiInited = false;
 let gisInited = false;
+
+/**
+ * Get the current access token
+ */
+export const getAccessToken = (): string | null => {
+  return accessToken;
+};
 
 export interface GoogleCalendarEvent {
   id: string;
@@ -366,6 +373,62 @@ export const deleteEvent = async (
     return true;
   } catch (error) {
     console.error('Error deleting event:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upload a file to Google Drive
+ */
+export const uploadToGoogleDrive = async (
+  fileBlob: Blob,
+  fileName: string,
+  mimeType: string = 'application/pdf'
+): Promise<{ id: string; webViewLink: string } | null> => {
+  try {
+    if (!gapiInited) {
+      throw new Error('Google API not initialized');
+    }
+    if (!accessToken) {
+      throw new Error('User not signed in');
+    }
+
+    // Load the Drive API client if not already loaded
+    if (!gapi.client.drive) {
+      await gapi.client.load('drive', 'v3');
+    }
+
+    // Create metadata
+    const metadata = {
+      name: fileName,
+      mimeType: mimeType,
+    };
+
+    // Create form data for multipart upload
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', fileBlob);
+
+    // Upload file using fetch (gapi.client doesn't support multipart uploads well)
+    const response = await fetch(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: form,
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Error uploading to Google Drive:', error);
     throw error;
   }
 };

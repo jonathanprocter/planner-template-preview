@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+import { uploadToGoogleDrive, getAccessToken } from "@/lib/googleCalendar";
 
 interface ExportPDFButtonProps {
   weekStart: Date;
@@ -11,6 +12,7 @@ interface ExportPDFButtonProps {
 
 export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   const exportMutation = trpc.appointments.exportPDF.useMutation();
+  const [isUploadingToDrive, setIsUploadingToDrive] = useState(false);
 
   const handleExport = async () => {
     toast.info("Generating PDF...");
@@ -53,15 +55,83 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
     }
   };
 
+  const handleSaveToDrive = async () => {
+    toast.info("Generating PDF for Google Drive...");
+    setIsUploadingToDrive(true);
+
+    try {
+      // Check if user is signed in to Google
+      const accessToken = getAccessToken();
+      if (!accessToken) {
+        toast.error("Please sign in to Google Calendar first");
+        setIsUploadingToDrive(false);
+        return;
+      }
+
+      const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // Generate PDF
+      const result = await exportMutation.mutateAsync({
+        startDate: formatDate(weekStart),
+        endDate: formatDate(weekEnd),
+      });
+
+      // Convert base64 to blob
+      const binaryString = atob(result.pdf);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+
+      // Create filename with date range
+      const startStr = weekStart.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+      const endStr = weekEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const filename = `${startStr} - ${endStr}.pdf`;
+
+      toast.info("Uploading to Google Drive...");
+
+      // Upload to Google Drive
+      const driveFile = await uploadToGoogleDrive(blob, filename, 'application/pdf');
+
+      if (driveFile) {
+        toast.success(`PDF saved to Google Drive as "${filename}"`);
+      } else {
+        toast.error("Failed to upload to Google Drive");
+      }
+    } catch (error: any) {
+      console.error("Error saving to Google Drive:", error);
+      toast.error(error?.message || "Failed to save to Google Drive");
+    } finally {
+      setIsUploadingToDrive(false);
+    }
+  };
+
   return (
-    <Button
-      onClick={handleExport}
-      disabled={exportMutation.isPending}
-      variant="outline"
-      className="flex items-center gap-2"
-    >
-      <Download className="w-4 h-4" />
-      {exportMutation.isPending ? "Exporting..." : "Export to PDF"}
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        onClick={handleExport}
+        disabled={exportMutation.isPending || isUploadingToDrive}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <Download className="w-4 h-4" />
+        {exportMutation.isPending ? "Exporting..." : "Export to PDF"}
+      </Button>
+      <Button
+        onClick={handleSaveToDrive}
+        disabled={exportMutation.isPending || isUploadingToDrive}
+        variant="outline"
+        className="flex items-center gap-2"
+      >
+        <Upload className="w-4 h-4" />
+        {isUploadingToDrive ? "Saving..." : "Save to Drive"}
+      </Button>
+    </div>
   );
 }

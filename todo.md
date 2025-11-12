@@ -869,3 +869,10 @@
 - [x] Add automatic background sync every 15 minutes
 - [x] Display last sync time
 - [x] Test all sync enhancements
+
+## Add Google Drive PDF Upload
+- [x] Add Google Drive API scope to OAuth configuration
+- [x] Create Google Drive upload function in googleCalendar.ts
+- [x] Create backend endpoint to upload PDF to Google Drive
+- [x] Add "Save to Google Drive" button in ExportPDFButton component
+- [x] Test Google Drive upload functionality
