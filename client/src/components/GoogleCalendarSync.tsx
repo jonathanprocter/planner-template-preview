@@ -13,12 +13,26 @@ export default function GoogleCalendarSync() {
   const [availableCalendars, setAvailableCalendars] = useState<Array<{ id: string; summary: string; selected: boolean }>>([]);
   const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>([]);
   const [syncProgress, setSyncProgress] = useState({ current: 0, total: 0, calendar: "" });
+  const [syncStatus, setSyncStatus] = useState<Record<string, { status: 'pending' | 'syncing' | 'success' | 'error', error?: string, eventCount?: number }>>({});
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
   const syncMutation = trpc.appointments.syncFromGoogle.useMutation();
 
   useEffect(() => {
     initGoogleCalendar();
   }, []);
+  
+  // Automatic background sync every 15 minutes
+  useEffect(() => {
+    if (!isSignedIn || availableCalendars.length === 0) return;
+    
+    const syncInterval = setInterval(() => {
+      console.log('Auto-syncing calendars...');
+      handleSync();
+    }, 15 * 60 * 1000); // 15 minutes in milliseconds
+    
+    return () => clearInterval(syncInterval);
+  }, [isSignedIn, availableCalendars, selectedCalendarIds]);
 
   const loadCalendars = async () => {
     try {
@@ -47,6 +61,13 @@ export default function GoogleCalendarSync() {
     setIsSyncing(true);
     setSyncProgress({ current: 0, total: calendarsToSync.length, calendar: "" });
     
+    // Initialize sync status for all calendars
+    const initialStatus: Record<string, { status: 'pending' | 'syncing' | 'success' | 'error', error?: string, eventCount?: number }> = {};
+    calendarsToSync.forEach(id => {
+      initialStatus[id] = { status: 'pending' };
+    });
+    setSyncStatus(initialStatus);
+    
     try {
       const eventMap = new Map<string, any>();
       
@@ -58,6 +79,9 @@ export default function GoogleCalendarSync() {
 
         setSyncProgress({ current: i + 1, total: calendarsToSync.length, calendar: calendar.summary });
         toast.info(`Syncing ${calendar.summary} (${i + 1}/${calendarsToSync.length})...`);
+        
+        // Update status to syncing
+        setSyncStatus(prev => ({ ...prev, [calendarId]: { status: 'syncing' } }));
 
         try {
           // Fetch 2015-2030 events (full 15-year range)
@@ -142,9 +166,16 @@ export default function GoogleCalendarSync() {
             }
           }
           
-        } catch (calendarError) {
+          // Update status to success
+          setSyncStatus(prev => ({ ...prev, [calendarId]: { status: 'success', eventCount: events.length } }));
+          
+        } catch (calendarError: any) {
           console.error(`Error syncing ${calendar.summary}:`, calendarError);
+          const errorMsg = calendarError?.message || 'Unknown error';
           toast.error(`Failed to sync ${calendar.summary} - continuing with others`);
+          
+          // Update status to error
+          setSyncStatus(prev => ({ ...prev, [calendarId]: { status: 'error', error: errorMsg } }));
         }
         
         // Add 3 second delay between calendars to prevent overload
@@ -163,6 +194,7 @@ export default function GoogleCalendarSync() {
           toast.info(`Saving ${uniqueEvents.length} unique events to database...`);
           await syncMutation.mutateAsync({ events: uniqueEvents });
           toast.success(`Successfully synced ${uniqueEvents.length} appointments!`);
+          setLastSyncTime(new Date());
           break;
         } catch (dbError) {
           retries--;
@@ -238,6 +270,11 @@ export default function GoogleCalendarSync() {
         <p className="text-sm text-muted-foreground">
           Connected to Google Calendar
         </p>
+        {lastSyncTime && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Last synced: {lastSyncTime.toLocaleString()}
+          </p>
+        )}
       </div>
 
       {availableCalendars.length > 0 && (
@@ -263,6 +300,39 @@ export default function GoogleCalendarSync() {
               className="bg-blue-500 h-2 rounded-full transition-all duration-300"
               style={{ width: `${(syncProgress.current / syncProgress.total) * 100}%` }}
             />
+          </div>
+        </div>
+      )}
+      
+      {/* Sync Status Indicators */}
+      {Object.keys(syncStatus).length > 0 && (
+        <div className="text-sm space-y-2">
+          <div className="font-semibold">Sync Status:</div>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {availableCalendars
+              .filter(cal => syncStatus[cal.id])
+              .map(cal => {
+                const status = syncStatus[cal.id];
+                return (
+                  <div key={cal.id} className="flex items-center justify-between text-xs p-2 rounded bg-muted/50">
+                    <span className="truncate flex-1">{cal.summary}</span>
+                    <div className="flex items-center gap-2 ml-2">
+                      {status.status === 'pending' && (
+                        <span className="text-gray-500">⏳ Pending</span>
+                      )}
+                      {status.status === 'syncing' && (
+                        <span className="text-blue-500">🔄 Syncing...</span>
+                      )}
+                      {status.status === 'success' && (
+                        <span className="text-green-600">✓ {status.eventCount} events</span>
+                      )}
+                      {status.status === 'error' && (
+                        <span className="text-red-600" title={status.error}>✗ Failed</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

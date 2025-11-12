@@ -862,3 +862,10 @@
 - [x] Investigate getEvents error at line 157
 - [x] Fix calendar sync for all calendars
 - [x] Test sync functionality
+
+## Add Sync Enhancements
+- [x] Add sync status indicators showing success/failure per calendar
+- [x] Add selective calendar syncing with checkboxes
+- [x] Add automatic background sync every 15 minutes
+- [x] Display last sync time
+- [x] Test all sync enhancements
