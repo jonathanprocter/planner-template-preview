@@ -852,3 +852,13 @@
 - [x] Check current drag-and-drop implementation in WeeklyView
 - [x] Ensure appointments can be dragged to different times
 - [x] Test drag-and-drop functionality
+
+## Verify Google Calendar Write Permissions
+- [ ] Check current OAuth scopes configuration
+- [ ] Ensure write/edit scopes are included
+- [ ] Test calendar write operations
+
+## Fix Calendar Sync Errors
+- [x] Investigate getEvents error at line 157
+- [x] Fix calendar sync for all calendars
+- [x] Test sync functionality

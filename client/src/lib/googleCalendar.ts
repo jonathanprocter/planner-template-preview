@@ -239,9 +239,16 @@ export const getEvents = async (
     } while (pageToken);
     
     return allEvents;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching events:', error);
-    throw error;
+    console.error('Error details:', {
+      message: error.message,
+      status: error.status,
+      result: error.result,
+      calendarId
+    });
+    // Return empty array instead of throwing to allow other calendars to sync
+    return [];
   }
 };
 
