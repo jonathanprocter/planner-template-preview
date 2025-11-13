@@ -1,4 +1,11 @@
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -13,6 +20,7 @@ interface ExportPDFButtonProps {
 export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   const exportMutation = trpc.appointments.exportPDF.useMutation();
   const [isUploadingToDrive, setIsUploadingToDrive] = useState(false);
+  const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
 
   const handleExport = async () => {
     toast.info("Generating PDF...");
@@ -28,6 +36,7 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
       const result = await exportMutation.mutateAsync({
         startDate: formatDate(weekStart),
         endDate: formatDate(weekEnd),
+        orientation: orientation,
       });
 
       // Convert base64 to blob
@@ -79,6 +88,7 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
       const result = await exportMutation.mutateAsync({
         startDate: formatDate(weekStart),
         endDate: formatDate(weekEnd),
+        orientation: orientation,
       });
 
       // Convert base64 to blob
@@ -113,7 +123,16 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 items-center">
+      <Select value={orientation} onValueChange={(value: "landscape" | "portrait") => setOrientation(value)}>
+        <SelectTrigger className="w-[140px]">
+          <SelectValue placeholder="Orientation" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="landscape">Landscape</SelectItem>
+          <SelectItem value="portrait">Portrait</SelectItem>
+        </SelectContent>
+      </Select>
       <Button
         onClick={handleExport}
         disabled={exportMutation.isPending || isUploadingToDrive}

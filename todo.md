@@ -915,3 +915,11 @@
 - [x] Fix appointment-to-column mapping logic
 - [x] Test alignment across all days
 - [x] Verify holidays also align correctly
+
+## Add PDF Orientation Option for Weekly View
+- [x] Add orientation dropdown to Export PDF button (Landscape/Portrait)
+- [x] Update PDF generation backend to accept orientation parameter
+- [x] Adjust weekly page dimensions based on orientation (679×509 landscape, 509×679 portrait)
+- [x] Recalculate layout for portrait weekly view (column widths, spacing, font sizes)
+- [x] Test both orientations with real appointment data
+- [x] Verify all features work in both orientations (hyperlinks, holidays, notes, appointments)

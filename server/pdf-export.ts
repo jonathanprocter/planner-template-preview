@@ -145,7 +145,8 @@ const TIME_COL_WIDTH = 48;
 export async function generateWeeklyPlannerPDF(
   appointments: Appointment[],
   startDate: Date,
-  endDate: Date
+  endDate: Date,
+  orientation: "landscape" | "portrait" = "landscape"
 ): Promise<Buffer> {
   // Create PDF document
   const pdfDoc = await PDFDocument.create();
@@ -169,8 +170,11 @@ export async function generateWeeklyPlannerPDF(
     await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold, pdfDoc);
   }
 
-  // Page 1: Weekly Overview (Landscape) - create last but will be first in final PDF
-  const weeklyPage = pdfDoc.addPage([679, 509]);
+  // Page 1: Weekly Overview - create last but will be first in final PDF
+  // Orientation: Landscape (679×509) or Portrait (509×679)
+  const weeklyPage = orientation === "landscape" 
+    ? pdfDoc.addPage([679, 509])
+    : pdfDoc.addPage([509, 679]);
   await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc);
   
   // Add "< Weekly Overview" links to daily pages now that weekly page exists

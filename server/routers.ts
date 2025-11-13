@@ -401,6 +401,7 @@ export const appRouter = router({
         z.object({
           startDate: z.string(),
           endDate: z.string(),
+          orientation: z.enum(["landscape", "portrait"]).optional().default("landscape"),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -429,7 +430,8 @@ export const appRouter = router({
           const pdfBuffer = await generateWeeklyPlannerPDF(
             result,
             parseLocalDate(input.startDate),
-            parseLocalDate(input.endDate)
+            parseLocalDate(input.endDate),
+            input.orientation || "landscape"
           );
 
           // Return PDF as base64
