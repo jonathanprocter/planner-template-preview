@@ -923,3 +923,9 @@
 - [x] Recalculate layout for portrait weekly view (column widths, spacing, font sizes)
 - [x] Test both orientations with real appointment data
 - [x] Verify all features work in both orientations (hyperlinks, holidays, notes, appointments)
+
+## Use Abbreviated Day Names for Portrait PDF
+- [x] Update generateWeeklyGridPage to accept orientation parameter
+- [x] Use abbreviated day names (Mon, Tue, Wed, Thu, Fri, Sat, Sun) for portrait orientation
+- [x] Keep full day names (Monday, Tuesday, etc.) for landscape orientation
+- [x] Test portrait PDF to verify day names fit properly within grid

@@ -175,7 +175,7 @@ export async function generateWeeklyPlannerPDF(
   const weeklyPage = orientation === "landscape" 
     ? pdfDoc.addPage([679, 509])
     : pdfDoc.addPage([509, 679]);
-  await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc);
+  await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc, orientation);
   
   // Add "< Weekly Overview" links to daily pages now that weekly page exists
   dailyPages.forEach((dailyPage) => {
@@ -212,7 +212,8 @@ async function generateWeeklyGridPage(
   font: any,
   fontBold: any,
   dailyPages?: PDFPage[],
-  pdfDoc?: PDFDocument
+  pdfDoc?: PDFDocument,
+  orientation: "landscape" | "portrait" = "landscape"
 ) {
   const { width: pageWidth, height: pageHeight } = page.getSize();
   const margin = MARGIN;
@@ -249,8 +250,10 @@ async function generateWeeklyGridPage(
   const gridHeight = availableHeight;
   const columnWidth = (pageWidth - margin - timeColumnWidth) / 7;
 
-  // Day headers with full date
-  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  // Day headers with full or abbreviated names based on orientation
+  const dayNames = orientation === "portrait"
+    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   dayNames.forEach((dayName, i) => {
     const x = margin + timeColumnWidth + i * columnWidth;
     const currentDay = weekDays[i];
