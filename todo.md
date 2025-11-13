@@ -929,3 +929,9 @@
 - [x] Use abbreviated day names (Mon, Tue, Wed, Thu, Fri, Sat, Sun) for portrait orientation
 - [x] Keep full day names (Monday, Tuesday, etc.) for landscape orientation
 - [x] Test portrait PDF to verify day names fit properly within grid
+
+## Fix Day Header Alignment in Portrait PDF
+- [x] Change day header alignment from center to left for portrait orientation
+- [x] Keep center alignment for landscape orientation
+- [x] Verify Sunday header displays completely without being cut off
+- [x] Test with full week of data

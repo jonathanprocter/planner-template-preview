@@ -269,10 +269,12 @@ async function generateWeeklyGridPage(
     });
     const dateStr = `${dayName}, ${monthShort} ${dayNum}`;
     
-    // Measure text width to center it
+    // Align text: left for portrait (to prevent cutoff), center for landscape
     const textWidth = font.widthOfTextAtSize(dateStr, 8);
     
-    const textX = x + (columnWidth - textWidth) / 2;
+    const textX = orientation === "portrait" 
+      ? x + 2 // Left-align with small padding
+      : x + (columnWidth - textWidth) / 2; // Center-align
     const textY = gridTop + 5;
     
     page.drawText(dateStr, {
