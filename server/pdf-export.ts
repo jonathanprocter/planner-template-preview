@@ -220,6 +220,9 @@ async function generateWeeklyGridPage(
   const headerHeight = 60;
   const timeColumnWidth = TIME_COL_WIDTH;
   
+  // Font size scaling for portrait orientation (reduce by ~15% for better fit)
+  const fontScale = orientation === "portrait" ? 0.85 : 1.0;
+  
   // Calculate dynamic hour height to fit available space perfectly
   const totalHours = END_HOUR - START_HOUR;
   const availableHeight = pageHeight - headerHeight - margin * 2;
@@ -241,7 +244,7 @@ async function generateWeeklyGridPage(
   page.drawText(`Week of ${firstDay} - ${lastDay}`, {
     x: margin,
     y: pageHeight - 30,
-    size: 16,
+    size: Math.round(16 * fontScale),
     font: fontBold,
     color: rgb(0, 0, 0)
   });
@@ -269,8 +272,9 @@ async function generateWeeklyGridPage(
     });
     const dateStr = `${dayName}, ${monthShort} ${dayNum}`;
     
-    // Align text: left for portrait (to prevent cutoff), center for landscape
-    const textWidth = font.widthOfTextAtSize(dateStr, 8);
+    // Measure text width and align based on orientation
+    const dayHeaderSize = Math.round(8 * fontScale);
+    const textWidth = font.widthOfTextAtSize(dateStr, dayHeaderSize);
     
     const textX = orientation === "portrait" 
       ? x + 2 // Left-align with small padding
@@ -280,7 +284,7 @@ async function generateWeeklyGridPage(
     page.drawText(dateStr, {
       x: textX,
       y: textY,
-      size: 8,
+      size: dayHeaderSize,
       font: fontBold,
       color: rgb(0, 0, 0)
     });
@@ -347,7 +351,7 @@ async function generateWeeklyGridPage(
       page.drawText(cleanTitle, {
         x: x + 4,
         y: allDayY + 6,
-        size: 5,
+        size: Math.round(5 * fontScale),
         font: font,
         color: rgb(1, 1, 1)
       });
@@ -388,7 +392,7 @@ async function generateWeeklyGridPage(
     page.drawText(timeLabel, {
       x: margin + 2,
       y: y - 5,
-      size: 7,
+      size: Math.round(7 * fontScale),
       font: font,
       color: rgb(0.4, 0.4, 0.4)
     });
@@ -400,7 +404,7 @@ async function generateWeeklyGridPage(
       page.drawText(halfLabel, {
         x: margin + 2,
         y: halfY - 5,
-        size: 6,
+        size: Math.round(6 * fontScale),
         font: font,
         color: rgb(0.5, 0.5, 0.5)
       });
@@ -516,7 +520,7 @@ async function generateWeeklyGridPage(
       const cleanTitle = removeEmojis(apt.title);
       const timeText = `${startEST.substring(0, 5)}`; // e.g., "08:00"
       const fullText = `${timeText} - ${cleanTitle}`;
-      const fontSize = 6; // Smaller font to fit time + title
+      const fontSize = Math.round(6 * fontScale); // Smaller font to fit time + title
       const lineHeight = fontSize + 2;
       const textLines = wrapText(fullText, font, fontSize, width - 12);
       

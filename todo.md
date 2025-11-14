@@ -935,3 +935,11 @@
 - [x] Keep center alignment for landscape orientation
 - [x] Verify Sunday header displays completely without being cut off
 - [x] Test with full week of data
+
+## Reduce Font Sizes for Portrait PDF
+- [x] Reduce day header font size for portrait orientation
+- [x] Reduce time label font sizes for portrait orientation
+- [x] Reduce appointment text font sizes for portrait orientation
+- [x] Reduce title and other text font sizes for portrait orientation
+- [x] Test portrait PDF to verify readability with smaller fonts
+- [x] Ensure landscape orientation maintains current font sizes
