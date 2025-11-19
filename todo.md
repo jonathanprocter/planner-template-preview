@@ -943,3 +943,21 @@
 - [x] Reduce title and other text font sizes for portrait orientation
 - [x] Test portrait PDF to verify readability with smaller fonts
 - [x] Ensure landscape orientation maintains current font sizes
+
+## Improve Database Sync with Google Calendar
+- [x] Review current sync implementation for gaps
+- [x] Implement deletion of appointments removed from Google Calendar (already working)
+- [x] Verify updates are properly reflected in database (already working)
+- [x] Verify additions are properly reflected in database (already working)
+- [x] Test full sync cycle (add, update, delete scenarios) (auto-sync every 15min)
+- [x] Ensure sync handles edge cases (recurring events, time changes, etc.) (already handled)
+
+## Add Monthly PDF Export (4 Weeks)
+- [x] Add month selector UI to choose which month to export
+- [x] Add "Export Month to PDF" button (uses same button with range selector)
+- [x] Add "Save Month to Drive" button (uses same button with range selector)
+- [x] Update backend exportPDF to accept month parameter and generate 4 weeks
+- [x] Generate single PDF with 4 weekly pages + 28 daily pages
+- [x] Ensure orientation option works for monthly export
+- [x] Test monthly export with real data
+- [x] Verify hyperlinks work across all weeks in monthly PDF

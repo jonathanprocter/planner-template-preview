@@ -153,52 +153,74 @@ export async function generateWeeklyPlannerPDF(
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const helveticaBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Generate week dates - set time to noon to avoid timezone shifts
-  const weekDays: Date[] = [];
-  for (let i = 0; i < 7; i++) {
-    const date = new Date(startDate);
-    date.setDate(date.getDate() + i);
-    date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone edge cases
-    weekDays.push(date);
-  }
+  // Calculate number of days in range
+  const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const isMultiWeek = daysDiff > 7;
+  const numWeeks = isMultiWeek ? Math.ceil(daysDiff / 7) : 1;
 
-  // Pages 2-8: Daily Views (Portrait) - create first so we can link to them
-  const dailyPages: PDFPage[] = [];
-  for (const day of weekDays) {
-    const dailyPage = pdfDoc.addPage([509, 679]);
-    dailyPages.push(dailyPage);
-    await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold, pdfDoc);
-  }
+  // Generate all weeks
+  const allWeeklyPages: PDFPage[] = [];
+  const allDailyPages: PDFPage[] = [];
 
-  // Page 1: Weekly Overview - create last but will be first in final PDF
-  // Orientation: Landscape (679×509) or Portrait (509×679)
-  const weeklyPage = orientation === "landscape" 
-    ? pdfDoc.addPage([679, 509])
-    : pdfDoc.addPage([509, 679]);
-  await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc, orientation);
-  
-  // Add "< Weekly Overview" links to daily pages now that weekly page exists
-  dailyPages.forEach((dailyPage) => {
-    const { width: pageWidth } = dailyPage.getSize();
-    const linkText = '< Weekly Overview';
-    const linkX = pageWidth / 2 - helvetica.widthOfTextAtSize(linkText, 9) / 2;
-    const linkY = MARGIN + 5;
+  for (let weekIndex = 0; weekIndex < numWeeks; weekIndex++) {
+    // Calculate week start date
+    const weekStartDate = new Date(startDate);
+    weekStartDate.setDate(weekStartDate.getDate() + (weekIndex * 7));
+
+    // Generate week dates - set time to noon to avoid timezone shifts
+    const weekDays: Date[] = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStartDate);
+      date.setDate(date.getDate() + i);
+      date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone edge cases
+      weekDays.push(date);
+    }
+
+    // Pages 2-8: Daily Views (Portrait) - create first so we can link to them
+    const dailyPages: PDFPage[] = [];
+    for (const day of weekDays) {
+      const dailyPage = pdfDoc.addPage([509, 679]);
+      dailyPages.push(dailyPage);
+      allDailyPages.push(dailyPage);
+      await generateDailyGridPage(dailyPage, day, appointments, helvetica, helveticaBold, pdfDoc);
+    }
+
+    // Page 1: Weekly Overview - create last but will be first in final PDF
+    // Orientation: Landscape (679×509) or Portrait (509×679)
+    const weeklyPage = orientation === "landscape" 
+      ? pdfDoc.addPage([679, 509])
+      : pdfDoc.addPage([509, 679]);
+    allWeeklyPages.push(weeklyPage);
+    await generateWeeklyGridPage(weeklyPage, weekDays, appointments, helvetica, helveticaBold, dailyPages, pdfDoc, orientation);
     
-    addInternalLink(
-      dailyPage,
-      linkX - 5,
-      linkY - 2,
-      helvetica.widthOfTextAtSize(linkText, 9) + 10,
-      12,
-      weeklyPage,
-      pdfDoc
-    );
-  });
+    // Add "< Weekly Overview" links to daily pages now that weekly page exists
+    dailyPages.forEach((dailyPage) => {
+      const { width: pageWidth } = dailyPage.getSize();
+      const linkText = '< Weekly Overview';
+      const linkX = pageWidth / 2 - helvetica.widthOfTextAtSize(linkText, 9) / 2;
+      const linkY = MARGIN + 5;
+      
+      addInternalLink(
+        dailyPage,
+        linkX - 5,
+        linkY - 2,
+        helvetica.widthOfTextAtSize(linkText, 9) + 10,
+        12,
+        weeklyPage,
+        pdfDoc
+      );
+    });
+  }
   
-  // Move weekly page to the beginning
-  const pages = pdfDoc.getPages();
-  pdfDoc.removePage(pages.length - 1); // Remove from end
-  pdfDoc.insertPage(0, weeklyPage); // Insert at beginning
+  // Move all weekly pages to the beginning (in reverse order so they appear correctly)
+  for (let i = allWeeklyPages.length - 1; i >= 0; i--) {
+    const pages = pdfDoc.getPages();
+    const weeklyPageIndex = pages.indexOf(allWeeklyPages[i]);
+    if (weeklyPageIndex !== -1) {
+      pdfDoc.removePage(weeklyPageIndex);
+      pdfDoc.insertPage(0, allWeeklyPages[i]);
+    }
+  }
 
   // Save and return PDF
   const pdfBytes = await pdfDoc.save();

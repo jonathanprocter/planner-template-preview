@@ -21,9 +21,11 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   const exportMutation = trpc.appointments.exportPDF.useMutation();
   const [isUploadingToDrive, setIsUploadingToDrive] = useState(false);
   const [orientation, setOrientation] = useState<"landscape" | "portrait">("landscape");
+  const [exportRange, setExportRange] = useState<"week" | "month">("week");
 
   const handleExport = async () => {
-    toast.info("Generating PDF...");
+    const rangeText = exportRange === "month" ? "monthly (4 weeks)" : "weekly";
+    toast.info(`Generating ${rangeText} PDF...`);
 
     try {
       const formatDate = (date: Date) => {
@@ -33,9 +35,23 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
         return `${year}-${month}-${day}`;
       };
 
+      // Calculate date range based on export type
+      let startDate, endDate;
+      if (exportRange === "month") {
+        // Export 4 weeks starting from current week
+        startDate = formatDate(weekStart);
+        const monthEnd = new Date(weekStart);
+        monthEnd.setDate(monthEnd.getDate() + 27); // 4 weeks = 28 days - 1
+        endDate = formatDate(monthEnd);
+      } else {
+        // Export single week
+        startDate = formatDate(weekStart);
+        endDate = formatDate(weekEnd);
+      }
+
       const result = await exportMutation.mutateAsync({
-        startDate: formatDate(weekStart),
-        endDate: formatDate(weekEnd),
+        startDate,
+        endDate,
         orientation: orientation,
       });
 
@@ -65,7 +81,8 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
   };
 
   const handleSaveToDrive = async () => {
-    toast.info("Generating PDF for Google Drive...");
+    const rangeText = exportRange === "month" ? "monthly (4 weeks)" : "weekly";
+    toast.info(`Generating ${rangeText} PDF for Google Drive...`);
     setIsUploadingToDrive(true);
 
     try {
@@ -84,10 +101,24 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
         return `${year}-${month}-${day}`;
       };
 
+      // Calculate date range based on export type
+      let startDate, endDate;
+      if (exportRange === "month") {
+        // Export 4 weeks starting from current week
+        startDate = formatDate(weekStart);
+        const monthEnd = new Date(weekStart);
+        monthEnd.setDate(monthEnd.getDate() + 27); // 4 weeks = 28 days - 1
+        endDate = formatDate(monthEnd);
+      } else {
+        // Export single week
+        startDate = formatDate(weekStart);
+        endDate = formatDate(weekEnd);
+      }
+
       // Generate PDF
       const result = await exportMutation.mutateAsync({
-        startDate: formatDate(weekStart),
-        endDate: formatDate(weekEnd),
+        startDate,
+        endDate,
         orientation: orientation,
       });
 
@@ -124,6 +155,15 @@ export function ExportPDFButton({ weekStart, weekEnd }: ExportPDFButtonProps) {
 
   return (
     <div className="flex gap-2 items-center">
+      <Select value={exportRange} onValueChange={(value: "week" | "month") => setExportRange(value)}>
+        <SelectTrigger className="w-[120px]">
+          <SelectValue placeholder="Range" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="week">Week</SelectItem>
+          <SelectItem value="month">Month (4wks)</SelectItem>
+        </SelectContent>
+      </Select>
       <Select value={orientation} onValueChange={(value: "landscape" | "portrait") => setOrientation(value)}>
         <SelectTrigger className="w-[140px]">
           <SelectValue placeholder="Orientation" />
