@@ -157,9 +157,8 @@ export default function DailyView() {
         };
       });
       
-      // Merge with local events for this date
-      const localEvents = eventStore.getEvents().filter(e => e.source !== 'google' && e.date === currentDateStr);
-      setEvents([...localEvents, ...dbEvents]);
+      // Only use database events - don't merge with eventStore to avoid duplicates
+      setEvents(dbEvents);
     }
   }, [dbAppointments, currentDateStr]);
 
@@ -328,7 +327,7 @@ export default function DailyView() {
       }
     });
 
-    // Update events state directly to avoid conflicts with database events
+    // Update events state for immediate visual feedback
     setEvents(prevEvents => prevEvents.map(ev => 
       ev.id === draggingEvent 
         ? { 
@@ -338,14 +337,6 @@ export default function DailyView() {
           }
         : ev
     ));
-    
-    // Also update eventStore for local events
-    if (event.source === 'local') {
-      eventStore.updateEvent(draggingEvent, {
-        startTime: newStartTime,
-        endTime: newEndTime,
-      });
-    }
   };
 
   const handleDragEnd = async () => {
@@ -755,7 +746,7 @@ export default function DailyView() {
                       </div>
                       
                       {/* Reminders Column */}
-                      {hasReminders && height > 60 && (
+                      {hasReminders && height > 45 && (
                         <div style={{ width: remindersWidth, minWidth: 0 }} className="border-l border-gray-300 pl-2">
                           <div className="text-xs font-semibold text-gray-600 mb-1">📌 Reminders</div>
                           <div className="text-xs space-y-0.5">
@@ -770,7 +761,7 @@ export default function DailyView() {
                       )}
                       
                       {/* Notes Column */}
-                      {hasNotes && height > 60 && (
+                      {hasNotes && height > 45 && (
                         <div style={{ width: notesWidth, minWidth: 0 }} className="border-l border-gray-300 pl-2">
                           <div className="text-xs font-semibold text-gray-600 mb-1">📝 Notes</div>
                           <div className="text-xs opacity-75 overflow-hidden" style={{

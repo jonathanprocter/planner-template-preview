@@ -1084,3 +1084,29 @@
 - [x] Show warning icon when dragging creates overlap
 - [x] Add option to auto-adjust or cancel conflicting drags
 - [x] Test conflict detection with various scenarios
+
+## CRITICAL FIXES - Persistent Issues
+
+### Drag-and-Drop Issues
+- [x] Completely fix drag-and-drop not working properly
+- [x] Eliminate all appointment duplication scenarios
+- [x] Ensure drag updates persist to database correctly
+- [x] Fix drag state management conflicts
+
+### Notes and Reminders Display
+- [x] Fix notes not showing on appointment blocks in daily view
+- [x] Fix reminders not displaying on appointment blocks
+- [x] Ensure multi-column layout works correctly
+- [x] Verify data loads from database properly
+
+### Data Accuracy Issues
+- [x] Fix appointment names not matching (e.g., Vivian vs Brianna)
+- [x] Ensure 100% accurate data loading from Google Calendar
+- [x] Fix intermittent data loading issues
+- [x] Verify database sync with Google Calendar
+
+### System Audit
+- [x] Create comprehensive Python audit script
+- [x] Run audit to identify all issues
+- [x] Document all findings
+- [x] Implement fixes for all identified issues

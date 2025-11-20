@@ -1,0 +1,17 @@
+{
+  "issues": [],
+  "warnings": [
+    {
+      "category": "DUPLICATION",
+      "description": "Event merging detected - verify no duplicates",
+      "file": "/home/ubuntu/planner-template-preview/client/src/components/DailyView.tsx"
+    }
+  ],
+  "summary": {
+    "total_issues": 0,
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "warnings": 1
+  }
+}
