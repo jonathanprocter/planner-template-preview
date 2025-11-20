@@ -1110,3 +1110,10 @@
 - [x] Run audit to identify all issues
 - [x] Document all findings
 - [x] Implement fixes for all identified issues
+
+## Export Bug Fix
+
+- [x] Investigate why some appointments are marked as all-day in PDF export
+- [x] Fix all-day event detection logic
+- [x] Ensure time-based appointments export with correct times
+- [x] Test export functionality thoroughly

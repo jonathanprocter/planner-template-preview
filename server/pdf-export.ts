@@ -362,14 +362,12 @@ async function generateWeeklyGridPage(
     const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     const allDayEvents = appointments.filter(apt => {
       if (apt.date !== dayStr) return false;
+      // Only holidays/notes are all-day, not appointments that happen to start at midnight
       const isHoliday = apt.calendarId?.includes('holiday') ||
                        apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
-      // Check if event is all-day (starts at 00:00)
-      const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      const isAllDay = startTime === '00:00';
-      return isHoliday || isAllDay;
+      return isHoliday;
     });
     
     if (allDayEvents.length > 0) {
@@ -470,14 +468,12 @@ async function generateWeeklyGridPage(
     const dayAppointments = appointments.filter(apt => apt.date === dayStr);
     
     dayAppointments.forEach(apt => {
-      // Skip holidays and all-day events - they're in the all-day section
+      // Skip holidays - they're in the all-day section
       const isHoliday = apt.calendarId?.includes('holiday') ||
                        apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
-      const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-      const isAllDay = startTime === '00:00';
-      if (isHoliday || isAllDay) return;
+      if (isHoliday) return;
       
       // Get EST hours directly from toLocaleTimeString
       const startEST = apt.startTime.toLocaleTimeString('en-US', { 
@@ -688,13 +684,12 @@ async function generateDailyGridPage(
   const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
   const dayAppointments = appointments.filter(apt => apt.date === dayStr);
   const allDayEvents = dayAppointments.filter(apt => {
+    // Only holidays/notes are all-day, not appointments that happen to start at midnight
     const isHoliday = apt.calendarId?.includes('holiday') ||
                      apt.title?.toLowerCase().includes('holiday') || 
                      apt.title?.toLowerCase().includes('note') ||
                      apt.category === 'Holidays/Notes';
-    const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-    const isAllDay = startTime === '00:00';
-    return isHoliday || isAllDay;
+    return isHoliday;
   });
   
   if (allDayEvents.length > 0) {
@@ -738,14 +733,12 @@ async function generateDailyGridPage(
   // Draw appointments
   
   dayAppointments.forEach(apt => {
-    // Skip holidays and all-day events - they're shown in the all-day section
+    // Skip holidays - they're shown in the all-day section
     const isHoliday = apt.calendarId?.includes('holiday') ||
                      apt.title?.toLowerCase().includes('holiday') || 
                      apt.title?.toLowerCase().includes('note') ||
                      apt.category === 'Holidays/Notes';
-    const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-    const isAllDay = startTime === '00:00';
-    if (isHoliday || isAllDay) return;
+    if (isHoliday) return;
     
     // Get EST hours directly from toLocaleTimeString
     const startEST = apt.startTime.toLocaleTimeString('en-US', { 
