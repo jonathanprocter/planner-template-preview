@@ -125,6 +125,13 @@ export default function DailyView() {
           isHoliday,
           isFlight,
           isMeeting,
+          status: apt.status || 'scheduled',
+          reminders: apt.reminders,
+          notes: apt.notes,
+          sessionNumber: apt.sessionNumber,
+          totalSessions: apt.totalSessions,
+          presentingConcerns: apt.presentingConcerns,
+          lastSessionDate: apt.lastSessionDate,
         };
       });
       
@@ -242,6 +249,9 @@ export default function DailyView() {
     const event = events.find(ev => ev.id === eventId);
     if (!event) return;
     
+    // Prevent text selection during drag
+    e.preventDefault();
+    
     const eventY = timeToY(event.startTime);
     setDraggingEvent(eventId);
     setDragOffset({
@@ -252,6 +262,9 @@ export default function DailyView() {
 
   const handleDragMove = (e: React.MouseEvent) => {
     if (!draggingEvent || !config) return;
+    
+    // Prevent default to avoid text selection
+    e.preventDefault();
     
     const newY = e.clientY - dragOffset.y;
     const newStartTime = yToTime(newY);
@@ -267,7 +280,7 @@ export default function DailyView() {
     const newEndMinutes = newStartH * 60 + newStartM + duration;
     const newEndH = Math.floor(newEndMinutes / 60);
     const newEndM = newEndMinutes % 60;
-    
+
     eventStore.updateEvent(draggingEvent, {
       startTime: newStartTime,
       endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,

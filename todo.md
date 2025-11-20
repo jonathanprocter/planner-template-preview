@@ -1009,3 +1009,12 @@
 - [x] Update PDF export with status colors
 - [x] Test all status visual indicators on actual display
 - [x] Test multi-column layout with various data combinations
+
+## Bug Fixes - Status Persistence and Drag-and-Drop
+
+- [x] Fix status colors not persisting/loading correctly
+- [x] Ensure status updates save to database properly
+- [x] Fix drag-and-drop being haphazard and inconsistent
+- [x] Improve drag detection logic to prevent accidental navigation
+- [x] Test status persistence across page reloads
+- [x] Test drag-and-drop smoothness in both weekly and daily views

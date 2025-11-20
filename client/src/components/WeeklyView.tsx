@@ -128,6 +128,13 @@ export default function WeeklyView() {
           isHoliday,
           isFlight,
           isMeeting,
+          status: apt.status || 'scheduled',
+          reminders: apt.reminders,
+          notes: apt.notes,
+          sessionNumber: apt.sessionNumber,
+          totalSessions: apt.totalSessions,
+          presentingConcerns: apt.presentingConcerns,
+          lastSessionDate: apt.lastSessionDate,
         };
       });
       
@@ -266,6 +273,9 @@ export default function WeeklyView() {
     const event = events.find(ev => ev.id === eventId);
     if (!event) return;
     
+    // Prevent text selection during drag
+    e.preventDefault();
+    
     setDraggingEvent(eventId);
     setDragStartPos({ x: e.clientX, y: e.clientY });
     setIsDragging(false);
@@ -280,10 +290,10 @@ export default function WeeklyView() {
     if (!draggingEvent) return;
     e.preventDefault();
     
-    // Detect if user has moved more than 5 pixels - then it's a drag, not a click
+    // Detect if user has moved more than 3 pixels - then it's a drag, not a click
     const dx = Math.abs(e.clientX - dragStartPos.x);
     const dy = Math.abs(e.clientY - dragStartPos.y);
-    if (dx > 5 || dy > 5) {
+    if (dx > 3 || dy > 3) {
       setIsDragging(true);
     }
   }, [draggingEvent, dragStartPos]);
@@ -350,7 +360,7 @@ export default function WeeklyView() {
     
     setDraggingEvent(null);
     // Reset isDragging after a short delay to prevent click from firing
-    setTimeout(() => setIsDragging(false), 100);
+    setTimeout(() => setIsDragging(false), 50);
   }, [draggingEvent, events, weekDates, formatDateISO, updateMutation, utils]);
 
   const filteredEvents = useMemo(() => {
