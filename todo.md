@@ -1028,3 +1028,28 @@
 - [x] Test drag-and-drop doesn't create duplicates
 - [x] Test notes/reminders display correctly in daily view
 - [x] Test status indicators work across all views
+
+## New Features - Bulk Updates, History Log, and Smart Reminders
+
+### Bulk Status Updates
+- [x] Add shift+click selection mode for appointments
+- [x] Create visual indicator for selected appointments
+- [x] Add bulk action toolbar with status update options
+- [x] Implement bulk status update backend endpoint
+- [x] Test bulk selection and update functionality
+
+### Appointment History Log
+- [x] Create appointmentHistory database table
+- [x] Add history tracking to all appointment mutations
+- [x] Create AppointmentHistoryModal component
+- [x] Add history icon/button to appointment details modal
+- [x] Display timeline of all changes (status, notes, time, etc.)
+- [x] Test history logging and display
+
+### Smart Reminders
+- [x] Implement session number detection logic
+- [x] Add automatic reminder suggestions based on session count
+- [x] Add reminder suggestions for insurance authorization
+- [x] Create smart reminder UI in appointment modal
+- [x] Add one-click to accept/add suggested reminders
+- [x] Test smart reminder generation

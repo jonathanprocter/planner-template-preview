@@ -43,6 +43,13 @@
       "when": 1763670019561,
       "tag": "0005_mute_the_anarchist",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1763678279272,
+      "tag": "0006_abnormal_tarot",
+      "breakpoints": true
     }
   ]
 }

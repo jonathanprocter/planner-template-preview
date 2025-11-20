@@ -4,6 +4,8 @@ import { type Event } from "@/lib/eventStore";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { deleteEvent, isSignedIn } from "@/lib/googleCalendar";
+import { AppointmentHistoryModal } from "./AppointmentHistoryModal";
+import { SmartReminders } from "./SmartReminders";
 
 // Get access token from gapi if available
 function getAccessToken(): string | undefined {
@@ -46,6 +48,7 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const [sessionNotes, setSessionNotes] = useState("");
   const [sessionNumber, setSessionNumber] = useState<number | null>(null);
   const [totalSessions, setTotalSessions] = useState<number | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const updateNotesMutation = trpc.appointments.updateNotes.useMutation();
   const updateTagsMutation = trpc.appointments.updateNoteTags.useMutation();
@@ -277,7 +280,17 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold">{appointment.title}</DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="text-2xl font-bold">{appointment.title}</DialogTitle>
+            {hasCalendarId && (
+              <button
+                onClick={() => setShowHistory(true)}
+                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors flex items-center gap-2"
+              >
+                📜 History
+              </button>
+            )}
+          </div>
         </DialogHeader>
         
         <div className="space-y-4 mt-4">
@@ -366,6 +379,16 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
                 <p className="text-sm text-teal-600 mt-2">Session {sessionNumber} of {totalSessions}</p>
               )}
             </div>
+          )}
+
+          {/* Smart Reminder Suggestions */}
+          {hasCalendarId && (
+            <SmartReminders
+              sessionNumber={sessionNumber}
+              totalSessions={totalSessions}
+              currentReminders={reminders}
+              onAddReminder={(reminder) => setReminders([...reminders, reminder])}
+            />
           )}
 
           {/* Reminders/Follow-up */}
@@ -539,6 +562,12 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
           </div>
         )}
       </DialogContent>
+
+      <AppointmentHistoryModal
+        googleEventId={appointmentId}
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
     </Dialog>
   );
 }

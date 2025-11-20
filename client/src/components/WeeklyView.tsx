@@ -7,6 +7,7 @@ import { AdvancedSearch } from "./AdvancedSearch";
 import GoogleCalendarSync from "./GoogleCalendarSync";
 import { CategoryFilter } from "./CategoryFilter";
 import { ExportPDFButton } from "./ExportPDFButton";
+import { BulkActionToolbar } from "./BulkActionToolbar";
 import { WeeklyStats } from "./WeeklyStats";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
@@ -41,10 +42,13 @@ export default function WeeklyView() {
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
   const [filteredCategories, setFilteredCategories] = useState<string[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedEventIds, setSelectedEventIds] = useState<Set<string>>(new Set());
+  const [isShiftPressed, setIsShiftPressed] = useState(false);
   
   const updateMutation = trpc.appointments.updateAppointment.useMutation();
   const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
   const createMutation = trpc.appointments.createAppointment.useMutation();
+  const bulkUpdateMutation = trpc.appointments.bulkUpdateStatus.useMutation();
   const utils = trpc.useUtils();
 
   const getWeekDates = useCallback((offset: number = 0) => {
@@ -191,9 +195,19 @@ export default function WeeklyView() {
       }
     };
 
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(false);
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [weekOffset]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [weekOffset, selectedEventIds]);
 
   // Calculate ISO week number
   const getISOWeek = useCallback((date: Date) => {
@@ -689,14 +703,32 @@ export default function WeeklyView() {
                       return '#EBEDEF';
                     })(),
                     color: '#333',
-                    border: `1.5px solid ${event.color}`,
-                    borderLeftWidth: '4px',
-                    borderLeftColor: event.color,
+                    border: selectedEventIds.has(event.id) ? `3px solid #2563eb` : `1.5px solid ${event.color}`,
+                    borderLeftWidth: selectedEventIds.has(event.id) ? '6px' : '4px',
+                    borderLeftColor: selectedEventIds.has(event.id) ? '#2563eb' : event.color,
                     opacity: draggingEvent === event.id ? 0.7 : 1,
+                    boxShadow: selectedEventIds.has(event.id) ? '0 0 0 2px rgba(37, 99, 235, 0.2)' : 'none',
                   }}
-                  onMouseDown={(e) => handleDragStart(e, event.id)}
+                  onMouseDown={(e) => {
+                    if (!isShiftPressed) {
+                      handleDragStart(e, event.id);
+                    }
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    
+                    // Shift+click for bulk selection
+                    if (isShiftPressed) {
+                      const newSelection = new Set(selectedEventIds);
+                      if (newSelection.has(event.id)) {
+                        newSelection.delete(event.id);
+                      } else {
+                        newSelection.add(event.id);
+                      }
+                      setSelectedEventIds(newSelection);
+                      return;
+                    }
+                    
                     // Only navigate if this was a click, not a drag
                     if (!isDragging) {
                       const appointmentDate = event.date || formatDateISO(weekDates[dayIdx]);
@@ -760,6 +792,21 @@ export default function WeeklyView() {
         appointment={selectedAppointment}
         open={modalOpen}
         onClose={() => setModalOpen(false)}
+      />
+
+      <BulkActionToolbar
+        selectedCount={selectedEventIds.size}
+        onClearSelection={() => setSelectedEventIds(new Set())}
+        onBulkStatusUpdate={async (status) => {
+          try {
+            const googleEventIds = Array.from(selectedEventIds);
+            await bulkUpdateMutation.mutateAsync({ googleEventIds, status });
+            await utils.appointments.getByDateRange.invalidate();
+            setSelectedEventIds(new Set());
+          } catch (error) {
+            console.error('Bulk update failed:', error);
+          }
+        }}
       />
     </div>
   );

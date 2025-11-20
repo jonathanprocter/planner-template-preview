@@ -11,7 +11,7 @@ import {
   upsertAppointment,
 } from "./appointments";
 import { getDb } from "./db";
-import { appointments, dailyNotes } from "../drizzle/schema";
+import { appointments, dailyNotes, appointmentHistory } from "../drizzle/schema";
 import { and, eq, gte, lte, or, like } from "drizzle-orm";
 import { generateWeeklyPlannerPDF } from "./pdf-export";
 
@@ -479,6 +479,56 @@ export const appRouter = router({
           console.error('PDF Export Error:', error);
           throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
         }
+      }),
+
+    // Bulk update status for multiple appointments
+    bulkUpdateStatus: protectedProcedure
+      .input(
+        z.object({
+          googleEventIds: z.array(z.string()),
+          status: z.enum(["scheduled", "completed", "client_canceled", "therapist_canceled", "no_show"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        // Update all appointments
+        for (const googleEventId of input.googleEventIds) {
+          await db
+            .update(appointments)
+            .set({ status: input.status })
+            .where(
+              and(
+                eq(appointments.userId, ctx.user.id),
+                eq(appointments.googleEventId, googleEventId)
+              )
+            );
+        }
+
+        return { success: true, updated: input.googleEventIds.length };
+      }),
+
+    // Get appointment history
+    getHistory: protectedProcedure
+      .input(z.object({ googleEventId: z.string() }))
+      .query(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) return [];
+
+        const { appointmentHistory } = await import("../drizzle/schema");
+        const history = await db
+          .select()
+          .from(appointmentHistory)
+          .where(
+            and(
+              eq(appointmentHistory.userId, ctx.user.id),
+              eq(appointmentHistory.googleEventId, input.googleEventId)
+            )
+          )
+          .orderBy(appointmentHistory.createdAt);
+
+        return history;
       }),
   }),
 

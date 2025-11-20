@@ -109,3 +109,31 @@ export const deletedAppointments = mysqlTable("deletedAppointments", {
 
 export type DeletedAppointment = typeof deletedAppointments.$inferSelect;
 export type InsertDeletedAppointment = typeof deletedAppointments.$inferInsert;
+
+/**
+ * Appointment history table for tracking all changes to appointments
+ * Provides audit trail for status changes, reschedules, note edits, etc.
+ */
+export const appointmentHistory = mysqlTable("appointmentHistory", {
+  id: int("id").autoincrement().primaryKey(),
+  /** User ID who made the change */
+  userId: int("userId").notNull(),
+  /** Appointment ID that was changed */
+  appointmentId: int("appointmentId").notNull(),
+  /** Google Calendar event ID */
+  googleEventId: varchar("googleEventId", { length: 255 }),
+  /** Type of change made */
+  changeType: mysqlEnum("changeType", ["created", "status_changed", "rescheduled", "notes_updated", "reminders_updated", "deleted"]).notNull(),
+  /** Field that was changed (e.g., 'status', 'startTime', 'notes') */
+  fieldChanged: varchar("fieldChanged", { length: 100 }),
+  /** Previous value (JSON or text) */
+  oldValue: text("oldValue"),
+  /** New value (JSON or text) */
+  newValue: text("newValue"),
+  /** Human-readable description of the change */
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AppointmentHistory = typeof appointmentHistory.$inferSelect;
+export type InsertAppointmentHistory = typeof appointmentHistory.$inferInsert;
