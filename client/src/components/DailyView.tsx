@@ -410,8 +410,12 @@ export default function DailyView() {
             </div>
           </div>
 
-          {/* All-Day Holidays Section */}
-          {todayEvents.filter((event: Event) => (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845').length > 0 && (
+          {/* All-Day Events Section (Holidays, Birthdays, etc.) */}
+          {todayEvents.filter((event: Event) => {
+            const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
+            const isAllDay = event.startTime === '00:00';
+            return isHoliday || isAllDay;
+          }).length > 0 && (
             <div 
               className="absolute border-b border-gray-300" 
               style={{ 
@@ -426,7 +430,11 @@ export default function DailyView() {
               <div className="text-xs font-semibold text-gray-600 mb-2">All-Day Events</div>
               <div className="flex flex-col gap-2">
                 {todayEvents
-                  .filter((event: Event) => (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845')
+                  .filter((event: Event) => {
+                    const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
+                    const isAllDay = event.startTime === '00:00';
+                    return isHoliday || isAllDay;
+                  })
                   .map((holiday: Event) => (
                     <div
                       key={holiday.id}
@@ -517,9 +525,10 @@ export default function DailyView() {
 
           {todayEvents
             .filter((event) => {
-              // Skip holidays - they're shown in the all-day section
+              // Skip holidays and all-day events - they're shown in the all-day section
               const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
-              return !isHoliday;
+              const isAllDay = event.startTime === '00:00';
+              return !isHoliday && !isAllDay;
             })
             .map((event) => {
             const startY = timeToY(event.startTime);

@@ -961,3 +961,18 @@
 - [x] Ensure orientation option works for monthly export
 - [x] Test monthly export with real data
 - [x] Verify hyperlinks work across all weeks in monthly PDF
+
+## Fix Dashboard Loading Error
+- [x] Check browser console for error messages
+- [x] Check server logs for backend errors
+- [x] Identify root cause of dashboard loading failure (date parsing in all-day event logic)
+- [x] Fix the error (changed to string comparison instead of date parsing)
+- [x] Test dashboard loads successfully
+
+## Ensure Birthday Calendar Syncs as All-Day Events
+- [x] Review all-day event handling in GoogleCalendarSync component
+- [x] Verify birthday calendar events are detected as all-day events
+- [x] Ensure birthdays display in "All-Day" section of weekly view
+- [x] Ensure birthdays display in daily view all-day section
+- [x] Ensure birthdays appear in PDF exports (weekly and monthly)
+- [ ] Test with actual birthday calendar data

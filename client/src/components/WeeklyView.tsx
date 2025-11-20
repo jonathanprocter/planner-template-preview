@@ -482,10 +482,12 @@ export default function WeeklyView() {
             </div>
             {dayNames.map((day, idx) => {
               const dateStr = formatDateISO(weekDates[idx]);
-              const dayHolidays = filteredEvents.filter(event => {
-                // Use the isHoliday flag set when loading from database
+              const dayAllDayEvents = filteredEvents.filter(event => {
+                // Include holidays and all-day events (birthdays, etc.)
                 const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
-                return isHoliday && event.date === dateStr;
+                // Check if event is all-day (starts at 00:00)
+                const isAllDay = event.startTime === '00:00';
+                return (isHoliday || isAllDay) && event.date === dateStr;
               });
               
               return (
@@ -493,7 +495,7 @@ export default function WeeklyView() {
                   key={`holiday-${day}`}
                   className="flex-1 border-l border-gray-300 p-1 flex flex-col gap-1"
                 >
-                  {dayHolidays.map(holiday => (
+                  {dayAllDayEvents.map((holiday: any) => (
                     <div
                       key={holiday.id}
                       className="text-xs px-2 py-1 rounded text-white cursor-pointer hover:opacity-80"
@@ -616,9 +618,10 @@ export default function WeeklyView() {
           </div>
 
           {filteredEvents.map((event) => {
-            // Skip holidays - they're shown in the all-day section
+            // Skip holidays and all-day events - they're shown in the all-day section
             const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
-            if (isHoliday) return null;
+            const isAllDay = event.startTime === '00:00';
+            if (isHoliday || isAllDay) return null;
             
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);

@@ -344,18 +344,21 @@ async function generateWeeklyGridPage(
   weekDays.forEach((day, dayIndex) => {
     // Use local date string to avoid UTC shift
     const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-    const holidays = appointments.filter(apt => {
+    const allDayEvents = appointments.filter(apt => {
       if (apt.date !== dayStr) return false;
       const isHoliday = apt.calendarId?.includes('holiday') ||
                        apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
-      return isHoliday;
+      // Check if event is all-day (starts at 00:00)
+      const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      const isAllDay = startTime === '00:00';
+      return isHoliday || isAllDay;
     });
     
-    if (holidays.length > 0) {
+    if (allDayEvents.length > 0) {
       const x = margin + timeColumnWidth + dayIndex * columnWidth;
-      const holiday = holidays[0]; // Show first holiday if multiple
+      const holiday = allDayEvents[0]; // Show first all-day event if multiple
       const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
       const rgb_color = hexToRgb(colors.leftFlag);
       
@@ -451,12 +454,14 @@ async function generateWeeklyGridPage(
     const dayAppointments = appointments.filter(apt => apt.date === dayStr);
     
     dayAppointments.forEach(apt => {
-      // Skip holidays - they're in the all-day section
+      // Skip holidays and all-day events - they're in the all-day section
       const isHoliday = apt.calendarId?.includes('holiday') ||
                        apt.title?.toLowerCase().includes('holiday') || 
                        apt.title?.toLowerCase().includes('note') ||
                        apt.category === 'Holidays/Notes';
-      if (isHoliday) return;
+      const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+      const isAllDay = startTime === '00:00';
+      if (isHoliday || isAllDay) return;
       
       // Get EST hours directly from toLocaleTimeString
       const startEST = apt.startTime.toLocaleTimeString('en-US', { 
@@ -666,15 +671,17 @@ async function generateDailyGridPage(
   // Use local date string to avoid UTC shift
   const dayStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
   const dayAppointments = appointments.filter(apt => apt.date === dayStr);
-  const holidays = dayAppointments.filter(apt => {
+  const allDayEvents = dayAppointments.filter(apt => {
     const isHoliday = apt.calendarId?.includes('holiday') ||
                      apt.title?.toLowerCase().includes('holiday') || 
                      apt.title?.toLowerCase().includes('note') ||
                      apt.category === 'Holidays/Notes';
-    return isHoliday;
+    const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const isAllDay = startTime === '00:00';
+    return isHoliday || isAllDay;
   });
   
-  if (holidays.length > 0) {
+  if (allDayEvents.length > 0) {
     const allDayY = gridTop + 10;
     const allDayHeight = 24;
     
@@ -687,8 +694,8 @@ async function generateDailyGridPage(
       color: rgb(0.4, 0.4, 0.4)
     });
     
-    // Draw holidays
-    holidays.forEach((holiday, idx) => {
+    // Draw all-day events
+    allDayEvents.forEach((holiday, idx) => {
       const holidayY = allDayY - (idx * 20) - 5;
       const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
       const rgb_color = hexToRgb(colors.leftFlag);
@@ -715,12 +722,14 @@ async function generateDailyGridPage(
   // Draw appointments
   
   dayAppointments.forEach(apt => {
-    // Skip holidays - they're shown in the all-day section
+    // Skip holidays and all-day events - they're shown in the all-day section
     const isHoliday = apt.calendarId?.includes('holiday') ||
                      apt.title?.toLowerCase().includes('holiday') || 
                      apt.title?.toLowerCase().includes('note') ||
                      apt.category === 'Holidays/Notes';
-    if (isHoliday) return;
+    const startTime = apt.startTime?.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+    const isAllDay = startTime === '00:00';
+    if (isHoliday || isAllDay) return;
     
     // Get EST hours directly from toLocaleTimeString
     const startEST = apt.startTime.toLocaleTimeString('en-US', { 
