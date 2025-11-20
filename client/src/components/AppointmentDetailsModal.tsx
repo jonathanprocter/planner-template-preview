@@ -41,9 +41,15 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const [editedNotes, setEditedNotes] = useState("");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [status, setStatus] = useState<"scheduled" | "completed" | "client_canceled" | "therapist_canceled" | "no_show">("scheduled");
+  const [reminders, setReminders] = useState<string[]>([]);
+  const [sessionNotes, setSessionNotes] = useState("");
+  const [sessionNumber, setSessionNumber] = useState<number | null>(null);
+  const [totalSessions, setTotalSessions] = useState<number | null>(null);
 
   const updateNotesMutation = trpc.appointments.updateNotes.useMutation();
   const updateTagsMutation = trpc.appointments.updateNoteTags.useMutation();
+  const updateDetailsMutation = trpc.appointments.updateAppointmentDetails.useMutation();
   const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
   const utils = trpc.useUtils();
 
@@ -52,17 +58,42 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const isHoliday = appointment ? (appointment as any).isHoliday : false;
   const hasCalendarId = appointment ? !!(appointment as any).calendarId : false;
 
-  // Load tags when appointment changes
+  // Load tags and status when appointment changes
   useEffect(() => {
-    if (appointment && (appointment as any).noteTags) {
-      try {
-        const tags = JSON.parse((appointment as any).noteTags);
-        setSelectedTags(Array.isArray(tags) ? tags : []);
-      } catch {
+    if (appointment) {
+      // Load tags
+      if ((appointment as any).noteTags) {
+        try {
+          const tags = JSON.parse((appointment as any).noteTags);
+          setSelectedTags(Array.isArray(tags) ? tags : []);
+        } catch {
+          setSelectedTags([]);
+        }
+      } else {
         setSelectedTags([]);
       }
-    } else {
-      setSelectedTags([]);
+      
+      // Load status
+      setStatus((appointment as any).status || "scheduled");
+      
+      // Load reminders
+      if ((appointment as any).reminders) {
+        try {
+          const remindersList = JSON.parse((appointment as any).reminders);
+          setReminders(Array.isArray(remindersList) ? remindersList : []);
+        } catch {
+          setReminders([]);
+        }
+      } else {
+        setReminders([]);
+      }
+      
+      // Load session notes
+      setSessionNotes((appointment as any).notes || "");
+      
+      // Load session tracking
+      setSessionNumber((appointment as any).sessionNumber || null);
+      setTotalSessions((appointment as any).totalSessions || null);
     }
   }, [appointment]);
 
@@ -209,6 +240,36 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
     }
   };
 
+  const handleSaveChanges = async () => {
+    if (!appointmentId || !hasCalendarId) return;
+    
+    try {
+      await updateDetailsMutation.mutateAsync({
+        googleEventId: appointmentId,
+        status,
+        reminders,
+        notes: sessionNotes,
+        sessionNumber,
+        totalSessions,
+      });
+      
+      // Update local appointment object
+      if (appointment) {
+        (appointment as any).status = status;
+        (appointment as any).reminders = JSON.stringify(reminders);
+        (appointment as any).notes = sessionNotes;
+        (appointment as any).sessionNumber = sessionNumber;
+        (appointment as any).totalSessions = totalSessions;
+      }
+      
+      toast.success("Changes saved successfully!");
+      utils.appointments.getByDateRange.invalidate();
+    } catch (error) {
+      toast.error("Failed to save changes");
+      console.error("Error saving changes:", error);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -243,6 +304,102 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
               </p>
             </div>
           </div>
+
+          {/* Appointment Status */}
+          {hasCalendarId && (
+            <div className="bg-slate-50 p-4 rounded-lg border-l-4 border-slate-400">
+              <h3 className="font-semibold text-sm text-slate-700 mb-3">📊 Appointment Status</h3>
+              <div className="space-y-2">
+                {[
+                  { value: "scheduled", label: "Scheduled", icon: "📅" },
+                  { value: "completed", label: "Completed", icon: "✓" },
+                  { value: "client_canceled", label: "Client Canceled", icon: "⚠" },
+                  { value: "therapist_canceled", label: "Therapist Canceled", icon: "⚠" },
+                  { value: "no_show", label: "No-Show", icon: "✗" },
+                ].map((option) => (
+                  <label key={option.value} className="flex items-center gap-3 cursor-pointer hover:bg-slate-100 p-2 rounded transition-colors">
+                    <input
+                      type="radio"
+                      name="status"
+                      value={option.value}
+                      checked={status === option.value}
+                      onChange={(e) => setStatus(e.target.value as any)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-base">{option.icon} {option.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Session Tracking */}
+          {hasCalendarId && (
+            <div className="bg-teal-50 p-4 rounded-lg border-l-4 border-teal-400">
+              <h3 className="font-semibold text-sm text-teal-700 mb-3">📝 Session Tracking</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Session Number</label>
+                  <input
+                    type="number"
+                    value={sessionNumber || ""}
+                    onChange={(e) => setSessionNumber(e.target.value ? parseInt(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="e.g., 8"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Total Sessions</label>
+                  <input
+                    type="number"
+                    value={totalSessions || ""}
+                    onChange={(e) => setTotalSessions(e.target.value ? parseInt(e.target.value) : null)}
+                    className="w-full px-3 py-2 border border-teal-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    placeholder="e.g., 12"
+                  />
+                </div>
+              </div>
+              {sessionNumber && totalSessions && (
+                <p className="text-sm text-teal-600 mt-2">Session {sessionNumber} of {totalSessions}</p>
+              )}
+            </div>
+          )}
+
+          {/* Reminders/Follow-up */}
+          {hasCalendarId && (
+            <div className="bg-orange-50 p-4 rounded-lg border-l-4 border-orange-400">
+              <h3 className="font-semibold text-sm text-orange-700 mb-3">📌 Reminders & Follow-up</h3>
+              <div className="space-y-2">
+                {reminders.map((reminder, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <span className="text-base">• {reminder}</span>
+                    <button
+                      onClick={() => setReminders(reminders.filter((_, i) => i !== index))}
+                      className="ml-auto text-red-600 hover:text-red-800 text-sm"
+                    >
+                      ✗
+                    </button>
+                  </div>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Add reminder..."
+                    className="flex-1 px-3 py-2 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && e.currentTarget.value.trim()) {
+                        setReminders([...reminders, e.currentTarget.value.trim()]);
+                        e.currentTarget.value = '';
+                      }
+                    }}
+                  />
+                </div>
+                {reminders.length === 0 && (
+                  <p className="text-xs text-gray-500 italic">Press Enter to add reminders</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Note Tags */}
           {hasCalendarId && (
@@ -360,12 +517,22 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
             >
               {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </button>
-            <button
-              onClick={onClose}
-              className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
-            >
-              Close
-            </button>
+            <div className="flex gap-2">
+              {hasCalendarId && (
+                <button
+                  onClick={handleSaveChanges}
+                  className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
+                >
+                  Save Changes
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="px-6 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg font-medium transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         )}
       </DialogContent>

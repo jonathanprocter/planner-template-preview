@@ -209,6 +209,42 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    // Update appointment details (status, reminders, session tracking)
+    updateAppointmentDetails: protectedProcedure
+      .input(
+        z.object({
+          googleEventId: z.string(),
+          status: z.enum(["scheduled", "completed", "client_canceled", "therapist_canceled", "no_show"]).optional(),
+          reminders: z.array(z.string()).optional(),
+          notes: z.string().optional(),
+          sessionNumber: z.number().nullable().optional(),
+          totalSessions: z.number().nullable().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const db = await getDb();
+        if (!db) throw new Error("Database not available");
+
+        const updateData: any = {};
+        if (input.status !== undefined) updateData.status = input.status;
+        if (input.reminders !== undefined) updateData.reminders = JSON.stringify(input.reminders);
+        if (input.notes !== undefined) updateData.notes = input.notes;
+        if (input.sessionNumber !== undefined) updateData.sessionNumber = input.sessionNumber;
+        if (input.totalSessions !== undefined) updateData.totalSessions = input.totalSessions;
+
+        await db
+          .update(appointments)
+          .set(updateData)
+          .where(
+            and(
+              eq(appointments.userId, ctx.user.id),
+              eq(appointments.googleEventId, input.googleEventId)
+            )
+          );
+
+        return { success: true };
+      }),
+
     // Create new appointment
     createAppointment: protectedProcedure
       .input(

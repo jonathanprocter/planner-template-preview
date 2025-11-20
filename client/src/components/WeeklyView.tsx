@@ -665,6 +665,13 @@ export default function WeeklyView() {
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
                     backgroundColor: (() => {
+                      const status = (event as any).status;
+                      // eInk-optimized colors based on status
+                      if (status === 'completed') return '#D8E5D8'; // Light green
+                      if (status === 'client_canceled') return '#F0E5E5'; // Light red
+                      if (status === 'therapist_canceled') return '#F5F0E5'; // Light yellow
+                      if (status === 'no_show') return '#E8E8E8'; // Light gray
+                      // Default colors by type
                       if ((event as any).isSimplePractice) return '#E7E9EC';
                       if ((event as any).isFlight) return '#F6EAEA';
                       if ((event as any).isHoliday) return '#E9ECE9';
@@ -687,7 +694,12 @@ export default function WeeklyView() {
                     }
                   }}
                 >
-                  <div className="font-semibold truncate">{event.title}</div>
+                  <div className="font-semibold truncate" style={{
+                    textDecoration: (() => {
+                      const status = (event as any).status;
+                      return (status === 'client_canceled' || status === 'therapist_canceled' || status === 'no_show') ? 'line-through' : 'none';
+                    })()
+                  }}>{event.title}</div>
                   <div className="text-xs opacity-90">
                     {event.startTime} - {event.endTime}
                   </div>

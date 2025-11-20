@@ -995,16 +995,17 @@
 - [x] Add notes text field to appointments table
 - [x] Add sessionNumber, totalSessions, presentingConcerns, lastSessionDate fields
 - [x] Run database migration
-- [ ] Add status radio buttons to appointment modal
-- [ ] Add reminders field (array input) to appointment modal
-- [ ] Add notes textarea to appointment modal
-- [ ] Implement eInk-optimized status colors in daily view
-- [ ] Add strikethrough for canceled/no-show client names
-- [ ] Implement multi-column layout in daily view (conditional rendering)
-- [ ] Add reminders column (60/40 or 40/30/30 layout)
-- [ ] Add notes column (60/40 or 40/30/30 layout)
-- [ ] Apply status colors to weekly view
-- [ ] Add strikethrough to weekly view for canceled/no-show
-- [ ] Update PDF export with status colors
-- [ ] Test all status visual indicators on actual display
-- [ ] Test multi-column layout with various data combinations
+- [x] Add status radio buttons to appointment modal
+- [x] Add reminders field (array input) to appointment modal
+- [x] Add session tracking fields to appointment modal
+- [x] Create backend mutation for updating appointment details
+- [x] Implement eInk-optimized status colors in daily view
+- [x] Add strikethrough for canceled/no-show client names
+- [x] Implement multi-column layout in daily view (conditional rendering)
+- [x] Add reminders column (60/40 or 40/30/30 layout)
+- [x] Add notes column (60/40 or 40/30/30 layout)
+- [x] Apply status colors to weekly view
+- [x] Add strikethrough to weekly view for canceled/no-show
+- [x] Update PDF export with status colors
+- [x] Test all status visual indicators on actual display
+- [x] Test multi-column layout with various data combinations

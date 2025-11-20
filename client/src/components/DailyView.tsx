@@ -545,6 +545,13 @@ export default function DailyView() {
                   width: `${config.timeBlocks.width - config.timeBlocks.labelWidth - 20}px`,
                   height: `${height}px`,
                   backgroundColor: (() => {
+                    const status = (event as any).status;
+                    // eInk-optimized colors based on status
+                    if (status === 'completed') return '#D8E5D8'; // Light green
+                    if (status === 'client_canceled') return '#F0E5E5'; // Light red
+                    if (status === 'therapist_canceled') return '#F5F0E5'; // Light yellow
+                    if (status === 'no_show') return '#E8E8E8'; // Light gray
+                    // Default colors by type
                     if ((event as any).isSimplePractice) return '#E7E9EC';
                     if ((event as any).isFlight) return '#F6EAEA';
                     if ((event as any).isHoliday) return '#E9ECE9';
@@ -565,20 +572,73 @@ export default function DailyView() {
                   setModalOpen(true);
                 }}
               >
-                <div className="font-semibold text-sm leading-tight mb-1 overflow-hidden text-ellipsis" style={{ 
-                  display: '-webkit-box',
-                  WebkitLineClamp: height > 60 ? 2 : 1,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden'
-                }}>
-                  {event.title}
-                </div>
-                <div className="text-xs opacity-90 font-medium">
-                  {event.startTime} - {event.endTime}
-                </div>
-                {event.category && height > 60 && (
-                  <div className="text-xs opacity-75 mt-1 truncate">{event.category}</div>
-                )}
+                {(() => {
+                  const reminders = (event as any).reminders ? JSON.parse((event as any).reminders) : [];
+                  const notes = (event as any).notes || '';
+                  const hasReminders = reminders.length > 0;
+                  const hasNotes = notes.trim().length > 0;
+                  
+                  // Determine layout: 60/40 if only reminders, 40/30/30 if both, 100% if neither
+                  const showMultiColumn = hasReminders || hasNotes;
+                  const primaryWidth = hasReminders && hasNotes ? '40%' : hasReminders ? '60%' : '100%';
+                  const remindersWidth = hasReminders && hasNotes ? '30%' : '40%';
+                  const notesWidth = '30%';
+                  
+                  return (
+                    <div className="flex gap-2 h-full">
+                      {/* Primary Column */}
+                      <div style={{ width: primaryWidth, minWidth: 0 }}>
+                        <div className="font-semibold text-sm leading-tight mb-1 overflow-hidden text-ellipsis" style={{ 
+                          display: '-webkit-box',
+                          WebkitLineClamp: height > 60 ? 2 : 1,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          textDecoration: (() => {
+                            const status = (event as any).status;
+                            return (status === 'client_canceled' || status === 'therapist_canceled' || status === 'no_show') ? 'line-through' : 'none';
+                          })()
+                        }}>
+                          {event.title}
+                        </div>
+                        <div className="text-xs opacity-90 font-medium">
+                          {event.startTime} - {event.endTime}
+                        </div>
+                        {event.category && height > 60 && (
+                          <div className="text-xs opacity-75 mt-1 truncate">{event.category}</div>
+                        )}
+                      </div>
+                      
+                      {/* Reminders Column */}
+                      {hasReminders && height > 60 && (
+                        <div style={{ width: remindersWidth, minWidth: 0 }} className="border-l border-gray-300 pl-2">
+                          <div className="text-xs font-semibold text-gray-600 mb-1">📌 Reminders</div>
+                          <div className="text-xs space-y-0.5">
+                            {reminders.slice(0, 3).map((reminder: string, i: number) => (
+                              <div key={i} className="truncate">• {reminder}</div>
+                            ))}
+                            {reminders.length > 3 && (
+                              <div className="text-gray-500 italic">+{reminders.length - 3} more</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Notes Column */}
+                      {hasNotes && height > 60 && (
+                        <div style={{ width: notesWidth, minWidth: 0 }} className="border-l border-gray-300 pl-2">
+                          <div className="text-xs font-semibold text-gray-600 mb-1">📝 Notes</div>
+                          <div className="text-xs opacity-75 overflow-hidden" style={{
+                            display: '-webkit-box',
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: 'vertical'
+                          }}>
+                            {notes}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <button
                   className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold shadow-md transition-all"
                   onClick={(e) => {

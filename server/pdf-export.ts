@@ -94,7 +94,22 @@ function toEST(date: Date): Date {
 }
 
 // Financial District color scheme for reMarkable 2 Pro
-function getFinancialDistrictColors(calendarId?: string | null, title?: string) {
+function getFinancialDistrictColors(calendarId?: string | null, title?: string, status?: string) {
+  // eInk-optimized colors based on status (priority over type)
+  if (status === 'completed') {
+    return { border: '#4A7A4A', background: '#D8E5D8', leftFlag: '#4A7A4A' }; // Light green
+  }
+  if (status === 'client_canceled') {
+    return { border: '#A63D3D', background: '#F0E5E5', leftFlag: '#A63D3D' }; // Light red
+  }
+  if (status === 'therapist_canceled') {
+    return { border: '#9A7547', background: '#F5F0E5', leftFlag: '#9A7547' }; // Light yellow
+  }
+  if (status === 'no_show') {
+    return { border: '#666666', background: '#E8E8E8', leftFlag: '#666666' }; // Light gray
+  }
+  
+  // Default colors by type
   if (calendarId?.startsWith('6ac7ac649a345a77') || calendarId?.startsWith('79dfcb90ce59b1b0')) {
     return { border: '#243447', background: '#E7E9EC', leftFlag: '#243447' };
   }
@@ -133,6 +148,7 @@ interface Appointment {
   category?: string | null;
   description?: string | null;
   calendarId?: string | null;
+  status?: string | null;
 }
 
 // Constants for layout
@@ -359,7 +375,7 @@ async function generateWeeklyGridPage(
     if (allDayEvents.length > 0) {
       const x = margin + timeColumnWidth + dayIndex * columnWidth;
       const holiday = allDayEvents[0]; // Show first all-day event if multiple
-      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
+      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title, holiday.status || undefined);
       const rgb_color = hexToRgb(colors.leftFlag);
       
       // Draw small holiday indicator
@@ -498,7 +514,7 @@ async function generateWeeklyGridPage(
       const x = margin + timeColumnWidth + dayIndex * columnWidth + 2;
       const width = columnWidth - 4;
       
-      const colors = getFinancialDistrictColors(apt.calendarId, apt.title);
+      const colors = getFinancialDistrictColors(apt.calendarId, apt.title, apt.status || undefined);
       const bgColor = hexToRgb(colors.background);
       const borderColor = hexToRgb(colors.border);
       
@@ -697,7 +713,7 @@ async function generateDailyGridPage(
     // Draw all-day events
     allDayEvents.forEach((holiday, idx) => {
       const holidayY = allDayY - (idx * 20) - 5;
-      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title);
+      const colors = getFinancialDistrictColors(holiday.calendarId, holiday.title, holiday.status || undefined);
       const rgb_color = hexToRgb(colors.leftFlag);
       
       page.drawRectangle({
@@ -767,7 +783,7 @@ async function generateDailyGridPage(
     // Fix: subtract margin from gridWidth to keep appointment within right margin
     const width = gridWidth - margin - 4;
     
-    const colors = getFinancialDistrictColors(apt.calendarId, apt.title);
+    const colors = getFinancialDistrictColors(apt.calendarId, apt.title, apt.status || undefined);
     const bgColor = hexToRgb(colors.background);
     const borderColor = hexToRgb(colors.border);
     
