@@ -8,6 +8,7 @@ import GoogleCalendarSync from "./GoogleCalendarSync";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 
 interface DailyConfig {
   header: {
@@ -51,6 +52,8 @@ export default function DailyView() {
   const [newEventTitle, setNewEventTitle] = useState("");
   const [draggingEvent, setDraggingEvent] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [dragPreview, setDragPreview] = useState<{ show: boolean; y: number; event: Event | null }>({ show: false, y: 0, event: null });
+  const [hasConflict, setHasConflict] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -58,6 +61,7 @@ export default function DailyView() {
 
   const updateMutation = trpc.appointments.updateAppointment.useMutation();
   const utils = trpc.useUtils();
+  const { addAction } = useUndoRedo();
 
   // Get access token from gapi if available
   function getAccessToken(): string | undefined {
@@ -298,6 +302,31 @@ export default function DailyView() {
     const newEndMinutes = newStartH * 60 + newStartM + duration;
     const newEndH = Math.floor(newEndMinutes / 60);
     const newEndM = newEndMinutes % 60;
+    const newEndTime = `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`;
+
+    // Check for conflicts with other appointments
+    const conflict = events.some(ev => {
+      if (ev.id === draggingEvent) return false;
+      const [evStartH, evStartM] = ev.startTime.split(":").map(Number);
+      const [evEndH, evEndM] = ev.endTime.split(":").map(Number);
+      const evStart = evStartH * 60 + evStartM;
+      const evEnd = evEndH * 60 + evEndM;
+      const newStart = newStartH * 60 + newStartM;
+      const newEnd = newEndMinutes;
+      return (newStart < evEnd && newEnd > evStart);
+    });
+    setHasConflict(conflict);
+
+    // Update drag preview
+    setDragPreview({
+      show: true,
+      y: newY,
+      event: {
+        ...event,
+        startTime: newStartTime,
+        endTime: newEndTime,
+      }
+    });
 
     // Update events state directly to avoid conflicts with database events
     setEvents(prevEvents => prevEvents.map(ev => 
@@ -305,7 +334,7 @@ export default function DailyView() {
         ? { 
             ...ev, 
             startTime: newStartTime,
-            endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
+            endTime: newEndTime,
           }
         : ev
     ));
@@ -314,7 +343,7 @@ export default function DailyView() {
     if (event.source === 'local') {
       eventStore.updateEvent(draggingEvent, {
         startTime: newStartTime,
-        endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
+        endTime: newEndTime,
       });
     }
   };
@@ -322,8 +351,17 @@ export default function DailyView() {
   const handleDragEnd = async () => {
     if (!draggingEvent) return;
     
+    // Clear drag preview
+    setDragPreview({ show: false, y: 0, event: null });
+    setHasConflict(false);
+    
     const event = events.find(ev => ev.id === draggingEvent);
     if (event && event.source === 'google' && event.id) {
+      // Store original times for undo
+      const originalEvent = events.find(ev => ev.id === draggingEvent);
+      const originalStartTime = originalEvent?.startTime || event.startTime;
+      const originalEndTime = originalEvent?.endTime || event.endTime;
+      
       try {
         const accessToken = getAccessToken();
         await updateMutation.mutateAsync({
@@ -333,6 +371,37 @@ export default function DailyView() {
           date: event.date || currentDateStr,
           accessToken,
         });
+        
+        // Add undo action
+        addAction({
+          type: 'update',
+          timestamp: new Date(),
+          data: { event, originalStartTime, originalEndTime },
+          description: `Moved ${event.title} from ${originalStartTime} to ${event.startTime}`,
+          undo: async () => {
+            const accessToken = getAccessToken();
+            await updateMutation.mutateAsync({
+              googleEventId: event.id,
+              startTime: originalStartTime,
+              endTime: originalEndTime,
+              date: event.date || currentDateStr,
+              accessToken,
+            });
+            await utils.appointments.getByDateRange.invalidate();
+          },
+          redo: async () => {
+            const accessToken = getAccessToken();
+            await updateMutation.mutateAsync({
+              googleEventId: event.id,
+              startTime: event.startTime,
+              endTime: event.endTime,
+              date: event.date || currentDateStr,
+              accessToken,
+            });
+            await utils.appointments.getByDateRange.invalidate();
+          },
+        });
+        
         utils.appointments.getByDateRange.invalidate();
       } catch (error) {
         console.error('Failed to update appointment:', error);
@@ -623,10 +692,11 @@ export default function DailyView() {
                     return '#EBEDEF'; // Work
                   })(),
                   color: '#333',
-                  border: `1.5px solid ${event.color}`,
-                  borderLeftWidth: '4px',
-                  borderLeftColor: event.color,
+                  border: draggingEvent === event.id && hasConflict ? '3px solid #DC2626' : `1.5px solid ${event.color}`,
+                  borderLeftWidth: draggingEvent === event.id && hasConflict ? '3px' : '4px',
+                  borderLeftColor: draggingEvent === event.id && hasConflict ? '#DC2626' : event.color,
                   opacity: draggingEvent === event.id ? 0.7 : 1,
+                  boxShadow: draggingEvent === event.id && hasConflict ? '0 0 0 3px rgba(220, 38, 38, 0.2)' : undefined,
                   minHeight: '40px',
                 }}
                 onMouseDown={(e) => handleDragStart(e, event.id)}

@@ -1061,3 +1061,26 @@
 - [x] Fix notes not displaying on appointment blocks in daily view
 - [x] Verify drag-and-drop updates database correctly
 - [x] Test that notes persist and display correctly
+
+## New Features - Drag Preview, Undo/Redo, and Conflict Detection
+
+### Visual Drag Preview
+- [x] Add semi-transparent ghost image during drag operations
+- [x] Show preview of where appointment will land
+- [x] Add visual feedback for valid/invalid drop zones
+- [x] Test drag preview in both daily and weekly views
+
+### Undo/Redo Functionality
+- [x] Create action history system to track changes
+- [x] Implement Ctrl+Z (undo) keyboard shortcut
+- [x] Implement Ctrl+Y (redo) keyboard shortcut
+- [x] Add visual toast showing what was undone/redone
+- [x] Track status updates, time changes, and deletions
+- [x] Test undo/redo with various action types
+
+### Appointment Conflict Warnings
+- [x] Implement overlap detection algorithm
+- [x] Add red border warning for conflicting appointments
+- [x] Show warning icon when dragging creates overlap
+- [x] Add option to auto-adjust or cancel conflicting drags
+- [x] Test conflict detection with various scenarios

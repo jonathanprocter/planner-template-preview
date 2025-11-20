@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { deleteEvent, isSignedIn } from "@/lib/googleCalendar";
 import { AppointmentHistoryModal } from "./AppointmentHistoryModal";
 import { SmartReminders } from "./SmartReminders";
+import { useUndoRedo } from "@/hooks/useUndoRedo";
 
 // Get access token from gapi if available
 function getAccessToken(): string | undefined {
@@ -55,6 +56,7 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const updateDetailsMutation = trpc.appointments.updateAppointmentDetails.useMutation();
   const deleteMutation = trpc.appointments.deleteAppointment.useMutation();
   const utils = trpc.useUtils();
+  const { addAction } = useUndoRedo();
 
   const appointmentId = appointment ? appointment.id : null;
   const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
@@ -246,6 +248,13 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const handleSaveChanges = async () => {
     if (!appointmentId || !hasCalendarId) return;
     
+    // Store original values for undo
+    const originalStatus = (appointment as any).status || 'scheduled';
+    const originalReminders = (appointment as any).reminders ? JSON.parse((appointment as any).reminders) : [];
+    const originalNotes = (appointment as any).notes || '';
+    const originalSessionNumber = (appointment as any).sessionNumber;
+    const originalTotalSessions = (appointment as any).totalSessions;
+    
     try {
       await updateDetailsMutation.mutateAsync({
         googleEventId: appointmentId,
@@ -264,6 +273,36 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
         (appointment as any).sessionNumber = sessionNumber;
         (appointment as any).totalSessions = totalSessions;
       }
+      
+      // Add undo action
+      addAction({
+        type: 'status_change',
+        timestamp: new Date(),
+        data: { appointmentId, originalStatus, newStatus: status },
+        description: `Changed ${appointment?.title} status from ${originalStatus} to ${status}`,
+        undo: async () => {
+          await updateDetailsMutation.mutateAsync({
+            googleEventId: appointmentId,
+            status: originalStatus,
+            reminders: originalReminders,
+            notes: originalNotes,
+            sessionNumber: originalSessionNumber,
+            totalSessions: originalTotalSessions,
+          });
+          await utils.appointments.getByDateRange.invalidate();
+        },
+        redo: async () => {
+          await updateDetailsMutation.mutateAsync({
+            googleEventId: appointmentId,
+            status,
+            reminders,
+            notes: sessionNotes,
+            sessionNumber,
+            totalSessions,
+          });
+          await utils.appointments.getByDateRange.invalidate();
+        },
+      });
       
       toast.success("Changes saved successfully!");
       // Force refetch to ensure UI updates with new status/reminders/notes
