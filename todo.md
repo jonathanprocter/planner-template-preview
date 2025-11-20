@@ -976,3 +976,35 @@
 - [x] Ensure birthdays display in daily view all-day section
 - [x] Ensure birthdays appear in PDF exports (weekly and monthly)
 - [ ] Test with actual birthday calendar data
+
+## Fix Birthday Events Not Displaying
+- [x] Check if birthday calendar is selected for sync (not showing in calendar list)
+- [x] Update calendar fetching to include birthday calendars (added showHidden: true)
+- [x] Verify birthday calendar appears in sync options (still not showing after sign out/in)
+- [ ] Debug why showHidden:true isn't working
+- [ ] Check Google Calendar API documentation for birthday calendar access
+- [ ] Try alternative approach to fetch birthday calendar
+- [ ] Test syncing birthday calendar
+- [ ] Verify birthday events have correct startTime format
+- [ ] Test with Nancy Grossman birthday on Monday
+- [ ] Ensure birthdays appear in all-day section
+
+## Appointment Status Tracking & Enhanced Daily View
+- [x] Add status field to appointments table (scheduled, completed, client_canceled, therapist_canceled, no_show)
+- [x] Add reminders array field to appointments table
+- [x] Add notes text field to appointments table
+- [x] Add sessionNumber, totalSessions, presentingConcerns, lastSessionDate fields
+- [x] Run database migration
+- [ ] Add status radio buttons to appointment modal
+- [ ] Add reminders field (array input) to appointment modal
+- [ ] Add notes textarea to appointment modal
+- [ ] Implement eInk-optimized status colors in daily view
+- [ ] Add strikethrough for canceled/no-show client names
+- [ ] Implement multi-column layout in daily view (conditional rendering)
+- [ ] Add reminders column (60/40 or 40/30/30 layout)
+- [ ] Add notes column (60/40 or 40/30/30 layout)
+- [ ] Apply status colors to weekly view
+- [ ] Add strikethrough to weekly view for canceled/no-show
+- [ ] Update PDF export with status colors
+- [ ] Test all status visual indicators on actual display
+- [ ] Test multi-column layout with various data combinations

@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title, date, startTime, endTime, calendarId FROM appointments WHERE title LIKE '%Nancy%Grossman%' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PprtSQ4Zk9Y5ny.cc7ab35ef048 --database HtghuQEwPJTyb8ieP26aWj --execute SELECT id, title, date, startTime, endTime, calendarId FROM appointments WHERE title LIKE '%Nancy%Grossman%' LIMIT 5;",
+  "rows": [
+    {
+      "id": "30249",
+      "title": "🔒 Nancy Grossman Appointment",
+      "date": "2025-09-22",
+      "startTime": "2025-09-22 13:30:00",
+      "endTime": "2025-09-22 15:00:00",
+      "calendarId": "6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com"
+    },
+    {
+      "id": "30287",
+      "title": "🔒 Nancy Grossman Appointment",
+      "date": "2025-09-29",
+      "startTime": "2025-09-29 14:00:00",
+      "endTime": "2025-09-29 15:30:00",
+      "calendarId": "6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com"
+    },
+    {
+      "id": "61946",
+      "title": "🔒 Nancy Grossman Appointment",
+      "date": "2025-10-13",
+      "startTime": "2025-10-13 13:15:00",
+      "endTime": "2025-10-13 14:45:00",
+      "calendarId": "6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com"
+    },
+    {
+      "id": "61986",
+      "title": "🔒 Nancy Grossman Appointment",
+      "date": "2025-10-20",
+      "startTime": "2025-10-20 13:30:00",
+      "endTime": "2025-10-20 15:00:00",
+      "calendarId": "6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com"
+    },
+    {
+      "id": "62028",
+      "title": "🔒 Nancy Grossman Appointment",
+      "date": "2025-10-27",
+      "startTime": "2025-10-27 21:00:00",
+      "endTime": "2025-10-27 22:30:00",
+      "calendarId": "6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tdate\tstartTime\tendTime\tcalendarId\n30249\t🔒 Nancy Grossman Appointment\t2025-09-22\t2025-09-22 13:30:00\t2025-09-22 15:00:00\t6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com\n30287\t🔒 Nancy Grossman Appointment\t2025-09-29\t2025-09-29 14:00:00\t2025-09-29 15:30:00\t6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com\n61946\t🔒 Nancy Grossman Appointment\t2025-10-13\t2025-10-13 13:15:00\t2025-10-13 14:45:00\t6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com\n61986\t🔒 Nancy Grossman Appointment\t2025-10-20\t2025-10-20 13:30:00\t2025-10-20 15:00:00\t6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com\n62028\t🔒 Nancy Grossman Appointment\t2025-10-27\t2025-10-27 21:00:00\t2025-10-27 22:30:00\t6ac7ac649a345a77fa617a926a67b4e1028f6a8ade0bdf1e7cca8f2b62310423@group.calendar.google.com\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

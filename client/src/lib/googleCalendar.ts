@@ -195,8 +195,14 @@ export const getCalendarList = async (): Promise<any[]> => {
     if (!accessToken) {
       throw new Error('User not signed in');
     }
-    const response = await gapi.client.calendar.calendarList.list();
-    return response.result.items || [];
+    // Include all calendar types: showHidden and showDeleted to get birthday calendars
+    const response = await gapi.client.calendar.calendarList.list({
+      showHidden: true,  // Include hidden calendars like birthdays
+      showDeleted: false  // Don't include deleted calendars
+    });
+    const calendars = response.result.items || [];
+    console.log('📅 Fetched calendars:', calendars.map((c: any) => ({ id: c.id, summary: c.summary, hidden: c.hidden, selected: c.selected })));
+    return calendars;
   } catch (error) {
     console.error('Error fetching calendar list:', error);
     throw error;

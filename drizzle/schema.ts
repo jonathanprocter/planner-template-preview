@@ -53,6 +53,20 @@ export const appointments = mysqlTable("appointments", {
   recurrence: text("recurrence"),
   /** Last synced with Google Calendar */
   lastSynced: timestamp("lastSynced"),
+  /** Appointment status for tracking completion and cancellations */
+  status: mysqlEnum("status", ["scheduled", "completed", "client_canceled", "therapist_canceled", "no_show"]).default("scheduled").notNull(),
+  /** Reminders and follow-up items (JSON array of strings) */
+  reminders: text("reminders"),
+  /** Session notes and observations */
+  notes: text("notes"),
+  /** Current session number */
+  sessionNumber: int("sessionNumber"),
+  /** Total planned sessions */
+  totalSessions: int("totalSessions"),
+  /** Presenting concerns (JSON array of strings) */
+  presentingConcerns: text("presentingConcerns"),
+  /** Last session date */
+  lastSessionDate: varchar("lastSessionDate", { length: 10 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

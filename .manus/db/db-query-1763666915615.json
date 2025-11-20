@@ -1,0 +1,170 @@
+{
+  "query": "SELECT id, title, date, startTime, endTime, calendarId FROM appointments WHERE title LIKE '%Grossman%' OR title LIKE '%birthday%' OR title LIKE '%Birthday%' ORDER BY date LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2PprtSQ4Zk9Y5ny.cc7ab35ef048 --database HtghuQEwPJTyb8ieP26aWj --execute SELECT id, title, date, startTime, endTime, calendarId FROM appointments WHERE title LIKE '%Grossman%' OR title LIKE '%birthday%' OR title LIKE '%Birthday%' ORDER BY date LIMIT 20;",
+  "rows": [
+    {
+      "id": "180320",
+      "title": "Jodie Watts's birthday",
+      "date": "2015-03-25",
+      "startTime": "2015-03-25 04:00:00",
+      "endTime": "2015-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211621",
+      "title": "Jodie Watts's birthday",
+      "date": "2015-03-25",
+      "startTime": "2015-03-25 04:00:00",
+      "endTime": "2015-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330320",
+      "title": "Jodie Watts's birthday",
+      "date": "2015-03-25",
+      "startTime": "2015-03-25 04:00:00",
+      "endTime": "2015-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211627",
+      "title": "Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 16:30:00",
+      "endTime": "2015-09-03 17:30:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330323",
+      "title": "Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 16:30:00",
+      "endTime": "2015-09-03 17:30:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211631",
+      "title": "Marian's Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 23:00:00",
+      "endTime": "2015-09-04 00:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330325",
+      "title": "Marian's Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 23:00:00",
+      "endTime": "2015-09-04 00:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180323",
+      "title": "Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 16:30:00",
+      "endTime": "2015-09-03 17:30:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180325",
+      "title": "Marian's Birthday",
+      "date": "2015-09-03",
+      "startTime": "2015-09-03 23:00:00",
+      "endTime": "2015-09-04 00:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180341",
+      "title": "Mark Liotta's birthday",
+      "date": "2015-10-08",
+      "startTime": "2015-10-08 04:00:00",
+      "endTime": "2015-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330341",
+      "title": "Mark Liotta's birthday",
+      "date": "2015-10-08",
+      "startTime": "2015-10-08 04:00:00",
+      "endTime": "2015-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211664",
+      "title": "Mark Liotta's birthday",
+      "date": "2015-10-08",
+      "startTime": "2015-10-08 04:00:00",
+      "endTime": "2015-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211736",
+      "title": "Jodie Watts's birthday",
+      "date": "2016-03-25",
+      "startTime": "2016-03-25 04:00:00",
+      "endTime": "2016-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330378",
+      "title": "Jodie Watts's birthday",
+      "date": "2016-03-25",
+      "startTime": "2016-03-25 04:00:00",
+      "endTime": "2016-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180377",
+      "title": "Jodie Watts's birthday",
+      "date": "2016-03-25",
+      "startTime": "2016-03-25 04:00:00",
+      "endTime": "2016-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "330393",
+      "title": "Mark Liotta's birthday",
+      "date": "2016-10-08",
+      "startTime": "2016-10-08 04:00:00",
+      "endTime": "2016-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180392",
+      "title": "Mark Liotta's birthday",
+      "date": "2016-10-08",
+      "startTime": "2016-10-08 04:00:00",
+      "endTime": "2016-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211767",
+      "title": "Mark Liotta's birthday",
+      "date": "2016-10-08",
+      "startTime": "2016-10-08 04:00:00",
+      "endTime": "2016-10-09 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "211821",
+      "title": "Jodie Watts's birthday",
+      "date": "2017-03-25",
+      "startTime": "2017-03-25 04:00:00",
+      "endTime": "2017-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    },
+    {
+      "id": "180418",
+      "title": "Jodie Watts's birthday",
+      "date": "2017-03-25",
+      "startTime": "2017-03-25 04:00:00",
+      "endTime": "2017-03-26 04:00:00",
+      "calendarId": "jonathan.procter@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tdate\tstartTime\tendTime\tcalendarId\n180320\tJodie Watts's birthday\t2015-03-25\t2015-03-25 04:00:00\t2015-03-26 04:00:00\tjonathan.procter@gmail.com\n211621\tJodie Watts's birthday\t2015-03-25\t2015-03-25 04:00:00\t2015-03-26 04:00:00\tjonathan.procter@gmail.com\n330320\tJodie Watts's birthday\t2015-03-25\t2015-03-25 04:00:00\t2015-03-26 04:00:00\tjonathan.procter@gmail.com\n211627\tBirthday\t2015-09-03\t2015-09-03 16:30:00\t2015-09-03 17:30:00\tjonathan.procter@gmail.com\n330323\tBirthday\t2015-09-03\t2015-09-03 16:30:00\t2015-09-03 17:30:00\tjonathan.procter@gmail.com\n211631\tMarian's Birthday\t2015-09-03\t2015-09-03 23:00:00\t2015-09-04 00:00:00\tjonathan.procter@gmail.com\n330325\tMarian's Birthday\t2015-09-03\t2015-09-03 23:00:00\t2015-09-04 00:00:00\tjonathan.procter@gmail.com\n180323\tBirthday\t2015-09-03\t2015-09-03 16:30:00\t2015-09-03 17:30:00\tjonathan.procter@gmail.com\n180325\tMarian's Birthday\t2015-09-03\t2015-09-03 23:00:00\t2015-09-04 00:00:00\tjonathan.procter@gmail.com\n180341\tMark Liotta's birthday\t2015-10-08\t2015-10-08 04:00:00\t2015-10-09 04:00:00\tjonathan.procter@gmail.com\n330341\tMark Liotta's birthday\t2015-10-08\t2015-10-08 04:00:00\t2015-10-09 04:00:00\tjonathan.procter@gmail.com\n211664\tMark Liotta's birthday\t2015-10-08\t2015-10-08 04:00:00\t2015-10-09 04:00:00\tjonathan.procter@gmail.com\n211736\tJodie Watts's birthday\t2016-03-25\t2016-03-25 04:00:00\t2016-03-26 04:00:00\tjonathan.procter@gmail.com\n330378\tJodie Watts's birthday\t2016-03-25\t2016-03-25 04:00:00\t2016-03-26 04:00:00\tjonathan.procter@gmail.com\n180377\tJodie Watts's birthday\t2016-03-25\t2016-03-25 04:00:00\t2016-03-26 04:00:00\tjonathan.procter@gmail.com\n330393\tMark Liotta's birthday\t2016-10-08\t2016-10-08 04:00:00\t2016-10-09 04:00:00\tjonathan.procter@gmail.com\n180392\tMark Liotta's birthday\t2016-10-08\t2016-10-08 04:00:00\t2016-10-09 04:00:00\tjonathan.procter@gmail.com\n211767\tMark Liotta's birthday\t2016-10-08\t2016-10-08 04:00:00\t2016-10-09 04:00:00\tjonathan.procter@gmail.com\n211821\tJodie Watts's birthday\t2017-03-25\t2017-03-25 04:00:00\t2017-03-26 04:00:00\tjonathan.procter@gmail.com\n180418\tJodie Watts's birthday\t2017-03-25\t2017-03-25 04:00:00\t2017-03-26 04:00:00\tjonathan.procter@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 102
+}

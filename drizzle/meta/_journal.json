@@ -36,6 +36,13 @@
       "when": 1762400097222,
       "tag": "0004_loose_puppet_master",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1763670019561,
+      "tag": "0005_mute_the_anarchist",
+      "breakpoints": true
     }
   ]
 }
