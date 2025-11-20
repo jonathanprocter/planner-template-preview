@@ -102,8 +102,8 @@ export default function DailyView() {
       .then((svg) => setSvgContent(svg))
       .catch((error) => console.error("Failed to load day template:", error));
 
+    // Subscribe to tasks only, events are managed by database query
     const unsubscribe = eventStore.subscribe(() => {
-      setEvents(eventStore.getEvents());
       setTasks(eventStore.getTasks());
     });
 
@@ -299,10 +299,24 @@ export default function DailyView() {
     const newEndH = Math.floor(newEndMinutes / 60);
     const newEndM = newEndMinutes % 60;
 
-    eventStore.updateEvent(draggingEvent, {
-      startTime: newStartTime,
-      endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
-    });
+    // Update events state directly to avoid conflicts with database events
+    setEvents(prevEvents => prevEvents.map(ev => 
+      ev.id === draggingEvent 
+        ? { 
+            ...ev, 
+            startTime: newStartTime,
+            endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
+          }
+        : ev
+    ));
+    
+    // Also update eventStore for local events
+    if (event.source === 'local') {
+      eventStore.updateEvent(draggingEvent, {
+        startTime: newStartTime,
+        endTime: `${newEndH.toString().padStart(2, "0")}:${newEndM.toString().padStart(2, "0")}`,
+      });
+    }
   };
 
   const handleDragEnd = async () => {

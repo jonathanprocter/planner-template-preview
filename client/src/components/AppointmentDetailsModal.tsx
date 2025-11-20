@@ -268,8 +268,6 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
       toast.success("Changes saved successfully!");
       // Force refetch to ensure UI updates with new status/reminders/notes
       await utils.appointments.getByDateRange.invalidate();
-      // Close modal after successful save to trigger parent re-render
-      setTimeout(() => onClose(), 500);
     } catch (error) {
       toast.error("Failed to save changes");
       console.error("Error saving changes:", error);

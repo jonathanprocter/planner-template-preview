@@ -1053,3 +1053,11 @@
 - [x] Create smart reminder UI in appointment modal
 - [x] Add one-click to accept/add suggested reminders
 - [x] Test smart reminder generation
+
+## Critical Bug Fixes - Round 2
+
+- [x] Fix drag-and-drop completely not working
+- [x] Fix appointment duplication issue
+- [x] Fix notes not displaying on appointment blocks in daily view
+- [x] Verify drag-and-drop updates database correctly
+- [x] Test that notes persist and display correctly
