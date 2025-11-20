@@ -1018,3 +1018,13 @@
 - [x] Improve drag detection logic to prevent accidental navigation
 - [x] Test status persistence across page reloads
 - [x] Test drag-and-drop smoothness in both weekly and daily views
+
+## Critical Bug Fixes - Drag-and-Drop, Notes Display, and Status Indicators
+
+- [x] Fix drag-and-drop creating duplicate appointments
+- [x] Fix notes and reminders not displaying on appointment boxes
+- [x] Fix status colors not showing on appointments
+- [x] Fix strikethrough not appearing for canceled/no-show appointments
+- [x] Test drag-and-drop doesn't create duplicates
+- [x] Test notes/reminders display correctly in daily view
+- [x] Test status indicators work across all views

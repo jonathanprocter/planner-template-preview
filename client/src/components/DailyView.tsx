@@ -56,6 +56,24 @@ export default function DailyView() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogData, setDialogData] = useState<{ startTime: string; endTime: string; date: string } | undefined>();
 
+  const updateMutation = trpc.appointments.updateAppointment.useMutation();
+  const utils = trpc.useUtils();
+
+  // Get access token from gapi if available
+  function getAccessToken(): string | undefined {
+    if (typeof window === 'undefined') return undefined;
+    try {
+      const gapi = (window as any).gapi;
+      if (gapi && gapi.client) {
+        const token = gapi.client.getToken();
+        return token?.access_token;
+      }
+    } catch (error) {
+      console.warn('Could not get access token:', error);
+    }
+    return undefined;
+  }
+
   // Get date from URL parameter or use today
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
@@ -287,7 +305,26 @@ export default function DailyView() {
     });
   };
 
-  const handleDragEnd = () => {
+  const handleDragEnd = async () => {
+    if (!draggingEvent) return;
+    
+    const event = events.find(ev => ev.id === draggingEvent);
+    if (event && event.source === 'google' && event.id) {
+      try {
+        const accessToken = getAccessToken();
+        await updateMutation.mutateAsync({
+          googleEventId: event.id,
+          startTime: event.startTime,
+          endTime: event.endTime,
+          date: event.date || currentDateStr,
+          accessToken,
+        });
+        utils.appointments.getByDateRange.invalidate();
+      } catch (error) {
+        console.error('Failed to update appointment:', error);
+      }
+    }
+    
     setDraggingEvent(null);
   };
 
@@ -586,7 +623,19 @@ export default function DailyView() {
                 }}
               >
                 {(() => {
-                  const reminders = (event as any).reminders ? JSON.parse((event as any).reminders) : [];
+                  // Safely parse reminders - handle both string and already-parsed array
+                  let reminders: string[] = [];
+                  try {
+                    const reminderData = (event as any).reminders;
+                    if (typeof reminderData === 'string') {
+                      reminders = JSON.parse(reminderData);
+                    } else if (Array.isArray(reminderData)) {
+                      reminders = reminderData;
+                    }
+                  } catch (e) {
+                    console.warn('Failed to parse reminders:', e);
+                    reminders = [];
+                  }
                   const notes = (event as any).notes || '';
                   const hasReminders = reminders.length > 0;
                   const hasNotes = notes.trim().length > 0;
