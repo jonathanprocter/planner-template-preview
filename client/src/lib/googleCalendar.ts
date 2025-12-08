@@ -396,7 +396,7 @@ export const uploadToGoogleDrive = async (
       throw new Error('Google API not initialized');
     }
     if (!accessToken) {
-      throw new Error('User not signed in');
+      throw new Error('Not authenticated. Please sign in to Google Calendar first.');
     }
 
     // Load the Drive API client if not already loaded
@@ -414,6 +414,11 @@ export const uploadToGoogleDrive = async (
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', fileBlob);
+
+    // Verify access token one more time before making the request
+    if (!accessToken) {
+      throw new Error('Access token expired. Please sign in again.');
+    }
 
     // Upload file using fetch (gapi.client doesn't support multipart uploads well)
     const response = await fetch(

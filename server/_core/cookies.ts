@@ -52,10 +52,14 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
+  const isSecure = isSecureRequest(req);
+  
   return {
     httpOnly: true, // Prevents XSS attacks by making cookie inaccessible to JavaScript
     path: "/",
-    sameSite: "none", // Required for cross-origin OAuth flows
-    secure: isSecureRequest(req), // Only send over HTTPS in production
+    // Use "lax" in development (non-HTTPS), "none" in production (HTTPS)
+    // This prevents the SameSite=None without Secure error
+    sameSite: isSecure ? "none" : "lax",
+    secure: isSecure, // Only send over HTTPS in production
   };
 }

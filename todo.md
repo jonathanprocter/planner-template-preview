@@ -1117,3 +1117,12 @@
 - [x] Fix all-day event detection logic
 - [x] Ensure time-based appointments export with correct times
 - [x] Test export functionality thoroughly
+
+## Authorization Loading Errors
+
+- [x] Identify both errors that occur when calendar loads after authorization
+  - Error 1: "[Auth] Missing session cookie" - Cookie SameSite=None without Secure
+  - Error 2: "Missing auth header" - Google Calendar API called without access token
+- [x] Fix "Missing session cookie" error - Use SameSite=Lax in development
+- [x] Fix "Missing auth header" error - Add better error messages and validation
+- [x] Test authorization flow thoroughly
