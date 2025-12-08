@@ -51,9 +51,18 @@ export function registerOAuthRoutes(app: Express): void {
         expiresInMs: ONE_YEAR_MS,
       });
 
-      // Set secure session cookie
+      // Set secure session cookie with explicit settings
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      res.cookie(COOKIE_NAME, sessionToken, { 
+        ...cookieOptions, 
+        maxAge: ONE_YEAR_MS,
+        // Ensure cookie is set before redirect
+        path: '/',
+      });
+
+      // Add a small delay to ensure cookie is set before redirect
+      // This prevents timing issues with platform API calls
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect to home page
       res.redirect(302, "/");

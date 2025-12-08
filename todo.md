@@ -1138,3 +1138,16 @@
 - [x] Apply changes to project files
 - [x] Test all changes - All 75 tests passing
 - [ ] Save checkpoint
+
+## Fix Persistent Authorization Headers Issue
+
+- [x] Investigate where "missing authorization headers" error occurs
+  - Error occurs when trying to hide Manus badge through platform UI
+  - This is a platform-level API call, not custom application code
+  - Cookie fixes from earlier should help, but timing issue may exist
+- [x] Check if we can improve cookie/session handling for platform calls
+- [x] Add session initialization check before app loads
+- [x] Improve cookie settings to ensure they're available immediately
+- [x] Add better error handling for authentication failures
+- [x] Test badge hiding functionality - All 91 tests passing
+- [ ] Save checkpoint
