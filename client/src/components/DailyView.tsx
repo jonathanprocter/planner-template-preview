@@ -118,20 +118,20 @@ export default function DailyView() {
   useEffect(() => {
     if (dbAppointments) {
       // Convert DB appointments to Event format
-      const dbEvents: Event[] = dbAppointments.map((apt: any) => {
+      const dbEvents: Event[] = dbAppointments.map((apt) => {
         // Check if this is a SimplePractice calendar
         const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
         const isFlight = apt.title?.toLowerCase().includes('flight');
         const isMeeting = apt.title?.toLowerCase().includes('meeting');
-        
+
         // Financial District color scheme
         let color = '#4F5D67'; // Default: Work (Cool Slate)
         if (isSimplePractice) color = '#243447'; // Deep Indigo
         else if (isFlight) color = '#A63D3D'; // Merlot Red
         else if (isHoliday) color = '#3D5845'; // Forest Pine
         else if (isMeeting) color = '#9A7547'; // Rich Caramel
-        
+
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
@@ -141,22 +141,22 @@ export default function DailyView() {
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
-          description: apt.description,
-          calendarId: apt.calendarId,
+          description: apt.description ?? undefined,
+          calendarId: apt.calendarId ?? undefined,
           isSimplePractice,
           isHoliday,
           isFlight,
           isMeeting,
-          status: apt.status || 'scheduled',
-          reminders: apt.reminders,
-          notes: apt.notes,
+          status: (apt.status as Event['status']) || 'scheduled',
+          reminders: apt.reminders ?? undefined,
+          notes: apt.notes ?? undefined,
           sessionNumber: apt.sessionNumber,
           totalSessions: apt.totalSessions,
-          presentingConcerns: apt.presentingConcerns,
-          lastSessionDate: apt.lastSessionDate,
+          presentingConcerns: apt.presentingConcerns ?? undefined,
+          lastSessionDate: apt.lastSessionDate ?? undefined,
         };
       });
-      
+
       // Only use database events - don't merge with eventStore to avoid duplicates
       setEvents(dbEvents);
     }

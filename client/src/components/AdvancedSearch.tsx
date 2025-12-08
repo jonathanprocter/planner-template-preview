@@ -168,7 +168,7 @@ export function AdvancedSearch() {
                 <div className="text-sm text-gray-600 mb-3">
                   Found {searchQuery.data.length} appointment{searchQuery.data.length !== 1 ? "s" : ""}
                 </div>
-                {searchQuery.data.map((appointment: any) => (
+                {searchQuery.data.map((appointment) => (
                   <div
                     key={appointment.id}
                     className="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer transition-colors"
@@ -187,7 +187,7 @@ export function AdvancedSearch() {
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
-                            {formatDateTime(appointment.date, appointment.startTime)}
+                            {formatDateTime(String(appointment.date), String(appointment.startTime))}
                           </div>
                           {appointment.category && (
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">

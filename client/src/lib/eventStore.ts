@@ -12,6 +12,19 @@ export interface Event {
     frequency: "daily" | "weekly" | "monthly";
     endDate?: string; // Optional end date for recurring events
   };
+  // Extended properties from database
+  calendarId?: string;
+  isSimplePractice?: boolean;
+  isHoliday?: boolean;
+  isFlight?: boolean;
+  isMeeting?: boolean;
+  status?: 'scheduled' | 'completed' | 'client_canceled' | 'therapist_canceled' | 'no_show';
+  reminders?: string | string[];
+  notes?: string;
+  sessionNumber?: number | null;
+  totalSessions?: number | null;
+  presentingConcerns?: string;
+  lastSessionDate?: string;
 }
 
 interface Task {

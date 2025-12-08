@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { initGoogleCalendar, getCalendarList, getEvents, signIn, signOut, type GoogleCalendarEvent } from "@/lib/googleCalendar";
@@ -22,17 +22,21 @@ export default function GoogleCalendarSync() {
     initGoogleCalendar();
   }, []);
   
+  // Use ref to store handleSync function to avoid recreating interval
+  const handleSyncRef = useRef<(() => Promise<void>) | null>(null);
+
   // Automatic background sync every 15 minutes
   useEffect(() => {
     if (!isSignedIn || availableCalendars.length === 0) return;
-    
+
     const syncInterval = setInterval(() => {
       console.log('Auto-syncing calendars...');
-      handleSync();
+      // Call handleSync through ref to get latest state without restarting interval
+      handleSyncRef.current?.();
     }, 15 * 60 * 1000); // 15 minutes in milliseconds
-    
+
     return () => clearInterval(syncInterval);
-  }, [isSignedIn, availableCalendars, selectedCalendarIds]);
+  }, [isSignedIn, availableCalendars.length]);
 
   const loadCalendars = async () => {
     try {
@@ -47,10 +51,10 @@ export default function GoogleCalendarSync() {
     }
   };
 
-  const handleSync = async () => {
+  const handleSync = useCallback(async () => {
     // Sync all selected calendars
-    const calendarsToSync = selectedCalendarIds.length > 0 
-      ? selectedCalendarIds 
+    const calendarsToSync = selectedCalendarIds.length > 0
+      ? selectedCalendarIds
       : availableCalendars.map(c => c.id);
     
     if (calendarsToSync.length === 0) {
@@ -214,7 +218,12 @@ export default function GoogleCalendarSync() {
       setIsSyncing(false);
       setSyncProgress({ current: 0, total: 0, calendar: "" });
     }
-  };
+  }, [selectedCalendarIds, availableCalendars, syncMutation]);
+
+  // Update ref whenever handleSync changes
+  useEffect(() => {
+    handleSyncRef.current = handleSync;
+  }, [handleSync]);
 
   const handleSignOut = async () => {
     await signOut();

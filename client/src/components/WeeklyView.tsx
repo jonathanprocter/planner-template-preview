@@ -12,7 +12,6 @@ import { WeeklyStats } from "./WeeklyStats";
 import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
-import { isSignedIn } from "@/lib/googleCalendar";
 
 // Get access token from gapi if available
 function getAccessToken(): string | undefined {
@@ -96,7 +95,7 @@ export default function WeeklyView() {
   useEffect(() => {
     if (dailyNotes) {
       const notesMap: Record<string, string> = {};
-      dailyNotes.forEach((note: any) => {
+      dailyNotes.forEach((note) => {
         notesMap[note.date] = note.content || '';
       });
       setNoteContent(notesMap);
@@ -105,18 +104,18 @@ export default function WeeklyView() {
 
   useEffect(() => {
     if (dbAppointments) {
-      const dbEvents: Event[] = dbAppointments.map((apt: any) => {
+      const dbEvents: Event[] = dbAppointments.map((apt) => {
         const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
         const isHoliday = apt.calendarId?.includes('holiday');
         const isFlight = apt.title?.toLowerCase().includes('flight');
         const isMeeting = apt.title?.toLowerCase().includes('meeting');
-        
+
         let color = '#4F5D67';
         if (isSimplePractice) color = '#243447';
         else if (isFlight) color = '#A63D3D';
         else if (isHoliday) color = '#3D5845';
         else if (isMeeting) color = '#9A7547';
-        
+
         return {
           id: apt.googleEventId || `db-${apt.id}`,
           title: apt.title,
@@ -126,22 +125,22 @@ export default function WeeklyView() {
           source: 'google',
           date: apt.date,
           category: apt.category || 'Other',
-          description: apt.description,
-          calendarId: apt.calendarId,
+          description: apt.description ?? undefined,
+          calendarId: apt.calendarId ?? undefined,
           isSimplePractice,
           isHoliday,
           isFlight,
           isMeeting,
-          status: apt.status || 'scheduled',
-          reminders: apt.reminders,
-          notes: apt.notes,
+          status: (apt.status as Event['status']) || 'scheduled',
+          reminders: apt.reminders ?? undefined,
+          notes: apt.notes ?? undefined,
           sessionNumber: apt.sessionNumber,
           totalSessions: apt.totalSessions,
-          presentingConcerns: apt.presentingConcerns,
-          lastSessionDate: apt.lastSessionDate,
+          presentingConcerns: apt.presentingConcerns ?? undefined,
+          lastSessionDate: apt.lastSessionDate ?? undefined,
         };
       });
-      
+
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
       setEvents([...localEvents, ...dbEvents]);
     }
@@ -162,6 +161,12 @@ export default function WeeklyView() {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if user is typing in an input field
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Handle shift key for bulk selection
+      if (e.key === 'Shift') {
+        setIsShiftPressed(true);
         return;
       }
 
@@ -207,7 +212,7 @@ export default function WeeklyView() {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [weekOffset, selectedEventIds]);
+  }, [formatDateISO]);
 
   // Calculate ISO week number
   const getISOWeek = useCallback((date: Date) => {
@@ -508,18 +513,18 @@ export default function WeeklyView() {
               const dateStr = formatDateISO(weekDates[idx]);
               const dayAllDayEvents = filteredEvents.filter(event => {
                 // Include holidays and all-day events (birthdays, etc.)
-                const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
+                const eventIsHoliday = event.isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
                 // Check if event is all-day (starts at 00:00)
                 const isAllDay = event.startTime === '00:00';
-                return (isHoliday || isAllDay) && event.date === dateStr;
+                return (eventIsHoliday || isAllDay) && event.date === dateStr;
               });
-              
+
               return (
-                <div 
+                <div
                   key={`holiday-${day}`}
                   className="flex-1 border-l border-gray-300 p-1 flex flex-col gap-1"
                 >
-                  {dayAllDayEvents.map((holiday: any) => (
+                  {dayAllDayEvents.map((holiday) => (
                     <div
                       key={holiday.id}
                       className="text-xs px-2 py-1 rounded text-white cursor-pointer hover:opacity-80"
@@ -643,19 +648,19 @@ export default function WeeklyView() {
 
           {filteredEvents.map((event) => {
             // Skip holidays and all-day events - they're shown in the all-day section
-            const isHoliday = (event as any).isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
+            const eventIsHoliday = event.isHoliday || event.category === 'Holidays/Notes' || event.color === '#3D5845';
             const isAllDay = event.startTime === '00:00';
-            if (isHoliday || isAllDay) return null;
-            
+            if (eventIsHoliday || isAllDay) return null;
+
             const [startH, startM] = event.startTime.split(":").map(Number);
             const [endH, endM] = event.endTime.split(":").map(Number);
-            
+
             if (startH < 6 || startH >= 24) return null;
-            
+
             const startMinutes = (startH - 6) * 60 + startM;
             const endMinutes = (endH - 6) * 60 + endM;
             const pixelsPerMinute = 100 / 60;
-            
+
             // Calculate header offset within grid: day names + all-day section + notes section
             // Note: Appointments are positioned relative to #weekly-grid container (not outer container)
             // All-day section: 40px base + 28px per holiday row (approximate)
@@ -671,14 +676,14 @@ export default function WeeklyView() {
             const notesHeight = 80; // Notes section has minHeight: 80px
             // Subtract 21px to compensate for rendering offset (was -71px, added 50px for 30-minute correction)
             const headerOffset = dayNamesHeight + allDayHeight + notesHeight - 21;
-            
+
             const y = headerOffset + startMinutes * pixelsPerMinute;
             const height = (endMinutes - startMinutes) * pixelsPerMinute;
-            
+
             const dayIdx = getEventDayIndex(event);
             const columnWidth = (1780 - 40 - 100) / 7;
             const x = 100 + dayIdx * columnWidth;
-            
+
             return (
               <EventTooltip key={event.id} event={event}>
                 <div
@@ -689,17 +694,17 @@ export default function WeeklyView() {
                     width: `${columnWidth - 4}px`,
                     height: `${height}px`,
                     backgroundColor: (() => {
-                      const status = (event as any).status;
+                      const status = event.status;
                       // eInk-optimized colors based on status
                       if (status === 'completed') return '#D8E5D8'; // Light green
                       if (status === 'client_canceled') return '#F0E5E5'; // Light red
                       if (status === 'therapist_canceled') return '#F5F0E5'; // Light yellow
                       if (status === 'no_show') return '#E8E8E8'; // Light gray
                       // Default colors by type
-                      if ((event as any).isSimplePractice) return '#E7E9EC';
-                      if ((event as any).isFlight) return '#F6EAEA';
-                      if ((event as any).isHoliday) return '#E9ECE9';
-                      if ((event as any).isMeeting) return '#F4F0E9';
+                      if (event.isSimplePractice) return '#E7E9EC';
+                      if (event.isFlight) return '#F6EAEA';
+                      if (event.isHoliday) return '#E9ECE9';
+                      if (event.isMeeting) return '#F4F0E9';
                       return '#EBEDEF';
                     })(),
                     color: '#333',
@@ -738,7 +743,7 @@ export default function WeeklyView() {
                 >
                   <div className="font-semibold truncate" style={{
                     textDecoration: (() => {
-                      const status = (event as any).status;
+                      const status = event.status;
                       return (status === 'client_canceled' || status === 'therapist_canceled' || status === 'no_show') ? 'line-through' : 'none';
                     })()
                   }}>{event.title}</div>

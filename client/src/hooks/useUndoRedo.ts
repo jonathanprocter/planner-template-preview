@@ -38,6 +38,10 @@ export function useUndoRedo() {
     }
 
     const action = history[currentIndex];
+    if (!action) {
+      toast.error('Action not found');
+      return;
+    }
     try {
       await action.undo();
       setCurrentIndex(prev => prev - 1);
@@ -55,6 +59,10 @@ export function useUndoRedo() {
     }
 
     const action = history[currentIndex + 1];
+    if (!action) {
+      toast.error('Action not found');
+      return;
+    }
     try {
       await action.redo();
       setCurrentIndex(prev => prev + 1);
