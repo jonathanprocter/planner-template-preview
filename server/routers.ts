@@ -340,9 +340,10 @@ export const appRouter = router({
         // If access token provided and event is from Google Calendar, update in Google
         if (input.accessToken && appointment.length > 0 && !input.googleEventId.startsWith('local-')) {
           const { updateGoogleCalendarEvent } = await import('./googleCalendarApi');
+          const calendarId = appointment[0]?.calendarId || 'primary';
           await updateGoogleCalendarEvent(
             input.accessToken,
-            appointment[0].calendarId || 'primary',
+            calendarId,
             input.googleEventId,
             {
               start: {
@@ -402,9 +403,10 @@ export const appRouter = router({
         // If access token provided and event is from Google Calendar, delete from Google
         if (input.accessToken && appointment.length > 0 && !input.googleEventId.startsWith('local-')) {
           const { deleteGoogleCalendarEvent } = await import('./googleCalendarApi');
+          const calendarId = appointment[0]?.calendarId || 'primary';
           await deleteGoogleCalendarEvent(
             input.accessToken,
-            appointment[0].calendarId || 'primary',
+            calendarId,
             input.googleEventId
           );
         }
@@ -421,10 +423,11 @@ export const appRouter = router({
         // Track this deletion to prevent re-import during sync
         if (appointment.length > 0) {
           const { deletedAppointments } = await import("../drizzle/schema");
+          const calendarId = appointment[0]?.calendarId ?? null;
           await db.insert(deletedAppointments).values({
             userId: ctx.user.id,
             googleEventId: input.googleEventId,
-            calendarId: appointment[0].calendarId,
+            calendarId,
           });
         }
 
@@ -458,8 +461,21 @@ export const appRouter = router({
             );
 
           // Generate PDF - parse dates in local timezone to avoid UTC shift
-          const parseLocalDate = (dateStr: string) => {
-            const [year, month, day] = dateStr.split('-').map(Number);
+          const parseLocalDate = (dateStr: string): Date => {
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) {
+              throw new Error(`Invalid date format: ${dateStr}. Expected YYYY-MM-DD`);
+            }
+            const [year, month, day] = parts.map(Number);
+            if (isNaN(year) || isNaN(month) || isNaN(day)) {
+              throw new Error(`Invalid date components in: ${dateStr}`);
+            }
+            if (month < 1 || month > 12) {
+              throw new Error(`Invalid month ${month} in date: ${dateStr}`);
+            }
+            if (day < 1 || day > 31) {
+              throw new Error(`Invalid day ${day} in date: ${dateStr}`);
+            }
             return new Date(year, month - 1, day);
           };
           
@@ -575,7 +591,8 @@ export const appRouter = router({
           )
           .limit(1);
 
-        return result[0] || null;
+        const [first] = result;
+        return first ?? null;
       }),
 
     // Upsert note for a specific date
@@ -602,13 +619,14 @@ export const appRouter = router({
           )
           .limit(1);
 
-        if (existing.length > 0) {
+        const [existingNote] = existing;
+        if (existingNote) {
           // Update existing
           await db
             .update(dailyNotes)
             .set({ content: input.content, updatedAt: new Date() })
-            .where(eq(dailyNotes.id, existing[0].id));
-          return { id: existing[0].id };
+            .where(eq(dailyNotes.id, existingNote.id));
+          return { id: existingNote.id };
         } else {
           // Insert new
           const result = await db.insert(dailyNotes).values({
@@ -616,7 +634,8 @@ export const appRouter = router({
             date: input.date,
             content: input.content,
           });
-          return { id: result[0].insertId };
+          const [insertResult] = result;
+          return { id: insertResult?.insertId ?? 0 };
         }
       }),
   }),

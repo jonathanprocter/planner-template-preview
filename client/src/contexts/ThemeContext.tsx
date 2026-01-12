@@ -16,6 +16,24 @@ interface ThemeProviderProps {
   switchable?: boolean;
 }
 
+// Safe localStorage access for private browsing mode
+function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    console.warn('localStorage.getItem failed (private browsing?):', error);
+    return null;
+  }
+}
+
+function safeSetItem(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch (error) {
+    console.warn('localStorage.setItem failed (private browsing?):', error);
+  }
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "light",
@@ -23,7 +41,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (switchable) {
-      const stored = localStorage.getItem("theme");
+      const stored = safeGetItem("theme");
       return (stored as Theme) || defaultTheme;
     }
     return defaultTheme;
@@ -38,7 +56,7 @@ export function ThemeProvider({
     }
 
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      safeSetItem("theme", theme);
     }
   }, [theme, switchable]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { eventStore, type Event } from "@/lib/eventStore";
@@ -13,12 +13,19 @@ import { EventTooltip } from "./EventTooltip";
 import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
 
+// Calendar ID prefixes for specific calendar types
+const SIMPLEPRACTICE_CALENDAR_PREFIXES = ['6ac7ac649a345a77', '79dfcb90ce59b1b0'] as const;
+
+// Valid status values
+const VALID_STATUSES = ['scheduled', 'completed', 'client_canceled', 'therapist_canceled', 'no_show'] as const;
+type ValidStatus = typeof VALID_STATUSES[number];
+
 // Get access token from gapi if available
 function getAccessToken(): string | undefined {
   if (typeof window === 'undefined') return undefined;
   try {
     const gapi = (window as any).gapi;
-    if (gapi && gapi.client) {
+    if (gapi?.client && typeof gapi.client.getToken === 'function') {
       const token = gapi.client.getToken();
       return token?.access_token;
     }
@@ -26,6 +33,19 @@ function getAccessToken(): string | undefined {
     console.warn('Could not get access token:', error);
   }
   return undefined;
+}
+
+// Validate and cast status
+function validateStatus(status: string | null | undefined): ValidStatus {
+  if (status && VALID_STATUSES.includes(status as ValidStatus)) {
+    return status as ValidStatus;
+  }
+  return 'scheduled';
+}
+
+// Check if calendar is SimplePractice
+function isSimplePracticeCalendar(calendarId: string | null | undefined): boolean {
+  return SIMPLEPRACTICE_CALENDAR_PREFIXES.some(prefix => calendarId?.startsWith(prefix));
 }
 
 export default function WeeklyView() {
@@ -105,10 +125,10 @@ export default function WeeklyView() {
   useEffect(() => {
     if (dbAppointments) {
       const dbEvents: Event[] = dbAppointments.map((apt) => {
-        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-        const isHoliday = apt.calendarId?.includes('holiday');
-        const isFlight = apt.title?.toLowerCase().includes('flight');
-        const isMeeting = apt.title?.toLowerCase().includes('meeting');
+        const isSimplePractice = isSimplePracticeCalendar(apt.calendarId);
+        const isHoliday = apt.calendarId?.includes('holiday') ?? false;
+        const isFlight = apt.title?.toLowerCase().includes('flight') ?? false;
+        const isMeeting = apt.title?.toLowerCase().includes('meeting') ?? false;
 
         let color = '#4F5D67';
         if (isSimplePractice) color = '#243447';
@@ -131,7 +151,7 @@ export default function WeeklyView() {
           isHoliday,
           isFlight,
           isMeeting,
-          status: (apt.status as Event['status']) || 'scheduled',
+          status: validateStatus(apt.status),
           reminders: apt.reminders ?? undefined,
           notes: apt.notes ?? undefined,
           sessionNumber: apt.sessionNumber,
@@ -146,15 +166,20 @@ export default function WeeklyView() {
     }
   }, [dbAppointments]);
 
+  // Store events ref to access current value without adding to dependencies
+  const eventsRef = useRef(events);
+  eventsRef.current = events;
+
   useEffect(() => {
     const unsubscribe = eventStore.subscribe(() => {
       const localEvents = eventStore.getEvents().filter(e => e.source !== 'google');
-      const googleEvents = events.filter(e => e.source === 'google');
+      // Use ref to get current google events without re-subscribing
+      const googleEvents = eventsRef.current.filter(e => e.source === 'google');
       setEvents([...localEvents, ...googleEvents]);
     });
 
     return () => unsubscribe();
-  }, [events]);
+  }, []); // Empty deps - only subscribe once
 
   // Keyboard shortcuts
   useEffect(() => {

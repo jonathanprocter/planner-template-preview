@@ -1,5 +1,8 @@
 import { PDFDocument, rgb, StandardFonts, PDFPage, PDFName, PDFDict, PDFArray, PDFNumber } from 'pdf-lib';
 
+// Calendar ID prefixes for specific calendar types
+const SIMPLEPRACTICE_CALENDAR_PREFIXES = ['6ac7ac649a345a77', '79dfcb90ce59b1b0'] as const;
+
 // Add clickable link annotation to a PDF page
 function addInternalLink(
   page: PDFPage,
@@ -109,8 +112,9 @@ function getFinancialDistrictColors(calendarId?: string | null, title?: string, 
     return { border: '#666666', background: '#E8E8E8', leftFlag: '#666666' }; // Light gray
   }
   
-  // Default colors by type
-  if (calendarId?.startsWith('6ac7ac649a345a77') || calendarId?.startsWith('79dfcb90ce59b1b0')) {
+  // Default colors by type - check SimplePractice calendars
+  const isSimplePractice = SIMPLEPRACTICE_CALENDAR_PREFIXES.some(prefix => calendarId?.startsWith(prefix));
+  if (isSimplePractice) {
     return { border: '#243447', background: '#E7E9EC', leftFlag: '#243447' };
   }
   
@@ -439,7 +443,8 @@ async function generateWeeklyGridPage(
     // Half-hour label
     if (hour < END_HOUR) {
       const halfY = y - adjustedHourHeight / 2;
-      const halfLabel = hour > 11 ? `${hour > 12 ? hour - 12 : hour}:30p` : `${hour}:30a`;
+      // Fix: hour >= 12 for PM (12:30 PM through 11:30 PM), hour < 12 for AM
+      const halfLabel = hour >= 12 ? `${hour > 12 ? hour - 12 : 12}:30p` : `${hour}:30a`;
       page.drawText(halfLabel, {
         x: margin + 2,
         y: halfY - 5,
@@ -660,7 +665,8 @@ async function generateDailyGridPage(
     // Half-hour label
     if (hour < END_HOUR) {
       const halfY = y - hourHeight / 2;
-      const halfLabel = hour > 11 ? `${hour > 12 ? hour - 12 : hour}:30 PM` : `${hour}:30 AM`;
+      // Fix: hour >= 12 for PM (12:30 PM through 11:30 PM), hour < 12 for AM
+      const halfLabel = hour >= 12 ? `${hour > 12 ? hour - 12 : 12}:30 PM` : `${hour}:30 AM`;
       page.drawText(halfLabel, {
         x: margin,
         y: halfY - 5,

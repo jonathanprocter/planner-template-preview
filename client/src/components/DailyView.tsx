@@ -10,6 +10,67 @@ import { AppointmentDetailsModal } from "./AppointmentDetailsModal";
 import { trpc } from "@/lib/trpc";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 
+// Calendar ID prefixes for specific calendar types
+const SIMPLEPRACTICE_CALENDAR_PREFIXES = ['6ac7ac649a345a77', '79dfcb90ce59b1b0'] as const;
+
+// Valid status values
+const VALID_STATUSES = ['scheduled', 'completed', 'client_canceled', 'therapist_canceled', 'no_show'] as const;
+type ValidStatus = typeof VALID_STATUSES[number];
+
+// Validate and parse date from URL parameter
+function parseUrlDate(dateParam: string | null): Date {
+  if (!dateParam) return new Date();
+
+  // Validate format YYYY-MM-DD
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  if (!dateRegex.test(dateParam)) {
+    console.warn(`Invalid date format: ${dateParam}, using today's date`);
+    return new Date();
+  }
+
+  const parts = dateParam.split('-');
+  const [year, month, day] = parts.map(Number);
+
+  // Validate components
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    console.warn(`Invalid date components in: ${dateParam}, using today's date`);
+    return new Date();
+  }
+
+  if (month < 1 || month > 12) {
+    console.warn(`Invalid month ${month} in date: ${dateParam}, using today's date`);
+    return new Date();
+  }
+
+  if (day < 1 || day > 31) {
+    console.warn(`Invalid day ${day} in date: ${dateParam}, using today's date`);
+    return new Date();
+  }
+
+  const parsed = new Date(year, month - 1, day);
+
+  // Check for invalid date (e.g., Feb 31)
+  if (isNaN(parsed.getTime())) {
+    console.warn(`Invalid date: ${dateParam}, using today's date`);
+    return new Date();
+  }
+
+  return parsed;
+}
+
+// Validate and cast status
+function validateStatus(status: string | null | undefined): ValidStatus {
+  if (status && VALID_STATUSES.includes(status as ValidStatus)) {
+    return status as ValidStatus;
+  }
+  return 'scheduled';
+}
+
+// Check if calendar is SimplePractice
+function isSimplePracticeCalendar(calendarId: string | null | undefined): boolean {
+  return SIMPLEPRACTICE_CALENDAR_PREFIXES.some(prefix => calendarId?.startsWith(prefix));
+}
+
 interface DailyConfig {
   header: {
     weeklyOverview: { x: number; y: number; width: number; height: number; textKey: string };
@@ -68,7 +129,7 @@ export default function DailyView() {
     if (typeof window === 'undefined') return undefined;
     try {
       const gapi = (window as any).gapi;
-      if (gapi && gapi.client) {
+      if (gapi?.client && typeof gapi.client.getToken === 'function') {
         const token = gapi.client.getToken();
         return token?.access_token;
       }
@@ -78,13 +139,10 @@ export default function DailyView() {
     return undefined;
   }
 
-  // Get date from URL parameter or use today
+  // Get date from URL parameter or use today (with validation)
   const urlParams = new URLSearchParams(window.location.search);
   const dateParam = urlParams.get('date');
-  const currentDate = dateParam ? (() => {
-    const [year, month, day] = dateParam.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  })() : new Date();
+  const currentDate = parseUrlDate(dateParam);
   
   // Format current date as YYYY-MM-DD for filtering
   const currentDateStr = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}`;
@@ -120,10 +178,10 @@ export default function DailyView() {
       // Convert DB appointments to Event format
       const dbEvents: Event[] = dbAppointments.map((apt) => {
         // Check if this is a SimplePractice calendar
-        const isSimplePractice = apt.calendarId?.startsWith('6ac7ac649a345a77') || apt.calendarId?.startsWith('79dfcb90ce59b1b0');
-        const isHoliday = apt.calendarId?.includes('holiday');
-        const isFlight = apt.title?.toLowerCase().includes('flight');
-        const isMeeting = apt.title?.toLowerCase().includes('meeting');
+        const isSimplePractice = isSimplePracticeCalendar(apt.calendarId);
+        const isHoliday = apt.calendarId?.includes('holiday') ?? false;
+        const isFlight = apt.title?.toLowerCase().includes('flight') ?? false;
+        const isMeeting = apt.title?.toLowerCase().includes('meeting') ?? false;
 
         // Financial District color scheme
         let color = '#4F5D67'; // Default: Work (Cool Slate)
@@ -147,7 +205,7 @@ export default function DailyView() {
           isHoliday,
           isFlight,
           isMeeting,
-          status: (apt.status as Event['status']) || 'scheduled',
+          status: validateStatus(apt.status),
           reminders: apt.reminders ?? undefined,
           notes: apt.notes ?? undefined,
           sessionNumber: apt.sessionNumber,

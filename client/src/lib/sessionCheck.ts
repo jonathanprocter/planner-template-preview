@@ -3,15 +3,17 @@
  * Ensures the session cookie is properly set before making platform API calls
  */
 
+import { COOKIE_NAME } from "@/const";
+
 /**
  * Checks if the session cookie exists
  */
 export function hasSessionCookie(): boolean {
-  // Check if the Manus session cookie exists
+  // Check if the session cookie exists using the shared constant
   const cookies = document.cookie.split(';');
   return cookies.some(cookie => {
     const [name] = cookie.trim().split('=');
-    return name === 'manus-session';
+    return name === COOKIE_NAME;
   });
 }
 

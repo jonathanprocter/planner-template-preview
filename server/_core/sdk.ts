@@ -15,6 +15,15 @@ import type {
   GetUserInfoWithJwtResponse,
 } from "./types/manusTypes";
 
+// Extended response types with additional platform fields from API
+interface ExtendedUserInfoResponse extends GetUserInfoResponse {
+  platforms?: string[];
+}
+
+interface ExtendedUserInfoWithJwtResponse extends GetUserInfoWithJwtResponse {
+  platforms?: string[];
+}
+
 /**
  * Utility function to check if a value is a non-empty string
  */
@@ -161,16 +170,18 @@ class SDKServer {
   async getUserInfo(accessToken: string): Promise<GetUserInfoResponse> {
     const data = await this.oauthService.getUserInfoByToken({
       accessToken,
-    } as ExchangeTokenResponse);
+    } as ExchangeTokenResponse) as ExtendedUserInfoResponse;
+
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      data.platforms,
+      data.platform ?? null
     );
+
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
-    } as GetUserInfoResponse;
+    };
   }
 
   /**
@@ -286,20 +297,21 @@ class SDKServer {
       projectId: ENV.appId,
     };
 
-    const { data } = await this.client.post<GetUserInfoWithJwtResponse>(
+    const { data } = await this.client.post<ExtendedUserInfoWithJwtResponse>(
       GET_USER_INFO_WITH_JWT_PATH,
       payload
     );
 
     const loginMethod = this.deriveLoginMethod(
-      (data as any)?.platforms,
-      (data as any)?.platform ?? data.platform ?? null
+      data.platforms,
+      data.platform ?? null
     );
+
     return {
-      ...(data as any),
+      ...data,
       platform: loginMethod,
       loginMethod,
-    } as GetUserInfoWithJwtResponse;
+    };
   }
 
   /**

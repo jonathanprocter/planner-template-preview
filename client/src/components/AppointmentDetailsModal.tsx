@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { type Event } from "@/lib/eventStore";
 import { trpc } from "@/lib/trpc";
@@ -8,12 +8,24 @@ import { AppointmentHistoryModal } from "./AppointmentHistoryModal";
 import { SmartReminders } from "./SmartReminders";
 import { useUndoRedo } from "@/hooks/useUndoRedo";
 
+// Extended Event type with additional properties
+interface ExtendedEvent extends Event {
+  isSimplePractice?: boolean;
+  isHoliday?: boolean;
+  calendarId?: string;
+  noteTags?: string;
+  reminders?: string;
+  notes?: string;
+  sessionNumber?: number | null;
+  totalSessions?: number | null;
+}
+
 // Get access token from gapi if available
 function getAccessToken(): string | undefined {
   if (typeof window === 'undefined') return undefined;
   try {
     const gapi = (window as any).gapi;
-    if (gapi && gapi.client) {
+    if (gapi?.client && typeof gapi.client.getToken === 'function') {
       const token = gapi.client.getToken();
       return token?.access_token;
     }
@@ -21,6 +33,18 @@ function getAccessToken(): string | undefined {
     console.warn('Could not get access token:', error);
   }
   return undefined;
+}
+
+// Safe JSON parse with error logging
+function safeParseJSON<T>(json: string | null | undefined, fallback: T, context: string): T {
+  if (!json) return fallback;
+  try {
+    const parsed = JSON.parse(json);
+    return parsed as T;
+  } catch (error) {
+    console.error(`Failed to parse JSON for ${context}:`, error, 'Raw value:', json);
+    return fallback;
+  }
 }
 
 interface AppointmentDetailsModalProps {
@@ -58,91 +82,112 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   const utils = trpc.useUtils();
   const { addAction } = useUndoRedo();
 
-  const appointmentId = appointment ? appointment.id : null;
-  const isSimplePractice = appointment ? (appointment as any).isSimplePractice : false;
-  const isHoliday = appointment ? (appointment as any).isHoliday : false;
-  const hasCalendarId = appointment ? !!(appointment as any).calendarId : false;
+  // Track pending mutation to prevent race conditions
+  const pendingMutationRef = useRef<AbortController | null>(null);
+  const lastSavedNotesRef = useRef<string>("");
+
+  // Type-safe access to extended appointment properties
+  const extendedAppointment = appointment as ExtendedEvent | null;
+  const appointmentId = extendedAppointment?.id ?? null;
+  const isSimplePractice = extendedAppointment?.isSimplePractice ?? false;
+  const isHoliday = extendedAppointment?.isHoliday ?? false;
+  const hasCalendarId = !!extendedAppointment?.calendarId;
 
   // Load tags and status when appointment changes
   useEffect(() => {
-    if (appointment) {
-      // Load tags
-      if ((appointment as any).noteTags) {
-        try {
-          const tags = JSON.parse((appointment as any).noteTags);
-          setSelectedTags(Array.isArray(tags) ? tags : []);
-        } catch {
-          setSelectedTags([]);
-        }
-      } else {
-        setSelectedTags([]);
-      }
-      
-      // Load status
-      setStatus((appointment as any).status || "scheduled");
-      
-      // Load reminders
-      if ((appointment as any).reminders) {
-        try {
-          const remindersList = JSON.parse((appointment as any).reminders);
-          setReminders(Array.isArray(remindersList) ? remindersList : []);
-        } catch {
-          setReminders([]);
-        }
-      } else {
-        setReminders([]);
-      }
-      
-      // Load session notes
-      setSessionNotes((appointment as any).notes || "");
-      
-      // Load session tracking
-      setSessionNumber((appointment as any).sessionNumber || null);
-      setTotalSessions((appointment as any).totalSessions || null);
-    }
-  }, [appointment]);
+    if (extendedAppointment) {
+      // Load tags with safe parsing
+      const tags = safeParseJSON<string[]>(extendedAppointment.noteTags, [], 'noteTags');
+      setSelectedTags(Array.isArray(tags) ? tags : []);
 
-  // Auto-save effect with debouncing
+      // Load status
+      setStatus(extendedAppointment.status || "scheduled");
+
+      // Load reminders with safe parsing
+      const remindersList = safeParseJSON<string[]>(extendedAppointment.reminders, [], 'reminders');
+      setReminders(Array.isArray(remindersList) ? remindersList : []);
+
+      // Load session notes
+      setSessionNotes(extendedAppointment.notes || "");
+
+      // Load session tracking
+      setSessionNumber(extendedAppointment.sessionNumber ?? null);
+      setTotalSessions(extendedAppointment.totalSessions ?? null);
+
+      // Reset mutation tracking
+      lastSavedNotesRef.current = extendedAppointment.description || "";
+    }
+  }, [extendedAppointment]);
+
+  // Auto-save effect with debouncing and race condition prevention
   useEffect(() => {
     if (!isEditing || !appointmentId || !hasCalendarId) return;
 
-    // Don't auto-save if notes haven't changed
-    if (editedNotes === (appointment?.description || "")) return;
+    // Don't auto-save if notes haven't changed from last saved value
+    if (editedNotes === lastSavedNotesRef.current) return;
 
     setSaveStatus("saving");
 
+    // Cancel any pending mutation
+    if (pendingMutationRef.current) {
+      pendingMutationRef.current.abort();
+    }
+
+    // Create new abort controller for this mutation
+    const abortController = new AbortController();
+    pendingMutationRef.current = abortController;
+
     // Debounce: wait 2 seconds after user stops typing
     const timeoutId = setTimeout(async () => {
+      // Check if this mutation was cancelled
+      if (abortController.signal.aborted) return;
+
       try {
         await updateNotesMutation.mutateAsync({
           googleEventId: appointmentId,
           notes: editedNotes,
         });
-        
+
+        // Check if cancelled during async operation
+        if (abortController.signal.aborted) return;
+
+        // Update tracking ref
+        lastSavedNotesRef.current = editedNotes;
+
         // Update local appointment object
-        if (appointment) {
-          appointment.description = editedNotes;
+        if (extendedAppointment) {
+          extendedAppointment.description = editedNotes;
         }
-        
+
         setSaveStatus("saved");
-        
+
         // Reset to idle after 2 seconds
         setTimeout(() => {
-          setSaveStatus("idle");
+          if (!abortController.signal.aborted) {
+            setSaveStatus("idle");
+          }
         }, 2000);
       } catch (error) {
+        // Ignore abort errors
+        if (abortController.signal.aborted) return;
+
         setSaveStatus("error");
         console.error("Error auto-saving notes:", error);
-        
+
         // Reset to idle after 3 seconds
         setTimeout(() => {
-          setSaveStatus("idle");
+          if (!abortController.signal.aborted) {
+            setSaveStatus("idle");
+          }
         }, 3000);
       }
     }, 2000);
 
-    return () => clearTimeout(timeoutId);
-  }, [editedNotes, isEditing, appointmentId, hasCalendarId, appointment]);
+    return () => {
+      clearTimeout(timeoutId);
+      abortController.abort();
+    };
+  }, [editedNotes, isEditing, appointmentId, hasCalendarId, extendedAppointment, updateNotesMutation]);
 
   if (!appointment) return null;
 
@@ -206,8 +251,8 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
       });
       
       // Update local appointment object
-      if (appointment) {
-        (appointment as any).noteTags = JSON.stringify(newTags);
+      if (extendedAppointment) {
+        extendedAppointment.noteTags = JSON.stringify(newTags);
       }
       
       toast.success("Tags updated!");
@@ -246,14 +291,14 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
   };
 
   const handleSaveChanges = async () => {
-    if (!appointmentId || !hasCalendarId) return;
-    
+    if (!appointmentId || !hasCalendarId || !extendedAppointment) return;
+
     // Store original values for undo
-    const originalStatus = (appointment as any).status || 'scheduled';
-    const originalReminders = (appointment as any).reminders ? JSON.parse((appointment as any).reminders) : [];
-    const originalNotes = (appointment as any).notes || '';
-    const originalSessionNumber = (appointment as any).sessionNumber;
-    const originalTotalSessions = (appointment as any).totalSessions;
+    const originalStatus = extendedAppointment.status || 'scheduled';
+    const originalReminders = safeParseJSON<string[]>(extendedAppointment.reminders, [], 'reminders');
+    const originalNotes = extendedAppointment.notes || '';
+    const originalSessionNumber = extendedAppointment.sessionNumber;
+    const originalTotalSessions = extendedAppointment.totalSessions;
     
     try {
       await updateDetailsMutation.mutateAsync({
@@ -266,12 +311,12 @@ export function AppointmentDetailsModal({ appointment, open, onClose }: Appointm
       });
       
       // Update local appointment object
-      if (appointment) {
-        (appointment as any).status = status;
-        (appointment as any).reminders = JSON.stringify(reminders);
-        (appointment as any).notes = sessionNotes;
-        (appointment as any).sessionNumber = sessionNumber;
-        (appointment as any).totalSessions = totalSessions;
+      if (extendedAppointment) {
+        extendedAppointment.status = status;
+        extendedAppointment.reminders = JSON.stringify(reminders);
+        extendedAppointment.notes = sessionNotes;
+        extendedAppointment.sessionNumber = sessionNumber;
+        extendedAppointment.totalSessions = totalSessions;
       }
       
       // Add undo action

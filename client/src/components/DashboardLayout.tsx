@@ -37,19 +37,41 @@ const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
+// Safe localStorage access with validation
+function getSavedSidebarWidth(): number {
+  try {
+    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    if (!saved) return DEFAULT_WIDTH;
+    const parsed = parseInt(saved, 10);
+    // Validate within bounds
+    if (isNaN(parsed) || parsed < MIN_WIDTH || parsed > MAX_WIDTH) {
+      return DEFAULT_WIDTH;
+    }
+    return parsed;
+  } catch (error) {
+    console.warn('localStorage access failed:', error);
+    return DEFAULT_WIDTH;
+  }
+}
+
+function saveSidebarWidth(width: number): void {
+  try {
+    localStorage.setItem(SIDEBAR_WIDTH_KEY, width.toString());
+  } catch (error) {
+    console.warn('localStorage.setItem failed:', error);
+  }
+}
+
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
-  });
+  const [sidebarWidth, setSidebarWidth] = useState(getSavedSidebarWidth);
   const { loading, user } = useAuth();
 
   useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
+    saveSidebarWidth(sidebarWidth);
   }, [sidebarWidth]);
 
   if (loading) {
