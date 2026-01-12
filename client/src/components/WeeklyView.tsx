@@ -260,7 +260,7 @@ export default function WeeklyView() {
   );
 
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const hours = Array.from({ length: 16 }, (_, i) => i + 6);
+  const hours = Array.from({ length: 18 }, (_, i) => i + 6);
 
   const getEventDayIndex = useCallback((event: Event) => {
     if (!event.date) return 0;
