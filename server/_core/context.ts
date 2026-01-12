@@ -1,6 +1,6 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
+import * as db from "../db";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -8,23 +8,46 @@ export type TrpcContext = {
   user: User | null;
 };
 
+// Default user for single-user mode (no authentication)
+const DEFAULT_USER_OPEN_ID = "default-user";
+const DEFAULT_USER_NAME = "User";
+const DEFAULT_USER_EMAIL = "user@example.com";
+
+/**
+ * Gets or creates the default user for single-user mode
+ */
+async function getOrCreateDefaultUser(): Promise<User | null> {
+  try {
+    // Try to get existing default user
+    let user = await db.getUserByOpenId(DEFAULT_USER_OPEN_ID);
+
+    if (!user) {
+      // Create default user if doesn't exist
+      await db.upsertUser({
+        openId: DEFAULT_USER_OPEN_ID,
+        name: DEFAULT_USER_NAME,
+        email: DEFAULT_USER_EMAIL,
+        loginMethod: "default",
+        lastSignedIn: new Date(),
+      });
+      user = await db.getUserByOpenId(DEFAULT_USER_OPEN_ID);
+    }
+
+    return user ?? null;
+  } catch (error) {
+    console.error("Failed to get or create default user:", error);
+    return null;
+  }
+}
+
 /**
  * Creates tRPC context for each request
- * Attempts to authenticate the user from session cookie
- * Returns null user for unauthenticated requests (public procedures)
+ * Uses a default user for all requests (single-user mode)
  */
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
-  let user: User | null = null;
-
-  try {
-    user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
-    // Authentication is optional for public procedures.
-    // Errors are logged but don't fail the request
-    user = null;
-  }
+  const user = await getOrCreateDefaultUser();
 
   return {
     req: opts.req,
