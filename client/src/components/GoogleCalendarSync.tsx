@@ -16,6 +16,7 @@ export default function GoogleCalendarSync() {
   const [syncStatus, setSyncStatus] = useState<Record<string, { status: 'pending' | 'syncing' | 'success' | 'error', error?: string, eventCount?: number }>>({});
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
 
+  const utils = trpc.useUtils();
   const syncMutation = trpc.appointments.syncFromGoogle.useMutation();
 
   useEffect(() => {
@@ -197,6 +198,9 @@ export default function GoogleCalendarSync() {
         try {
           toast.info(`Saving ${uniqueEvents.length} unique events to database...`);
           await syncMutation.mutateAsync({ events: uniqueEvents });
+          // Invalidate appointments query to refresh the calendar view
+          await utils.appointments.getByDateRange.invalidate();
+          await utils.appointments.getAll.invalidate();
           toast.success(`Successfully synced ${uniqueEvents.length} appointments!`);
           setLastSyncTime(new Date());
           break;
@@ -218,7 +222,7 @@ export default function GoogleCalendarSync() {
       setIsSyncing(false);
       setSyncProgress({ current: 0, total: 0, calendar: "" });
     }
-  }, [selectedCalendarIds, availableCalendars, syncMutation]);
+  }, [selectedCalendarIds, availableCalendars, syncMutation, utils]);
 
   // Update ref whenever handleSync changes
   useEffect(() => {
