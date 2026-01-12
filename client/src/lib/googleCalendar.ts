@@ -6,10 +6,9 @@
 declare const gapi: any;
 declare const google: any;
 
-// SECURITY WARNING: These credentials should be in environment variables
-// For production, move to server-side or use proper OAuth flow
-const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '839967078225-1ljq2t2nhgh2h2io55cgkmvul4sn8r4v.apps.googleusercontent.com';
-const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || 'AIzaSyAUXmnozR1UJuaV2TLwyLcJY9XDoYrcDhA';
+// Google OAuth credentials - configured via environment variables
+const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '203333002256-lb71638dbppf6207fvk0bofajn70j6cf.apps.googleusercontent.com';
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY || 'AIzaSyArv0m6HV-xjkNaJScNdGryKy_qbjgpbJA';
 const SCOPES = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/drive.file';
 
 let tokenClient: any | null = null;
