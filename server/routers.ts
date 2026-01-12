@@ -628,14 +628,13 @@ export const appRouter = router({
             .where(eq(dailyNotes.id, existingNote.id));
           return { id: existingNote.id };
         } else {
-          // Insert new
+          // Insert new - use .returning() for PostgreSQL compatibility
           const result = await db.insert(dailyNotes).values({
             userId: ctx.user.id,
             date: input.date,
             content: input.content,
-          });
-          const [insertResult] = result;
-          return { id: insertResult?.insertId ?? 0 };
+          }).returning({ id: dailyNotes.id });
+          return { id: result[0]?.id ?? 0 };
         }
       }),
   }),

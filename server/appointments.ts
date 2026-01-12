@@ -73,9 +73,9 @@ export async function upsertAppointment(appointment: InsertAppointment) {
     }
   }
 
-  // Insert new
-  const result = await db.insert(appointments).values(appointment);
-  return result[0].insertId;
+  // Insert new - use .returning() for PostgreSQL compatibility
+  const result = await db.insert(appointments).values(appointment).returning({ id: appointments.id });
+  return result[0].id;
 }
 
 /**
