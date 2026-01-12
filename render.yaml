@@ -14,7 +14,7 @@ services:
       npm install -g pnpm
       pnpm install
       pnpm run build
-      pnpm exec drizzle-kit push
+      pnpm exec drizzle-kit push --force
     startCommand: pnpm run start
     healthCheckPath: /
     envVars:
